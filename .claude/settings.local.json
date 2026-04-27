@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cp -r /tmp/predictions-communities/. /Users/siya.jariwala/gemini-intern-hackathon/ 2>&1 && ls -la /Users/siya.jariwala/gemini-intern-hackathon/)"
+    ]
+  }
+}
