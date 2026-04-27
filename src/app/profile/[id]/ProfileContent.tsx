@@ -1,6 +1,8 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
+import Link from "next/link";
 import {
   User,
   TrendingUp,
@@ -9,8 +11,12 @@ import {
   Calendar,
   ArrowUpRight,
   ArrowDownRight,
+  CheckCircle2,
+  Settings,
 } from "lucide-react";
 import { cn, formatCurrency, formatPercentage, timeAgo } from "@/lib/utils";
+import { PositionsCard } from "@/components/profile/PositionsCard";
+import { OrderHistoryCard } from "@/components/profile/OrderHistoryCard";
 import type {
   ApiResponse,
   UserResponse,
@@ -22,6 +28,8 @@ interface ProfileContentProps {
 }
 
 export function ProfileContent({ userId }: ProfileContentProps) {
+  const { data: session } = useSession();
+  const isOwnProfile = session?.user?.id === userId;
   const {
     data: user,
     isLoading: userLoading,
@@ -36,7 +44,7 @@ export function ProfileContent({ userId }: ProfileContentProps) {
     },
   });
 
-  const { data: stats } = useQuery({
+  const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ["userStats", userId],
     queryFn: async () => {
       const res = await fetch(`/api/users/${userId}/stats`);
@@ -46,6 +54,16 @@ export function ProfileContent({ userId }: ProfileContentProps) {
     },
     enabled: !!user,
   });
+
+  const displayStats: UserStatsResponse = stats ?? {
+    totalTrades: 0,
+    totalPnl: 0,
+    winRate: 0,
+    constellationsJoined: 0,
+    commentsPosted: 0,
+    bestTrade: 0,
+    worstTrade: 0,
+  };
 
   if (userLoading) {
     return (
@@ -102,16 +120,43 @@ export function ProfileContent({ userId }: ProfileContentProps) {
             {user.bio && (
               <p className="mt-2 text-sm text-foreground-secondary">{user.bio}</p>
             )}
-            <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
-              <Calendar className="h-3.5 w-3.5" />
-              Joined {timeAgo(new Date(user.createdAt))}
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Calendar className="h-3.5 w-3.5" />
+                Joined {timeAgo(new Date(user.createdAt))}
+              </span>
+              {stats?.geminiConnected && (
+                <span className="flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-400">
+                  <CheckCircle2 className="h-3 w-3" />
+                  Gemini Connected
+                </span>
+              )}
             </div>
+            {isOwnProfile && !stats?.geminiConnected && !statsLoading && (
+              <Link
+                href="/settings"
+                className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+              >
+                <Settings className="h-3.5 w-3.5" />
+                Connect Gemini to show real stats
+              </Link>
+            )}
           </div>
         </div>
       </div>
 
       {/* Stats Grid */}
-      {stats && (
+      {statsLoading ? (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="animate-pulse rounded-lg border border-border bg-card p-4">
+              <div className="h-4 w-4 rounded bg-muted" />
+              <div className="mt-2 h-5 w-16 rounded bg-muted" />
+              <div className="mt-1 h-3 w-12 rounded bg-muted" />
+            </div>
+          ))}
+        </div>
+      ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <StatCard
             icon={<TrendingUp className="h-4 w-4" />}
@@ -119,34 +164,34 @@ export function ProfileContent({ userId }: ProfileContentProps) {
             value={
               <span
                 className={cn(
-                  stats.totalPnl >= 0 ? "text-yes-text" : "text-no-text"
+                  displayStats.totalPnl >= 0 ? "text-yes-text" : "text-no-text"
                 )}
               >
-                {stats.totalPnl >= 0 ? "+" : ""}
-                {formatCurrency(stats.totalPnl)}
+                {displayStats.totalPnl >= 0 ? "+" : ""}
+                {formatCurrency(displayStats.totalPnl)}
               </span>
             }
           />
           <StatCard
             icon={<Trophy className="h-4 w-4" />}
             label="Win Rate"
-            value={formatPercentage(stats.winRate)}
+            value={formatPercentage(displayStats.winRate)}
           />
           <StatCard
             icon={<User className="h-4 w-4" />}
             label="Trades"
-            value={stats.totalTrades.toString()}
+            value={displayStats.totalTrades.toString()}
           />
           <StatCard
             icon={<MessageSquare className="h-4 w-4" />}
             label="Comments"
-            value={stats.commentsPosted.toString()}
+            value={displayStats.commentsPosted.toString()}
           />
         </div>
       )}
 
       {/* Trade Performance */}
-      {stats && (stats.bestTrade !== 0 || stats.worstTrade !== 0) && (
+      {(displayStats.bestTrade !== 0 || displayStats.worstTrade !== 0) && (
         <div className="rounded-lg border border-border bg-card p-6">
           <h2 className="mb-4 text-sm font-medium text-foreground">
             Trade Performance
@@ -157,7 +202,7 @@ export function ProfileContent({ userId }: ProfileContentProps) {
               <div>
                 <p className="text-xs text-muted-foreground">Best Trade</p>
                 <p className="text-sm font-medium text-yes-text">
-                  +{formatCurrency(stats.bestTrade)}
+                  +{formatCurrency(displayStats.bestTrade)}
                 </p>
               </div>
             </div>
@@ -166,7 +211,7 @@ export function ProfileContent({ userId }: ProfileContentProps) {
               <div>
                 <p className="text-xs text-muted-foreground">Worst Trade</p>
                 <p className="text-sm font-medium text-no-text">
-                  {formatCurrency(stats.worstTrade)}
+                  {formatCurrency(displayStats.worstTrade)}
                 </p>
               </div>
             </div>
@@ -175,15 +220,21 @@ export function ProfileContent({ userId }: ProfileContentProps) {
       )}
 
       {/* Activity */}
-      {stats && (
-        <div className="rounded-lg border border-border bg-card p-6">
-          <h2 className="mb-2 text-sm font-medium text-foreground">Activity</h2>
-          <p className="text-sm text-muted-foreground">
-            Member of {stats.constellationsJoined} communit{stats.constellationsJoined !== 1 ? "ies" : "y"}{" "}
-            &middot; {stats.commentsPosted} comment
-            {stats.commentsPosted !== 1 && "s"} posted
-          </p>
-        </div>
+      <div className="rounded-lg border border-border bg-card p-6">
+        <h2 className="mb-2 text-sm font-medium text-foreground">Activity</h2>
+        <p className="text-sm text-muted-foreground">
+          Member of {displayStats.constellationsJoined} communit{displayStats.constellationsJoined !== 1 ? "ies" : "y"}{" "}
+          &middot; {displayStats.commentsPosted} comment
+          {displayStats.commentsPosted !== 1 && "s"} posted
+        </p>
+      </div>
+
+      {/* Gemini Positions & Order History (own profile only) */}
+      {isOwnProfile && stats?.geminiConnected && (
+        <>
+          <PositionsCard userId={userId} />
+          <OrderHistoryCard userId={userId} />
+        </>
       )}
     </div>
   );
