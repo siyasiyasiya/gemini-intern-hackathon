@@ -18,7 +18,7 @@ export function ConstellationRules({ constellation }: { constellation: Constella
         {rulesList.map((rule, i) => (
           <li key={i} className="flex gap-2.5 text-sm">
             <span className="shrink-0 text-muted-foreground font-medium">{i + 1}.</span>
-            <span className="text-foreground">{rule.trim()}</span>
+            <span className="text-foreground">{rule.trim().replace(/^\d+\.\s*/, "")}</span>
           </li>
         ))}
       </ol>

@@ -22,19 +22,19 @@ export function Leaderboard({ constellationId }: LeaderboardProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="space-y-2">
         <div className="flex items-center gap-2 text-sm font-medium text-foreground">
           <Trophy className="h-4 w-4" />
           Leaderboard
         </div>
 
-        <div className="flex rounded-lg border border-border bg-secondary p-0.5">
+        <div className="flex w-full rounded-lg border border-border bg-secondary p-0.5">
           {periods.map((p) => (
             <button
               key={p.value}
               onClick={() => setPeriod(p.value)}
               className={cn(
-                "whitespace-nowrap rounded-md px-3 py-1 text-xs font-medium transition-colors",
+                "flex-1 whitespace-nowrap rounded-md px-2 py-1 text-xs font-medium transition-colors text-center",
                 period === p.value
                   ? "bg-accent text-accent-foreground"
                   : "text-muted-foreground hover:text-foreground"
