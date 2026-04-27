@@ -6,13 +6,17 @@ import type { MarketCategory, MarketSortOption } from "@/types/market";
 
 const CATEGORIES: { value: MarketCategory | "all"; label: string }[] = [
   { value: "all", label: "All" },
-  { value: "politics", label: "Politics" },
   { value: "crypto", label: "Crypto" },
   { value: "sports", label: "Sports" },
+  { value: "politics", label: "Politics" },
   { value: "economics", label: "Economics" },
-  { value: "technology", label: "Technology" },
-  { value: "science", label: "Science" },
+  { value: "technology", label: "Tech" },
+  { value: "commodities", label: "Commodities" },
+  { value: "business", label: "Business" },
   { value: "entertainment", label: "Entertainment" },
+  { value: "weather", label: "Weather" },
+  { value: "media", label: "Media" },
+  { value: "culture", label: "Culture" },
 ];
 
 const SORT_OPTIONS: { value: MarketSortOption; label: string }[] = [
