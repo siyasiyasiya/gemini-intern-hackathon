@@ -1,17 +1,23 @@
 "use client";
 
+import { useState } from "react";
 import { useParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { Loader2 } from "lucide-react";
 import { RoomHeader } from "@/components/rooms/RoomHeader";
 import { MemberList } from "@/components/rooms/MemberList";
+import { MarketFeed } from "@/components/markets/MarketFeed";
+import { MarketDetail } from "@/components/markets/MarketDetail";
+import { CommentThread } from "@/components/comments/CommentThread";
+import { Leaderboard } from "@/components/leaderboard/Leaderboard";
 import type { RoomResponse } from "@/types/api";
 
 export default function RoomDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { data: session } = useSession();
   const queryClient = useQueryClient();
+  const [selectedMarket, setSelectedMarket] = useState<string | null>(null);
 
   const { data: roomData, isLoading: roomLoading } = useQuery({
     queryKey: ["room", id],
@@ -66,31 +72,31 @@ export default function RoomDetailPage() {
       />
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Left sidebar: market feed placeholder */}
-        <aside className="hidden lg:block w-72 border-r border-border p-4 overflow-y-auto">
-          <div
-            id="market-feed"
-            className="rounded-lg border border-dashed border-border p-4 text-center text-sm text-muted-foreground"
-          >
-            Market feed
+        {/* Left sidebar: market feed */}
+        <aside className="hidden lg:block w-80 border-r border-border overflow-y-auto">
+          <div className="p-4">
+            {selectedMarket ? (
+              <MarketDetail
+                ticker={selectedMarket}
+                onBack={() => setSelectedMarket(null)}
+                onSelectRelated={(ticker) => setSelectedMarket(ticker)}
+              />
+            ) : (
+              <MarketFeed onSelectMarket={(ticker) => setSelectedMarket(ticker)} />
+            )}
           </div>
         </aside>
 
-        {/* Center: comments placeholder */}
+        {/* Center: comments / discussion */}
         <main className="flex-1 overflow-y-auto p-4">
-          <div
-            id="comments"
-            className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground"
-          >
-            Discussion area
-          </div>
+          <CommentThread roomId={id} marketTicker={selectedMarket ?? undefined} />
         </main>
 
-        {/* Right sidebar: members + watchlist */}
-        <aside className="hidden md:block w-64 border-l border-border p-4 overflow-y-auto">
-          <MemberList roomId={id} />
-          <div className="mt-6 rounded-lg border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
-            Watchlist
+        {/* Right sidebar: leaderboard + members */}
+        <aside className="hidden md:block w-72 border-l border-border overflow-y-auto">
+          <div className="p-4 space-y-6">
+            <Leaderboard roomId={id} />
+            <MemberList roomId={id} />
           </div>
         </aside>
       </div>
