@@ -9,49 +9,49 @@ const io = new Server(httpServer, {
   },
 });
 
-// Track online users per community
-const communityPresence = new Map<string, Set<string>>();
+// Track online users per constellation
+const constellationPresence = new Map<string, Set<string>>();
 
 io.on("connection", (socket) => {
-  let currentCommunityId: string | null = null;
+  let currentConstellationId: string | null = null;
   let userId: string | null = null;
 
-  socket.on("join-community", (data: { communityId: string; userId?: string; username?: string }) => {
-    currentCommunityId = data.communityId;
+  socket.on("join-constellation", (data: { constellationId: string; userId?: string; username?: string }) => {
+    currentConstellationId = data.constellationId;
     userId = data.userId || socket.id;
 
-    socket.join(data.communityId);
+    socket.join(data.constellationId);
 
-    if (!communityPresence.has(data.communityId)) {
-      communityPresence.set(data.communityId, new Set());
+    if (!constellationPresence.has(data.constellationId)) {
+      constellationPresence.set(data.constellationId, new Set());
     }
-    communityPresence.get(data.communityId)!.add(userId);
+    constellationPresence.get(data.constellationId)!.add(userId);
 
-    io.to(data.communityId).emit("presence-update", {
-      communityId: data.communityId,
-      onlineCount: communityPresence.get(data.communityId)!.size,
+    io.to(data.constellationId).emit("presence-update", {
+      constellationId: data.constellationId,
+      onlineCount: constellationPresence.get(data.constellationId)!.size,
       userId,
       username: data.username,
       action: "joined",
     });
   });
 
-  socket.on("leave-community", (data: { communityId: string }) => {
-    socket.leave(data.communityId);
-    if (userId && communityPresence.has(data.communityId)) {
-      communityPresence.get(data.communityId)!.delete(userId);
-      io.to(data.communityId).emit("presence-update", {
-        communityId: data.communityId,
-        onlineCount: communityPresence.get(data.communityId)!.size,
+  socket.on("leave-constellation", (data: { constellationId: string }) => {
+    socket.leave(data.constellationId);
+    if (userId && constellationPresence.has(data.constellationId)) {
+      constellationPresence.get(data.constellationId)!.delete(userId);
+      io.to(data.constellationId).emit("presence-update", {
+        constellationId: data.constellationId,
+        onlineCount: constellationPresence.get(data.constellationId)!.size,
         userId,
         action: "left",
       });
     }
-    currentCommunityId = null;
+    currentConstellationId = null;
   });
 
-  socket.on("new-comment", (data: { communityId: string; comment: unknown }) => {
-    socket.to(data.communityId).emit("comment-added", data.comment);
+  socket.on("new-comment", (data: { constellationId: string; comment: unknown }) => {
+    socket.to(data.constellationId).emit("comment-added", data.comment);
   });
 
   socket.on("market-update", (data: { ticker: string; yesPrice: number; volume24h: number }) => {
@@ -59,11 +59,11 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
-    if (currentCommunityId && userId && communityPresence.has(currentCommunityId)) {
-      communityPresence.get(currentCommunityId)!.delete(userId);
-      io.to(currentCommunityId).emit("presence-update", {
-        communityId: currentCommunityId,
-        onlineCount: communityPresence.get(currentCommunityId)!.size,
+    if (currentConstellationId && userId && constellationPresence.has(currentConstellationId)) {
+      constellationPresence.get(currentConstellationId)!.delete(userId);
+      io.to(currentConstellationId).emit("presence-update", {
+        constellationId: currentConstellationId,
+        onlineCount: constellationPresence.get(currentConstellationId)!.size,
         userId,
         action: "left",
       });

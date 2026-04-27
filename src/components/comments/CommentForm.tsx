@@ -4,7 +4,7 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 interface CommentFormProps {
-  communitySlug: string;
+  constellationSlug: string;
   marketTicker?: string;
   parentId?: string;
   onSubmit: (data: {
@@ -19,7 +19,7 @@ interface CommentFormProps {
 }
 
 export function CommentForm({
-  communitySlug,
+  constellationSlug,
   marketTicker,
   parentId,
   onSubmit,
@@ -54,7 +54,7 @@ export function CommentForm({
   };
 
   // Suppress unused variable warning
-  void communitySlug;
+  void constellationSlug;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">

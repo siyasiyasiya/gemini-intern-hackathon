@@ -28,7 +28,7 @@ export default function LoginPage() {
       if (res?.error) {
         setError("Invalid email or password");
       } else {
-        router.push("/communities");
+        router.push("/constellations");
         router.refresh();
       }
     } finally {
@@ -42,7 +42,7 @@ export default function LoginPage() {
         <div className="text-center">
           <h1 className="text-2xl font-bold">Sign In</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Welcome back to Predictions Communities
+            Welcome back to Gemini Constellation
           </p>
         </div>
 

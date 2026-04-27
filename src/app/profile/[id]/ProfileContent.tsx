@@ -179,7 +179,7 @@ export function ProfileContent({ userId }: ProfileContentProps) {
         <div className="rounded-lg border border-border bg-card p-6">
           <h2 className="mb-2 text-sm font-medium text-foreground">Activity</h2>
           <p className="text-sm text-muted-foreground">
-            Member of {stats.communitiesJoined} communit{stats.communitiesJoined !== 1 ? "ies" : "y"}{" "}
+            Member of {stats.constellationsJoined} communit{stats.constellationsJoined !== 1 ? "ies" : "y"}{" "}
             &middot; {stats.commentsPosted} comment
             {stats.commentsPosted !== 1 && "s"} posted
           </p>

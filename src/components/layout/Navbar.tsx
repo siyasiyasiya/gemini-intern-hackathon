@@ -17,14 +17,14 @@ export function Navbar() {
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-accent">
               <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            <span className="text-base font-semibold tracking-tight">Predictions</span>
+            <span className="text-base font-semibold tracking-tight">Constellation</span>
           </Link>
           <div className="hidden sm:flex items-center gap-6">
             <Link
-              href="/communities"
+              href="/constellations"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
-              Communities
+              Constellations
             </Link>
           </div>
         </div>
@@ -80,11 +80,11 @@ export function Navbar() {
       {menuOpen && (
         <div className="sm:hidden border-t border-border bg-background px-4 py-3 space-y-1">
           <Link
-            href="/communities"
+            href="/constellations"
             onClick={() => setMenuOpen(false)}
             className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
           >
-            Communities
+            Constellations
           </Link>
           {session ? (
             <>

@@ -43,7 +43,7 @@ export default function RegisterPage() {
       if (signInRes?.error) {
         setError("Account created but failed to sign in. Please try logging in.");
       } else {
-        router.push("/communities");
+        router.push("/constellations");
         router.refresh();
       }
     } finally {
@@ -57,7 +57,7 @@ export default function RegisterPage() {
         <div className="text-center">
           <h1 className="text-2xl font-bold">Create Account</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Join Predictions Communities
+            Join Gemini Constellation
           </p>
         </div>
 

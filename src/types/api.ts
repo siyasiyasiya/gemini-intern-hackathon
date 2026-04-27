@@ -11,7 +11,7 @@ export interface PaginatedResponse<T> {
   pageSize: number;
 }
 
-export interface CommunityResponse {
+export interface ConstellationResponse {
   id: string;
   name: string;
   slug: string;
@@ -39,7 +39,7 @@ export interface UserResponse {
 
 export interface CommentResponse {
   id: string;
-  communityId: string;
+  constellationId: string;
   userId: string;
   marketTicker: string | null;
   parentId: string | null;
@@ -66,7 +66,7 @@ export interface UserStatsResponse {
   totalTrades: number;
   totalPnl: number;
   winRate: number;
-  communitiesJoined: number;
+  constellationsJoined: number;
   commentsPosted: number;
   bestTrade: number;
   worstTrade: number;
@@ -74,13 +74,13 @@ export interface UserStatsResponse {
 
 export interface TrackedMarketResponse {
   id: string;
-  communityId: string;
+  constellationId: string;
   marketTicker: string;
   pinnedAt: string;
   pinnedBy: string;
 }
 
-export interface CommunityStatsResponse {
+export interface ConstellationStatsResponse {
   collectiveAccuracy: number;
   totalVolume: number;
   totalTrades: number;

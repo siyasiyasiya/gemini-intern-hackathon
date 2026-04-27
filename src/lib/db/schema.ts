@@ -11,7 +11,7 @@ import {
 import { relations } from "drizzle-orm";
 
 // Enums
-export const communityTopicEnum = pgEnum("community_topic", [
+export const constellationTopicEnum = pgEnum("constellation_topic", [
   "politics",
   "crypto",
   "sports",
@@ -22,7 +22,7 @@ export const communityTopicEnum = pgEnum("community_topic", [
   "other",
 ]);
 
-export const communityRoleEnum = pgEnum("community_role", ["owner", "moderator", "member"]);
+export const constellationRoleEnum = pgEnum("constellation_role", ["owner", "moderator", "member"]);
 
 export const tradeDirectionEnum = pgEnum("trade_direction", ["yes", "no"]);
 
@@ -46,8 +46,8 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
-// Communities
-export const communities = pgTable("communities", {
+// Constellations
+export const constellations = pgTable("constellations", {
   id: uuid("id").defaultRandom().primaryKey(),
   name: text("name").notNull(),
   slug: text("slug").notNull().unique(),
@@ -55,7 +55,7 @@ export const communities = pgTable("communities", {
   about: text("about"),
   rules: text("rules"),
   bannerUrl: text("banner_url"),
-  topic: communityTopicEnum("topic").notNull().default("other"),
+  topic: constellationTopicEnum("topic").notNull().default("other"),
   isPublic: boolean("is_public").notNull().default(true),
   inviteCode: text("invite_code").unique(),
   creatorId: uuid("creator_id")
@@ -66,25 +66,25 @@ export const communities = pgTable("communities", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
-// Community Members
-export const communityMembers = pgTable("community_members", {
+// Constellation Members
+export const constellationMembers = pgTable("constellation_members", {
   id: uuid("id").defaultRandom().primaryKey(),
-  communityId: uuid("community_id")
+  constellationId: uuid("constellation_id")
     .notNull()
-    .references(() => communities.id, { onDelete: "cascade" }),
+    .references(() => constellations.id, { onDelete: "cascade" }),
   userId: uuid("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  role: communityRoleEnum("role").notNull().default("member"),
+  role: constellationRoleEnum("role").notNull().default("member"),
   joinedAt: timestamp("joined_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 // Tracked Markets
 export const trackedMarkets = pgTable("tracked_markets", {
   id: uuid("id").defaultRandom().primaryKey(),
-  communityId: uuid("community_id")
+  constellationId: uuid("constellation_id")
     .notNull()
-    .references(() => communities.id, { onDelete: "cascade" }),
+    .references(() => constellations.id, { onDelete: "cascade" }),
   marketTicker: text("market_ticker").notNull(),
   pinnedAt: timestamp("pinned_at", { withTimezone: true }).defaultNow().notNull(),
   pinnedBy: uuid("pinned_by")
@@ -95,9 +95,9 @@ export const trackedMarkets = pgTable("tracked_markets", {
 // Comments
 export const comments = pgTable("comments", {
   id: uuid("id").defaultRandom().primaryKey(),
-  communityId: uuid("community_id")
+  constellationId: uuid("constellation_id")
     .notNull()
-    .references(() => communities.id, { onDelete: "cascade" }),
+    .references(() => constellations.id, { onDelete: "cascade" }),
   userId: uuid("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
@@ -116,9 +116,9 @@ export const watchlistItems = pgTable("watchlist_items", {
   userId: uuid("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  communityId: uuid("community_id")
+  constellationId: uuid("constellation_id")
     .notNull()
-    .references(() => communities.id, { onDelete: "cascade" }),
+    .references(() => constellations.id, { onDelete: "cascade" }),
   marketTicker: text("market_ticker").notNull(),
   addedAt: timestamp("added_at", { withTimezone: true }).defaultNow().notNull(),
 });
@@ -129,9 +129,9 @@ export const userTrades = pgTable("user_trades", {
   userId: uuid("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  communityId: uuid("community_id")
+  constellationId: uuid("constellation_id")
     .notNull()
-    .references(() => communities.id, { onDelete: "cascade" }),
+    .references(() => constellations.id, { onDelete: "cascade" }),
   marketTicker: text("market_ticker").notNull(),
   direction: tradeDirectionEnum("direction").notNull(),
   amount: real("amount").notNull(),
@@ -147,7 +147,7 @@ export const leaderboardEntries = pgTable("leaderboard_entries", {
   userId: uuid("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  communityId: uuid("community_id").references(() => communities.id, { onDelete: "cascade" }),
+  constellationId: uuid("constellation_id").references(() => constellations.id, { onDelete: "cascade" }),
   totalPnl: real("total_pnl").notNull().default(0),
   totalTrades: integer("total_trades").notNull().default(0),
   winRate: real("win_rate").notNull().default(0),
@@ -172,40 +172,40 @@ export const notifications = pgTable("notifications", {
 
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
-  communities: many(communities),
-  communityMembers: many(communityMembers),
+  constellations: many(constellations),
+  constellationMembers: many(constellationMembers),
   comments: many(comments),
   trades: many(userTrades),
   notifications: many(notifications),
   watchlistItems: many(watchlistItems),
 }));
 
-export const communitiesRelations = relations(communities, ({ one, many }) => ({
-  creator: one(users, { fields: [communities.creatorId], references: [users.id] }),
-  members: many(communityMembers),
+export const constellationsRelations = relations(constellations, ({ one, many }) => ({
+  creator: one(users, { fields: [constellations.creatorId], references: [users.id] }),
+  members: many(constellationMembers),
   comments: many(comments),
   trackedMarkets: many(trackedMarkets),
 }));
 
-export const communityMembersRelations = relations(communityMembers, ({ one }) => ({
-  community: one(communities, { fields: [communityMembers.communityId], references: [communities.id] }),
-  user: one(users, { fields: [communityMembers.userId], references: [users.id] }),
+export const constellationMembersRelations = relations(constellationMembers, ({ one }) => ({
+  constellation: one(constellations, { fields: [constellationMembers.constellationId], references: [constellations.id] }),
+  user: one(users, { fields: [constellationMembers.userId], references: [users.id] }),
 }));
 
 export const trackedMarketsRelations = relations(trackedMarkets, ({ one }) => ({
-  community: one(communities, { fields: [trackedMarkets.communityId], references: [communities.id] }),
+  constellation: one(constellations, { fields: [trackedMarkets.constellationId], references: [constellations.id] }),
   pinnedByUser: one(users, { fields: [trackedMarkets.pinnedBy], references: [users.id] }),
 }));
 
 export const commentsRelations = relations(comments, ({ one }) => ({
-  community: one(communities, { fields: [comments.communityId], references: [communities.id] }),
+  constellation: one(constellations, { fields: [comments.constellationId], references: [constellations.id] }),
   user: one(users, { fields: [comments.userId], references: [users.id] }),
   parent: one(comments, { fields: [comments.parentId], references: [comments.id] }),
 }));
 
 export const userTradesRelations = relations(userTrades, ({ one }) => ({
   user: one(users, { fields: [userTrades.userId], references: [users.id] }),
-  community: one(communities, { fields: [userTrades.communityId], references: [communities.id] }),
+  constellation: one(constellations, { fields: [userTrades.constellationId], references: [constellations.id] }),
 }));
 
 export const notificationsRelations = relations(notifications, ({ one }) => ({
@@ -214,5 +214,5 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
 
 export const watchlistItemsRelations = relations(watchlistItems, ({ one }) => ({
   user: one(users, { fields: [watchlistItems.userId], references: [users.id] }),
-  community: one(communities, { fields: [watchlistItems.communityId], references: [communities.id] }),
+  constellation: one(constellations, { fields: [watchlistItems.constellationId], references: [constellations.id] }),
 }));

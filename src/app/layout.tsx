@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Predictions Communities",
-  description: "Community rooms built around prediction markets",
+  title: "Gemini Constellation",
+  description: "Constellations built around prediction markets",
 };
 
 export default function RootLayout({

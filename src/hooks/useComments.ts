@@ -4,29 +4,29 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { ApiResponse, CommentResponse } from "@/types/api";
 
 async function fetchComments(
-  communitySlug: string,
+  constellationSlug: string,
   marketTicker?: string
 ): Promise<CommentResponse[]> {
   const params = new URLSearchParams();
   if (marketTicker) params.set("marketTicker", marketTicker);
 
   const res = await fetch(
-    `/api/communities/${communitySlug}/comments?${params.toString()}`
+    `/api/constellations/${constellationSlug}/comments?${params.toString()}`
   );
   const json: ApiResponse<CommentResponse[]> = await res.json();
   if (json.error) throw new Error(json.error);
   return json.data || [];
 }
 
-export function useComments(communitySlug: string, marketTicker?: string) {
+export function useComments(constellationSlug: string, marketTicker?: string) {
   return useQuery({
-    queryKey: ["comments", communitySlug, marketTicker],
-    queryFn: () => fetchComments(communitySlug, marketTicker),
-    enabled: !!communitySlug,
+    queryKey: ["comments", constellationSlug, marketTicker],
+    queryFn: () => fetchComments(constellationSlug, marketTicker),
+    enabled: !!constellationSlug,
   });
 }
 
-export function useCreateComment(communitySlug: string, marketTicker?: string) {
+export function useCreateComment(constellationSlug: string, marketTicker?: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -37,7 +37,7 @@ export function useCreateComment(communitySlug: string, marketTicker?: string) {
       positionDirection?: "yes" | "no";
       positionAmount?: number;
     }) => {
-      const res = await fetch(`/api/communities/${communitySlug}/comments`, {
+      const res = await fetch(`/api/constellations/${constellationSlug}/comments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -48,7 +48,7 @@ export function useCreateComment(communitySlug: string, marketTicker?: string) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["comments", communitySlug, marketTicker],
+        queryKey: ["comments", constellationSlug, marketTicker],
       });
     },
   });

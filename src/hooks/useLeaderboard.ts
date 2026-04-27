@@ -4,11 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import type { ApiResponse, LeaderboardEntryResponse } from "@/types/api";
 
 async function fetchLeaderboard(
-  communityId?: string,
+  constellationId?: string,
   period?: string
 ): Promise<LeaderboardEntryResponse[]> {
   const params = new URLSearchParams();
-  if (communityId) params.set("communityId", communityId);
+  if (constellationId) params.set("constellationId", constellationId);
   if (period) params.set("period", period);
 
   const res = await fetch(`/api/leaderboard?${params.toString()}`);
@@ -17,9 +17,9 @@ async function fetchLeaderboard(
   return json.data || [];
 }
 
-export function useLeaderboard(communityId?: string, period?: string) {
+export function useLeaderboard(constellationId?: string, period?: string) {
   return useQuery({
-    queryKey: ["leaderboard", communityId, period],
-    queryFn: () => fetchLeaderboard(communityId, period),
+    queryKey: ["leaderboard", constellationId, period],
+    queryFn: () => fetchLeaderboard(constellationId, period),
   });
 }

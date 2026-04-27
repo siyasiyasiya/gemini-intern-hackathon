@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { connectSocket, disconnectSocket, getSocket } from "@/lib/socket/client";
 
-export function useSocket(communityId?: string) {
+export function useSocket(constellationId?: string) {
   const { data: session } = useSession();
   const queryClient = useQueryClient();
   const joinedRef = useRef(false);
@@ -13,9 +13,9 @@ export function useSocket(communityId?: string) {
   useEffect(() => {
     const socket = connectSocket();
 
-    if (communityId && !joinedRef.current) {
-      socket.emit("join-community", {
-        communityId,
+    if (constellationId && !joinedRef.current) {
+      socket.emit("join-constellation", {
+        constellationId,
         userId: session?.user?.id,
         username: session?.user?.name,
       });
@@ -23,12 +23,12 @@ export function useSocket(communityId?: string) {
     }
 
     socket.on("comment-added", () => {
-      if (communityId) {
-        queryClient.invalidateQueries({ queryKey: ["comments", communityId] });
+      if (constellationId) {
+        queryClient.invalidateQueries({ queryKey: ["comments", constellationId] });
       }
     });
 
-    socket.on("presence-update", (data: { communityId: string; onlineCount: number }) => {
+    socket.on("presence-update", (data: { constellationId: string; onlineCount: number }) => {
       // Could store in zustand for live presence display
     });
 
@@ -37,23 +37,23 @@ export function useSocket(communityId?: string) {
     });
 
     return () => {
-      if (communityId && joinedRef.current) {
-        socket.emit("leave-community", { communityId });
+      if (constellationId && joinedRef.current) {
+        socket.emit("leave-constellation", { constellationId });
         joinedRef.current = false;
       }
       socket.off("comment-added");
       socket.off("presence-update");
       socket.off("market-price-update");
     };
-  }, [communityId, session, queryClient]);
+  }, [constellationId, session, queryClient]);
 
   const emitNewComment = useCallback(
     (comment: unknown) => {
-      if (communityId) {
-        getSocket().emit("new-comment", { communityId, comment });
+      if (constellationId) {
+        getSocket().emit("new-comment", { constellationId, comment });
       }
     },
-    [communityId]
+    [constellationId]
   );
 
   return { emitNewComment };

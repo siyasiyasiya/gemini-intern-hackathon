@@ -7,7 +7,7 @@ import { LeaderboardEntry } from "./LeaderboardEntry";
 import { useLeaderboard } from "@/hooks/useLeaderboard";
 
 interface LeaderboardProps {
-  communityId?: string;
+  constellationId?: string;
 }
 
 const periods = [
@@ -16,9 +16,9 @@ const periods = [
   { value: "weekly", label: "Weekly" },
 ] as const;
 
-export function Leaderboard({ communityId }: LeaderboardProps) {
+export function Leaderboard({ constellationId }: LeaderboardProps) {
   const [period, setPeriod] = useState<string>("all_time");
-  const { data: entries, isLoading, error } = useLeaderboard(communityId, period);
+  const { data: entries, isLoading, error } = useLeaderboard(constellationId, period);
 
   return (
     <div className="space-y-4">
