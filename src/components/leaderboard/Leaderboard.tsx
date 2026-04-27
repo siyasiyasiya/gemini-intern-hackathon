@@ -34,7 +34,7 @@ export function Leaderboard({ constellationId }: LeaderboardProps) {
               key={p.value}
               onClick={() => setPeriod(p.value)}
               className={cn(
-                "rounded-md px-3 py-1 text-xs font-medium transition-colors",
+                "whitespace-nowrap rounded-md px-3 py-1 text-xs font-medium transition-colors",
                 period === p.value
                   ? "bg-accent text-accent-foreground"
                   : "text-muted-foreground hover:text-foreground"

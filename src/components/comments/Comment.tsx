@@ -55,7 +55,7 @@ export function Comment({ comment, onReply, isNested = false }: CommentProps) {
                 )}
               >
                 {comment.positionDirection === "yes" ? "YES" : "NO"}{" "}
-                {Math.round(comment.positionAmount * 100)}%
+                ${Math.round(comment.positionAmount)}
               </span>
             )}
 
