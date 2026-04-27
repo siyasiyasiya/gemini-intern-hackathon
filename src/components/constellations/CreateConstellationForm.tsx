@@ -176,31 +176,30 @@ export function CreateConstellationForm() {
         />
       </div>
 
-      {/* About + Rules side by side */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        <div>
-          <label className="block text-sm font-medium mb-2">About</label>
-          <textarea
-            value={about}
-            onChange={(e) => setAbout(e.target.value)}
-            placeholder="Detailed description shown on the constellation page"
-            rows={5}
-            maxLength={2000}
-            className="w-full rounded-lg border border-border bg-secondary px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
-          />
-        </div>
+      {/* About */}
+      <div>
+        <label className="block text-sm font-medium mb-2">About</label>
+        <textarea
+          value={about}
+          onChange={(e) => setAbout(e.target.value)}
+          placeholder="Detailed description shown on the constellation page"
+          rows={4}
+          maxLength={2000}
+          className="w-full rounded-lg border border-border bg-secondary px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+        />
+      </div>
 
-        <div>
-          <label className="block text-sm font-medium mb-2">Rules (one per line)</label>
-          <textarea
-            value={rules}
-            onChange={(e) => setRules(e.target.value)}
-            placeholder={"Be respectful\nNo spam\nBack up claims with data"}
-            rows={5}
-            maxLength={2000}
-            className="w-full rounded-lg border border-border bg-secondary px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
-          />
-        </div>
+      {/* Rules */}
+      <div>
+        <label className="block text-sm font-medium mb-2">Rules (one per line)</label>
+        <textarea
+          value={rules}
+          onChange={(e) => setRules(e.target.value)}
+          placeholder={"Be respectful\nNo spam\nBack up claims with data"}
+          rows={4}
+          maxLength={2000}
+          className="w-full rounded-lg border border-border bg-secondary px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+        />
       </div>
 
       {/* Topic + Visibility side by side */}
@@ -225,7 +224,7 @@ export function CreateConstellationForm() {
           <button
             type="button"
             onClick={() => setIsPublic(!isPublic)}
-            className="flex items-center gap-3 w-full rounded-lg border border-border bg-secondary px-4 py-2.5"
+            className="flex items-center gap-3 w-full rounded-lg border border-border px-4 py-2.5"
           >
             <div
               className={cn(
