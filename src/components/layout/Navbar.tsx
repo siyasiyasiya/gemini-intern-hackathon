@@ -24,7 +24,7 @@ export function Navbar() {
               href="/constellations"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
-              Constellations
+              Explore
             </Link>
           </div>
         </div>
@@ -84,7 +84,7 @@ export function Navbar() {
             onClick={() => setMenuOpen(false)}
             className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
           >
-            Constellations
+            Explore
           </Link>
           {session ? (
             <>
