@@ -23,49 +23,52 @@ export function LeaderboardEntry({ entry }: LeaderboardEntryProps) {
     <Link
       href={`/profile/${entry.userId}`}
       className={cn(
-        "flex items-center gap-4 rounded-lg px-4 py-3 transition-colors hover:bg-secondary",
+        "flex items-center gap-3 px-3 py-2.5 transition-colors hover:bg-secondary",
         isTop3 && "bg-secondary"
       )}
     >
-      <div className="flex w-8 items-center justify-center">
+      {/* Rank */}
+      <div className="flex w-6 shrink-0 items-center justify-center">
         {isTop3 ? (
-          <Trophy className={cn("h-5 w-5", medalColors[entry.rank])} />
+          <Trophy className={cn("h-4 w-4", medalColors[entry.rank])} />
         ) : (
-          <span className="text-sm font-medium text-muted-foreground">{entry.rank}</span>
+          <span className="text-xs font-medium text-muted-foreground">{entry.rank}</span>
         )}
       </div>
 
+      {/* Avatar */}
       {entry.avatarUrl ? (
         <img
           src={entry.avatarUrl}
           alt={entry.username}
-          className="h-9 w-9 rounded-full"
+          className="h-8 w-8 shrink-0 rounded-full"
         />
       ) : (
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
           {initials}
         </div>
       )}
 
+      {/* Name + stats */}
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-foreground">
+        <p className="truncate text-sm font-medium text-foreground leading-tight">
           {entry.displayName || entry.username}
         </p>
-        <p className="text-xs text-muted-foreground">@{entry.username}</p>
+        <p className="truncate text-xs text-muted-foreground leading-tight mt-0.5">
+          {Math.round(entry.winRate * 100)}% WR &middot; {entry.totalTrades} trades
+        </p>
       </div>
 
-      <div className="text-right">
+      {/* P&L — right-aligned */}
+      <div className="shrink-0 text-right">
         <p
           className={cn(
-            "text-sm font-semibold",
+            "text-sm font-semibold leading-tight",
             entry.totalPnl >= 0 ? "text-yes-text" : "text-no-text"
           )}
         >
           {entry.totalPnl >= 0 ? "+" : ""}
           {formatCurrency(entry.totalPnl)}
-        </p>
-        <p className="text-xs text-muted-foreground">
-          {Math.round(entry.winRate * 100)}% WR &middot; {entry.totalTrades} trades
         </p>
       </div>
     </Link>

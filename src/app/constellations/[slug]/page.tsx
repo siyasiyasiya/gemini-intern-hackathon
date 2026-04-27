@@ -5,7 +5,6 @@ import { useParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { Loader2 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { ConstellationHeader } from "@/components/constellations/ConstellationHeader";
 import { MemberList } from "@/components/constellations/MemberList";
 import { ConstellationAbout } from "@/components/constellations/ConstellationAbout";
@@ -19,14 +18,11 @@ import { Leaderboard } from "@/components/leaderboard/Leaderboard";
 import { useSocket } from "@/hooks/useSocket";
 import type { ConstellationResponse } from "@/types/api";
 
-type MobileTab = "discussion" | "markets" | "about";
-
 export default function ConstellationDetailPage() {
   const { slug } = useParams<{ slug: string }>();
   const { data: session } = useSession();
   const queryClient = useQueryClient();
   const [selectedMarket, setSelectedMarket] = useState<string | null>(null);
-  const [mobileTab, setMobileTab] = useState<MobileTab>("discussion");
 
   const { data: constellationData, isLoading: constellationLoading } = useQuery({
     queryKey: ["constellation", slug],
@@ -75,12 +71,6 @@ export default function ConstellationDetailPage() {
     );
   }
 
-  const MOBILE_TABS: { key: MobileTab; label: string }[] = [
-    { key: "discussion", label: "Discussion" },
-    { key: "markets", label: "Markets" },
-    { key: "about", label: "About" },
-  ];
-
   return (
     <div className="flex flex-col h-[calc(100vh-64px)]">
       <ConstellationHeader
@@ -90,60 +80,7 @@ export default function ConstellationDetailPage() {
         onMembershipChange={handleMembershipChange}
       />
 
-      {/* Mobile tab bar */}
-      <div className="md:hidden flex border-b border-border bg-card">
-        {MOBILE_TABS.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setMobileTab(tab.key)}
-            className={cn(
-              "flex-1 py-2.5 text-sm font-medium text-center transition-colors",
-              mobileTab === tab.key
-                ? "text-foreground border-b-2 border-primary"
-                : "text-muted-foreground"
-            )}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Mobile content */}
-      <div className="md:hidden flex-1 overflow-y-auto p-4">
-        {mobileTab === "discussion" && (
-          <CommentThread constellationSlug={slug} marketTicker={selectedMarket ?? undefined} />
-        )}
-        {mobileTab === "markets" && (
-          <>
-            <TrackedMarkets
-              constellationSlug={slug}
-              canManage={canManage}
-              onSelectMarket={(ticker) => setSelectedMarket(ticker)}
-            />
-            {selectedMarket ? (
-              <MarketDetail
-                ticker={selectedMarket}
-                onBack={() => setSelectedMarket(null)}
-                onSelectRelated={(ticker) => setSelectedMarket(ticker)}
-              />
-            ) : (
-              <MarketFeed onSelectMarket={(ticker) => setSelectedMarket(ticker)} />
-            )}
-          </>
-        )}
-        {mobileTab === "about" && (
-          <div className="space-y-6">
-            <ConstellationAbout constellation={constellation} />
-            <ConstellationRules constellation={constellation} />
-            <ConstellationStats constellationSlug={slug} />
-            <Leaderboard constellationId={constellation.id} />
-            <MemberList constellationSlug={slug} />
-          </div>
-        )}
-      </div>
-
-      {/* Desktop 3-column layout */}
-      <div className="hidden md:flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden">
         {/* Left sidebar: tracked markets + market feed */}
         <aside className="hidden lg:block w-80 border-r border-border overflow-y-auto">
           <div className="p-4">
@@ -170,7 +107,7 @@ export default function ConstellationDetailPage() {
         </main>
 
         {/* Right sidebar: about, rules, stats, leaderboard, members */}
-        <aside className="w-72 border-l border-border overflow-y-auto">
+        <aside className="hidden md:block w-80 lg:w-[22rem] border-l border-border overflow-y-auto">
           <div className="p-4 space-y-6">
             <ConstellationAbout constellation={constellation} />
             <ConstellationRules constellation={constellation} />
