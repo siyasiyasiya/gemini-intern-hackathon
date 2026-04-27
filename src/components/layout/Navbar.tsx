@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
-import { LogOut, User, Menu, X } from "lucide-react";
+import { LogOut, User, Menu, X, Settings } from "lucide-react";
 import { useState } from "react";
 
 export function Navbar() {
@@ -41,6 +41,12 @@ export function Navbar() {
                   <User className="h-3.5 w-3.5 text-foreground" />
                 </div>
                 {session.user.name}
+              </Link>
+              <Link
+                href="/settings"
+                className="rounded-full p-2 text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+              >
+                <Settings className="h-4 w-4" />
               </Link>
               <button
                 onClick={() => signOut()}
@@ -94,6 +100,13 @@ export function Navbar() {
                 className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
               >
                 Profile
+              </Link>
+              <Link
+                href="/settings"
+                onClick={() => setMenuOpen(false)}
+                className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+              >
+                Settings
               </Link>
               <button
                 onClick={() => { signOut(); setMenuOpen(false); }}
