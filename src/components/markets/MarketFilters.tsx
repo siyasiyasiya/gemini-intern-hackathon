@@ -54,32 +54,34 @@ export function MarketFilters({
         />
       </div>
 
-      <div className="flex items-center justify-between gap-3">
-        {/* Category pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat.value}
-              onClick={() =>
-                onCategoryChange(cat.value === "all" ? undefined : cat.value)
-              }
-              className={cn(
-                "whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium transition-colors",
-                (cat.value === "all" && !category) || cat.value === category
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-secondary text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {cat.label}
-            </button>
-          ))}
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+        {/* Category pills — scrollable row */}
+        <div className="relative min-w-0 flex-1">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
+            {CATEGORIES.map((cat) => (
+              <button
+                key={cat.value}
+                onClick={() =>
+                  onCategoryChange(cat.value === "all" ? undefined : cat.value)
+                }
+                className={cn(
+                  "whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium transition-colors flex-shrink-0",
+                  (cat.value === "all" && !category) || cat.value === category
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {cat.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Sort dropdown */}
         <select
           value={sort}
           onChange={(e) => onSortChange(e.target.value as MarketSortOption)}
-          className="rounded-md border border-border bg-secondary px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+          className="rounded-md border border-border bg-secondary px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-ring flex-shrink-0 w-full sm:w-auto"
         >
           {SORT_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>

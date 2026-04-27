@@ -60,7 +60,7 @@ export function MarketFeed({ onSelectMarket }: MarketFeedProps) {
       )}
 
       {isLoading && (
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
           {Array.from({ length: 6 }).map((_, i) => (
             <MarketCardSkeleton key={i} />
           ))}
@@ -74,7 +74,7 @@ export function MarketFeed({ onSelectMarket }: MarketFeedProps) {
       )}
 
       {markets && markets.length > 0 && (
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
           {markets.map((market) => (
             <MarketCard
               key={market.ticker}

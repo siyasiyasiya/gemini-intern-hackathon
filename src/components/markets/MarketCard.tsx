@@ -51,7 +51,7 @@ export function MarketCard({ market, onClick }: MarketCardProps) {
           <p className="text-xs text-muted-foreground capitalize mb-0.5">
             {market.category}
           </p>
-          <h3 className="text-sm font-semibold text-foreground line-clamp-2 leading-tight">
+          <h3 className="text-sm font-semibold text-foreground leading-tight line-clamp-2 break-words">
             {market.title}
           </h3>
         </div>
