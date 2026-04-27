@@ -94,6 +94,12 @@ body {
   border-color: var(--border);
 }
 
+/* Prevent mid-word title breaks in cards */
+h3, h2, h1 {
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
 /* Hide scrollbar but keep scrolling */
 .scrollbar-hide {
   -ms-overflow-style: none;
