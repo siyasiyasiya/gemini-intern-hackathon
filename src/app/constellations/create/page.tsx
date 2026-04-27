@@ -21,7 +21,7 @@ export default function CreateConstellationPage() {
   if (!session) return null;
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8">
+    <main className="mx-auto max-w-3xl px-4 py-8">
       <Link
         href="/constellations"
         className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors"
