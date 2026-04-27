@@ -11,10 +11,14 @@ export interface PaginatedResponse<T> {
   pageSize: number;
 }
 
-export interface RoomResponse {
+export interface CommunityResponse {
   id: string;
   name: string;
+  slug: string;
   description: string | null;
+  about: string | null;
+  rules: string | null;
+  bannerUrl: string | null;
   topic: string;
   isPublic: boolean;
   inviteCode: string | null;
@@ -35,7 +39,7 @@ export interface UserResponse {
 
 export interface CommentResponse {
   id: string;
-  roomId: string;
+  communityId: string;
   userId: string;
   marketTicker: string | null;
   parentId: string | null;
@@ -62,8 +66,23 @@ export interface UserStatsResponse {
   totalTrades: number;
   totalPnl: number;
   winRate: number;
-  roomsJoined: number;
+  communitiesJoined: number;
   commentsPosted: number;
   bestTrade: number;
   worstTrade: number;
+}
+
+export interface TrackedMarketResponse {
+  id: string;
+  communityId: string;
+  marketTicker: string;
+  pinnedAt: string;
+  pinnedBy: string;
+}
+
+export interface CommunityStatsResponse {
+  collectiveAccuracy: number;
+  totalVolume: number;
+  totalTrades: number;
+  activeMemberCount: number;
 }

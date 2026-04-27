@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { users, userTrades, roomMembers, comments } from "@/lib/db/schema";
+import { users, userTrades, communityMembers, comments } from "@/lib/db/schema";
 import { eq, sql } from "drizzle-orm";
 import type { ApiResponse, UserStatsResponse } from "@/types/api";
 
@@ -35,12 +35,12 @@ export async function GET(
       .from(userTrades)
       .where(eq(userTrades.userId, id));
 
-    const [roomStats] = await db
+    const [communityStats] = await db
       .select({
-        roomsJoined: sql<number>`count(*)::int`,
+        communitiesJoined: sql<number>`count(*)::int`,
       })
-      .from(roomMembers)
-      .where(eq(roomMembers.userId, id));
+      .from(communityMembers)
+      .where(eq(communityMembers.userId, id));
 
     const [commentStats] = await db
       .select({
@@ -56,7 +56,7 @@ export async function GET(
       totalTrades,
       totalPnl: tradeStats?.totalPnl || 0,
       winRate: Math.round(winRate * 1000) / 1000,
-      roomsJoined: roomStats?.roomsJoined || 0,
+      communitiesJoined: communityStats?.communitiesJoined || 0,
       commentsPosted: commentStats?.commentsPosted || 0,
       bestTrade: tradeStats?.bestTrade || 0,
       worstTrade: tradeStats?.worstTrade || 0,

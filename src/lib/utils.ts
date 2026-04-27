@@ -43,3 +43,13 @@ export function timeAgo(date: Date): string {
 export function generateInviteCode(): string {
   return Math.random().toString(36).substring(2, 10).toUpperCase();
 }
+
+export function generateSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/[\s_]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}

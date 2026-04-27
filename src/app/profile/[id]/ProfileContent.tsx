@@ -179,7 +179,7 @@ export function ProfileContent({ userId }: ProfileContentProps) {
         <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-6">
           <h2 className="mb-2 text-sm font-medium text-zinc-300">Activity</h2>
           <p className="text-sm text-zinc-500">
-            Member of {stats.roomsJoined} room{stats.roomsJoined !== 1 && "s"}{" "}
+            Member of {stats.communitiesJoined} communit{stats.communitiesJoined !== 1 ? "ies" : "y"}{" "}
             &middot; {stats.commentsPosted} comment
             {stats.commentsPosted !== 1 && "s"} posted
           </p>

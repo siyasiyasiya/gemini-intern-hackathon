@@ -7,12 +7,12 @@ import type { MarketCategory } from "@/types/market";
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
-  const { id } = await params;
+  const { slug } = await params;
 
   const community = await db.query.communities.findFirst({
-    where: eq(communities.id, id),
+    where: eq(communities.slug, slug),
     columns: { topic: true },
   });
 
@@ -20,14 +20,9 @@ export async function GET(
     return NextResponse.json({ error: "Community not found" }, { status: 404 });
   }
 
-  try {
-    const markets = await getMarkets({
-      category: community.topic as MarketCategory,
-    });
+  const markets = getMarkets({
+    category: community.topic as MarketCategory,
+  });
 
-    return NextResponse.json({ data: markets });
-  } catch (e) {
-    const message = e instanceof Error ? e.message : "Failed to fetch markets";
-    return NextResponse.json({ error: message }, { status: 502 });
-  }
+  return NextResponse.json({ data: markets });
 }

@@ -7,14 +7,14 @@ import { CommentForm } from "./CommentForm";
 import { useComments, useCreateComment } from "@/hooks/useComments";
 
 interface CommentThreadProps {
-  roomId: string;
+  communitySlug: string;
   marketTicker?: string;
 }
 
-export function CommentThread({ roomId, marketTicker }: CommentThreadProps) {
+export function CommentThread({ communitySlug, marketTicker }: CommentThreadProps) {
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
-  const { data: comments, isLoading, error } = useComments(roomId, marketTicker);
-  const createComment = useCreateComment(roomId, marketTicker);
+  const { data: comments, isLoading, error } = useComments(communitySlug, marketTicker);
+  const createComment = useCreateComment(communitySlug, marketTicker);
 
   if (isLoading) {
     return (
@@ -51,7 +51,7 @@ export function CommentThread({ roomId, marketTicker }: CommentThreadProps) {
       </div>
 
       <CommentForm
-        roomId={roomId}
+        communitySlug={communitySlug}
         marketTicker={marketTicker}
         onSubmit={async (data) => {
           await createComment.mutateAsync(data);
@@ -69,7 +69,7 @@ export function CommentThread({ roomId, marketTicker }: CommentThreadProps) {
               {replyingTo === comment.id && (
                 <div className="ml-8 mt-2 border-l-2 border-zinc-700 pl-4">
                   <CommentForm
-                    roomId={roomId}
+                    communitySlug={communitySlug}
                     marketTicker={marketTicker}
                     parentId={comment.id}
                     onSubmit={async (data) => {

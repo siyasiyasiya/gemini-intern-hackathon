@@ -43,7 +43,7 @@ export default function RegisterPage() {
       if (signInRes?.error) {
         setError("Account created but failed to sign in. Please try logging in.");
       } else {
-        router.push("/rooms");
+        router.push("/communities");
         router.refresh();
       }
     } finally {

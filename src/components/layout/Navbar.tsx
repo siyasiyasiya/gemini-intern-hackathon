@@ -20,10 +20,10 @@ export function Navbar() {
           </Link>
           <div className="hidden sm:flex items-center gap-4">
             <Link
-              href="/rooms"
+              href="/communities"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
-              Rooms
+              Communities
             </Link>
           </div>
         </div>
@@ -77,11 +77,11 @@ export function Navbar() {
       {menuOpen && (
         <div className="sm:hidden border-t border-border bg-background px-4 py-3 space-y-2">
           <Link
-            href="/rooms"
+            href="/communities"
             onClick={() => setMenuOpen(false)}
             className="block rounded-lg px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
           >
-            Rooms
+            Communities
           </Link>
           {session ? (
             <>

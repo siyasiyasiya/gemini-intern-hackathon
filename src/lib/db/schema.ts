@@ -11,7 +11,7 @@ import {
 import { relations } from "drizzle-orm";
 
 // Enums
-export const roomTopicEnum = pgEnum("room_topic", [
+export const communityTopicEnum = pgEnum("community_topic", [
   "politics",
   "crypto",
   "sports",
@@ -22,7 +22,7 @@ export const roomTopicEnum = pgEnum("room_topic", [
   "other",
 ]);
 
-export const roomRoleEnum = pgEnum("room_role", ["owner", "moderator", "member"]);
+export const communityRoleEnum = pgEnum("community_role", ["owner", "moderator", "member"]);
 
 export const tradeDirectionEnum = pgEnum("trade_direction", ["yes", "no"]);
 
@@ -46,12 +46,16 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
-// Rooms
-export const rooms = pgTable("rooms", {
+// Communities
+export const communities = pgTable("communities", {
   id: uuid("id").defaultRandom().primaryKey(),
   name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
   description: text("description"),
-  topic: roomTopicEnum("topic").notNull().default("other"),
+  about: text("about"),
+  rules: text("rules"),
+  bannerUrl: text("banner_url"),
+  topic: communityTopicEnum("topic").notNull().default("other"),
   isPublic: boolean("is_public").notNull().default(true),
   inviteCode: text("invite_code").unique(),
   creatorId: uuid("creator_id")
@@ -62,25 +66,38 @@ export const rooms = pgTable("rooms", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
-// Room Members
-export const roomMembers = pgTable("room_members", {
+// Community Members
+export const communityMembers = pgTable("community_members", {
   id: uuid("id").defaultRandom().primaryKey(),
-  roomId: uuid("room_id")
+  communityId: uuid("community_id")
     .notNull()
-    .references(() => rooms.id, { onDelete: "cascade" }),
+    .references(() => communities.id, { onDelete: "cascade" }),
   userId: uuid("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  role: roomRoleEnum("role").notNull().default("member"),
+  role: communityRoleEnum("role").notNull().default("member"),
   joinedAt: timestamp("joined_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Tracked Markets
+export const trackedMarkets = pgTable("tracked_markets", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  communityId: uuid("community_id")
+    .notNull()
+    .references(() => communities.id, { onDelete: "cascade" }),
+  marketTicker: text("market_ticker").notNull(),
+  pinnedAt: timestamp("pinned_at", { withTimezone: true }).defaultNow().notNull(),
+  pinnedBy: uuid("pinned_by")
+    .notNull()
+    .references(() => users.id),
 });
 
 // Comments
 export const comments = pgTable("comments", {
   id: uuid("id").defaultRandom().primaryKey(),
-  roomId: uuid("room_id")
+  communityId: uuid("community_id")
     .notNull()
-    .references(() => rooms.id, { onDelete: "cascade" }),
+    .references(() => communities.id, { onDelete: "cascade" }),
   userId: uuid("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
@@ -99,9 +116,9 @@ export const watchlistItems = pgTable("watchlist_items", {
   userId: uuid("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  roomId: uuid("room_id")
+  communityId: uuid("community_id")
     .notNull()
-    .references(() => rooms.id, { onDelete: "cascade" }),
+    .references(() => communities.id, { onDelete: "cascade" }),
   marketTicker: text("market_ticker").notNull(),
   addedAt: timestamp("added_at", { withTimezone: true }).defaultNow().notNull(),
 });
@@ -112,9 +129,9 @@ export const userTrades = pgTable("user_trades", {
   userId: uuid("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  roomId: uuid("room_id")
+  communityId: uuid("community_id")
     .notNull()
-    .references(() => rooms.id, { onDelete: "cascade" }),
+    .references(() => communities.id, { onDelete: "cascade" }),
   marketTicker: text("market_ticker").notNull(),
   direction: tradeDirectionEnum("direction").notNull(),
   amount: real("amount").notNull(),
@@ -130,7 +147,7 @@ export const leaderboardEntries = pgTable("leaderboard_entries", {
   userId: uuid("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  roomId: uuid("room_id").references(() => rooms.id, { onDelete: "cascade" }),
+  communityId: uuid("community_id").references(() => communities.id, { onDelete: "cascade" }),
   totalPnl: real("total_pnl").notNull().default(0),
   totalTrades: integer("total_trades").notNull().default(0),
   winRate: real("win_rate").notNull().default(0),
@@ -155,34 +172,40 @@ export const notifications = pgTable("notifications", {
 
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
-  rooms: many(rooms),
-  roomMembers: many(roomMembers),
+  communities: many(communities),
+  communityMembers: many(communityMembers),
   comments: many(comments),
   trades: many(userTrades),
   notifications: many(notifications),
   watchlistItems: many(watchlistItems),
 }));
 
-export const roomsRelations = relations(rooms, ({ one, many }) => ({
-  creator: one(users, { fields: [rooms.creatorId], references: [users.id] }),
-  members: many(roomMembers),
+export const communitiesRelations = relations(communities, ({ one, many }) => ({
+  creator: one(users, { fields: [communities.creatorId], references: [users.id] }),
+  members: many(communityMembers),
   comments: many(comments),
+  trackedMarkets: many(trackedMarkets),
 }));
 
-export const roomMembersRelations = relations(roomMembers, ({ one }) => ({
-  room: one(rooms, { fields: [roomMembers.roomId], references: [rooms.id] }),
-  user: one(users, { fields: [roomMembers.userId], references: [users.id] }),
+export const communityMembersRelations = relations(communityMembers, ({ one }) => ({
+  community: one(communities, { fields: [communityMembers.communityId], references: [communities.id] }),
+  user: one(users, { fields: [communityMembers.userId], references: [users.id] }),
+}));
+
+export const trackedMarketsRelations = relations(trackedMarkets, ({ one }) => ({
+  community: one(communities, { fields: [trackedMarkets.communityId], references: [communities.id] }),
+  pinnedByUser: one(users, { fields: [trackedMarkets.pinnedBy], references: [users.id] }),
 }));
 
 export const commentsRelations = relations(comments, ({ one }) => ({
-  room: one(rooms, { fields: [comments.roomId], references: [rooms.id] }),
+  community: one(communities, { fields: [comments.communityId], references: [communities.id] }),
   user: one(users, { fields: [comments.userId], references: [users.id] }),
   parent: one(comments, { fields: [comments.parentId], references: [comments.id] }),
 }));
 
 export const userTradesRelations = relations(userTrades, ({ one }) => ({
   user: one(users, { fields: [userTrades.userId], references: [users.id] }),
-  room: one(rooms, { fields: [userTrades.roomId], references: [rooms.id] }),
+  community: one(communities, { fields: [userTrades.communityId], references: [communities.id] }),
 }));
 
 export const notificationsRelations = relations(notifications, ({ one }) => ({
@@ -191,5 +214,5 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
 
 export const watchlistItemsRelations = relations(watchlistItems, ({ one }) => ({
   user: one(users, { fields: [watchlistItems.userId], references: [users.id] }),
-  room: one(rooms, { fields: [watchlistItems.roomId], references: [rooms.id] }),
+  community: one(communities, { fields: [watchlistItems.communityId], references: [communities.id] }),
 }));

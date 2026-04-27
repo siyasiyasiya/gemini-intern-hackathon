@@ -9,49 +9,49 @@ const io = new Server(httpServer, {
   },
 });
 
-// Track online users per room
-const roomPresence = new Map<string, Set<string>>();
+// Track online users per community
+const communityPresence = new Map<string, Set<string>>();
 
 io.on("connection", (socket) => {
-  let currentRoomId: string | null = null;
+  let currentCommunityId: string | null = null;
   let userId: string | null = null;
 
-  socket.on("join-room", (data: { roomId: string; userId?: string; username?: string }) => {
-    currentRoomId = data.roomId;
+  socket.on("join-community", (data: { communityId: string; userId?: string; username?: string }) => {
+    currentCommunityId = data.communityId;
     userId = data.userId || socket.id;
 
-    socket.join(data.roomId);
+    socket.join(data.communityId);
 
-    if (!roomPresence.has(data.roomId)) {
-      roomPresence.set(data.roomId, new Set());
+    if (!communityPresence.has(data.communityId)) {
+      communityPresence.set(data.communityId, new Set());
     }
-    roomPresence.get(data.roomId)!.add(userId);
+    communityPresence.get(data.communityId)!.add(userId);
 
-    io.to(data.roomId).emit("presence-update", {
-      roomId: data.roomId,
-      onlineCount: roomPresence.get(data.roomId)!.size,
+    io.to(data.communityId).emit("presence-update", {
+      communityId: data.communityId,
+      onlineCount: communityPresence.get(data.communityId)!.size,
       userId,
       username: data.username,
       action: "joined",
     });
   });
 
-  socket.on("leave-room", (data: { roomId: string }) => {
-    socket.leave(data.roomId);
-    if (userId && roomPresence.has(data.roomId)) {
-      roomPresence.get(data.roomId)!.delete(userId);
-      io.to(data.roomId).emit("presence-update", {
-        roomId: data.roomId,
-        onlineCount: roomPresence.get(data.roomId)!.size,
+  socket.on("leave-community", (data: { communityId: string }) => {
+    socket.leave(data.communityId);
+    if (userId && communityPresence.has(data.communityId)) {
+      communityPresence.get(data.communityId)!.delete(userId);
+      io.to(data.communityId).emit("presence-update", {
+        communityId: data.communityId,
+        onlineCount: communityPresence.get(data.communityId)!.size,
         userId,
         action: "left",
       });
     }
-    currentRoomId = null;
+    currentCommunityId = null;
   });
 
-  socket.on("new-comment", (data: { roomId: string; comment: unknown }) => {
-    socket.to(data.roomId).emit("comment-added", data.comment);
+  socket.on("new-comment", (data: { communityId: string; comment: unknown }) => {
+    socket.to(data.communityId).emit("comment-added", data.comment);
   });
 
   socket.on("market-update", (data: { ticker: string; yesPrice: number; volume24h: number }) => {
@@ -59,11 +59,11 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
-    if (currentRoomId && userId && roomPresence.has(currentRoomId)) {
-      roomPresence.get(currentRoomId)!.delete(userId);
-      io.to(currentRoomId).emit("presence-update", {
-        roomId: currentRoomId,
-        onlineCount: roomPresence.get(currentRoomId)!.size,
+    if (currentCommunityId && userId && communityPresence.has(currentCommunityId)) {
+      communityPresence.get(currentCommunityId)!.delete(userId);
+      io.to(currentCommunityId).emit("presence-update", {
+        communityId: currentCommunityId,
+        onlineCount: communityPresence.get(currentCommunityId)!.size,
         userId,
         action: "left",
       });
