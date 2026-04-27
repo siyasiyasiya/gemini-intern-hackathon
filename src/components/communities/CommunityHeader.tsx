@@ -15,7 +15,7 @@ const topicColors: Record<string, string> = {
   science: "bg-cyan-500/20 text-cyan-400",
   economics: "bg-yellow-500/20 text-yellow-400",
   technology: "bg-purple-500/20 text-purple-400",
-  other: "bg-zinc-500/20 text-zinc-400",
+  other: "bg-muted text-muted-foreground",
 };
 
 interface CommunityHeaderProps {

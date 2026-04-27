@@ -63,7 +63,7 @@ export function CommentForm({
         onChange={(e) => setContent(e.target.value)}
         placeholder={placeholder}
         rows={3}
-        className="w-full resize-none rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-200 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+        className="w-full resize-none rounded-lg border border-input-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none"
       />
 
       {marketTicker && (
@@ -74,8 +74,8 @@ export function CommentForm({
             className={cn(
               "rounded-md border px-2.5 py-1 text-xs transition-colors",
               showPosition
-                ? "border-zinc-500 bg-zinc-700 text-zinc-200"
-                : "border-zinc-700 text-zinc-400 hover:border-zinc-600"
+                ? "border-border-hover bg-muted text-foreground"
+                : "border-border text-muted-foreground hover:border-border-hover"
             )}
           >
             Share position
@@ -89,8 +89,8 @@ export function CommentForm({
                 className={cn(
                   "rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors",
                   direction === "yes"
-                    ? "bg-emerald-500/20 text-emerald-400"
-                    : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"
+                    ? "bg-yes-bg text-yes-text"
+                    : "bg-secondary text-muted-foreground hover:bg-muted"
                 )}
               >
                 YES
@@ -101,8 +101,8 @@ export function CommentForm({
                 className={cn(
                   "rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors",
                   direction === "no"
-                    ? "bg-red-500/20 text-red-400"
-                    : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"
+                    ? "bg-no-bg text-no-text"
+                    : "bg-secondary text-muted-foreground hover:bg-muted"
                 )}
               >
                 NO
@@ -113,9 +113,9 @@ export function CommentForm({
                 max="99"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="w-14 rounded border border-zinc-700 bg-zinc-800 px-1.5 py-0.5 text-xs text-zinc-200 focus:border-zinc-500 focus:outline-none"
+                className="w-14 rounded border border-input-border bg-background px-1.5 py-0.5 text-xs text-foreground focus:border-foreground focus:outline-none"
               />
-              <span className="text-xs text-zinc-500">%</span>
+              <span className="text-xs text-muted-foreground">%</span>
             </div>
           )}
         </div>
@@ -126,7 +126,7 @@ export function CommentForm({
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-md px-3 py-1.5 text-xs text-zinc-400 hover:text-zinc-200 transition-colors"
+            className="rounded-md px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
             Cancel
           </button>
@@ -134,7 +134,7 @@ export function CommentForm({
         <button
           type="submit"
           disabled={!content.trim() || isSubmitting}
-          className="rounded-md bg-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-900 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
         >
           {isSubmitting ? "Posting..." : "Post"}
         </button>

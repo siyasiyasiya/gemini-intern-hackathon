@@ -20,13 +20,13 @@ export function CommentThread({ communitySlug, marketTicker }: CommentThreadProp
     return (
       <div className="space-y-3">
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="animate-pulse rounded-lg bg-zinc-900 p-4">
+          <div key={i} className="animate-pulse rounded-lg bg-secondary p-4">
             <div className="flex items-start gap-3">
-              <div className="h-8 w-8 rounded-full bg-zinc-700" />
+              <div className="h-8 w-8 rounded-full bg-muted" />
               <div className="flex-1 space-y-2">
-                <div className="h-3 w-24 rounded bg-zinc-700" />
-                <div className="h-3 w-full rounded bg-zinc-700" />
-                <div className="h-3 w-2/3 rounded bg-zinc-700" />
+                <div className="h-3 w-24 rounded bg-muted" />
+                <div className="h-3 w-full rounded bg-muted" />
+                <div className="h-3 w-2/3 rounded bg-muted" />
               </div>
             </div>
           </div>
@@ -37,7 +37,7 @@ export function CommentThread({ communitySlug, marketTicker }: CommentThreadProp
 
   if (error) {
     return (
-      <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-400">
+      <div className="rounded-lg border border-destructive/20 bg-no-bg p-4 text-sm text-destructive">
         Failed to load comments. Please try again.
       </div>
     );
@@ -45,7 +45,7 @@ export function CommentThread({ communitySlug, marketTicker }: CommentThreadProp
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2 text-sm font-medium text-zinc-300">
+      <div className="flex items-center gap-2 text-sm font-medium text-foreground">
         <MessageSquare className="h-4 w-4" />
         Discussion {comments && comments.length > 0 && `(${comments.length})`}
       </div>
@@ -67,7 +67,7 @@ export function CommentThread({ communitySlug, marketTicker }: CommentThreadProp
                 onReply={(id) => setReplyingTo(replyingTo === id ? null : id)}
               />
               {replyingTo === comment.id && (
-                <div className="ml-8 mt-2 border-l-2 border-zinc-700 pl-4">
+                <div className="ml-8 mt-2 border-l-2 border-border pl-4">
                   <CommentForm
                     communitySlug={communitySlug}
                     marketTicker={marketTicker}
@@ -85,7 +85,7 @@ export function CommentThread({ communitySlug, marketTicker }: CommentThreadProp
           ))}
         </div>
       ) : (
-        <p className="py-6 text-center text-sm text-zinc-500">
+        <p className="py-6 text-center text-sm text-muted-foreground">
           No comments yet. Be the first to share your thoughts!
         </p>
       )}

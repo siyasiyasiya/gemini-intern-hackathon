@@ -11,7 +11,8 @@
     "db:studio": "drizzle-kit studio",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "socket": "npx tsx src/server/index.ts"
+    "socket": "npx tsx src/server/index.ts",
+    "db:seed": "tsx --env-file=.env.local src/lib/db/seed.ts"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.100.5",
@@ -41,6 +42,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
     "tailwindcss": "^4",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }

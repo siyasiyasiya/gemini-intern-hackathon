@@ -17,8 +17,8 @@ export function Comment({ comment, onReply, isNested = false }: CommentProps) {
     .toUpperCase();
 
   return (
-    <div className={cn("group", isNested && "ml-8 border-l-2 border-zinc-700 pl-4")}>
-      <div className="rounded-lg bg-zinc-900 p-4">
+    <div className={cn("group", isNested && "ml-8 border-l-2 border-border pl-4")}>
+      <div className="rounded-lg bg-secondary p-4">
         <div className="flex items-start gap-3">
           {comment.user.avatarUrl ? (
             <img
@@ -27,20 +27,20 @@ export function Comment({ comment, onReply, isNested = false }: CommentProps) {
               className="h-8 w-8 rounded-full"
             />
           ) : (
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-700 text-xs font-medium text-zinc-300">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
               {initials}
             </div>
           )}
 
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-zinc-200">
+              <span className="text-sm font-medium text-foreground">
                 {comment.user.displayName || comment.user.username}
               </span>
-              <span className="text-xs text-zinc-500">
+              <span className="text-xs text-muted-foreground">
                 @{comment.user.username}
               </span>
-              <span className="text-xs text-zinc-600">
+              <span className="text-xs text-muted-foreground">
                 {timeAgo(new Date(comment.createdAt))}
               </span>
             </div>
@@ -50,8 +50,8 @@ export function Comment({ comment, onReply, isNested = false }: CommentProps) {
                 className={cn(
                   "mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-medium",
                   comment.positionDirection === "yes"
-                    ? "bg-emerald-500/20 text-emerald-400"
-                    : "bg-red-500/20 text-red-400"
+                    ? "bg-yes-bg text-yes-text"
+                    : "bg-no-bg text-no-text"
                 )}
               >
                 {comment.positionDirection === "yes" ? "YES" : "NO"}{" "}
@@ -59,12 +59,12 @@ export function Comment({ comment, onReply, isNested = false }: CommentProps) {
               </span>
             )}
 
-            <p className="mt-1.5 text-sm text-zinc-300">{comment.content}</p>
+            <p className="mt-1.5 text-sm text-foreground-secondary">{comment.content}</p>
 
             {onReply && !isNested && (
               <button
                 onClick={() => onReply(comment.id)}
-                className="mt-2 flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+                className="mt-2 flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
                 <MessageSquare className="h-3.5 w-3.5" />
                 Reply

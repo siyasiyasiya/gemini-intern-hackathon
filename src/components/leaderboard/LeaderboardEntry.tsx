@@ -10,9 +10,9 @@ interface LeaderboardEntryProps {
 }
 
 const medalColors: Record<number, string> = {
-  1: "text-yellow-400",
-  2: "text-zinc-300",
-  3: "text-amber-600",
+  1: "text-yellow-500",
+  2: "text-gray-400",
+  3: "text-amber-700",
 };
 
 export function LeaderboardEntry({ entry }: LeaderboardEntryProps) {
@@ -23,15 +23,15 @@ export function LeaderboardEntry({ entry }: LeaderboardEntryProps) {
     <Link
       href={`/profile/${entry.userId}`}
       className={cn(
-        "flex items-center gap-4 rounded-lg px-4 py-3 transition-colors hover:bg-zinc-800",
-        isTop3 && "bg-zinc-800/50"
+        "flex items-center gap-4 rounded-lg px-4 py-3 transition-colors hover:bg-secondary",
+        isTop3 && "bg-secondary"
       )}
     >
       <div className="flex w-8 items-center justify-center">
         {isTop3 ? (
           <Trophy className={cn("h-5 w-5", medalColors[entry.rank])} />
         ) : (
-          <span className="text-sm font-medium text-zinc-500">{entry.rank}</span>
+          <span className="text-sm font-medium text-muted-foreground">{entry.rank}</span>
         )}
       </div>
 
@@ -42,29 +42,29 @@ export function LeaderboardEntry({ entry }: LeaderboardEntryProps) {
           className="h-9 w-9 rounded-full"
         />
       ) : (
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-700 text-xs font-medium text-zinc-300">
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
           {initials}
         </div>
       )}
 
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-zinc-200">
+        <p className="truncate text-sm font-medium text-foreground">
           {entry.displayName || entry.username}
         </p>
-        <p className="text-xs text-zinc-500">@{entry.username}</p>
+        <p className="text-xs text-muted-foreground">@{entry.username}</p>
       </div>
 
       <div className="text-right">
         <p
           className={cn(
             "text-sm font-semibold",
-            entry.totalPnl >= 0 ? "text-emerald-400" : "text-red-400"
+            entry.totalPnl >= 0 ? "text-yes-text" : "text-no-text"
           )}
         >
           {entry.totalPnl >= 0 ? "+" : ""}
           {formatCurrency(entry.totalPnl)}
         </p>
-        <p className="text-xs text-zinc-500">
+        <p className="text-xs text-muted-foreground">
           {Math.round(entry.winRate * 100)}% WR &middot; {entry.totalTrades} trades
         </p>
       </div>
