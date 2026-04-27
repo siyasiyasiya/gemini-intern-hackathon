@@ -36,7 +36,7 @@ export function Leaderboard({ communityId }: LeaderboardProps) {
               className={cn(
                 "rounded-md px-3 py-1 text-xs font-medium transition-colors",
                 period === p.value
-                  ? "bg-primary text-primary-foreground"
+                  ? "bg-accent text-accent-foreground"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >

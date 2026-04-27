@@ -23,10 +23,10 @@ export default function Home() {
     <main className="mx-auto max-w-6xl px-4 lg:px-6 py-16">
       {/* Hero */}
       <div className="text-center mb-20">
-        <div className="inline-flex items-center gap-2 rounded-full bg-secondary border border-border px-4 py-1.5 text-sm text-muted-foreground mb-8">
+        <div className="inline-flex items-center gap-2 rounded-full bg-accent-bg border border-accent/20 px-4 py-1.5 text-sm text-accent mb-8">
           Prediction Markets + Community
         </div>
-        <h1 className="text-5xl sm:text-6xl font-bold tracking-tight mb-5 bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent">
+        <h1 className="text-5xl sm:text-6xl font-bold tracking-tight mb-5">
           Predictions Communities
         </h1>
         <p className="text-base text-muted-foreground max-w-xl mx-auto mb-10 leading-relaxed">
@@ -66,7 +66,7 @@ export default function Home() {
             <h2 className="text-lg font-semibold">Trending Communities</h2>
             <Link
               href="/communities"
-              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              className="flex items-center gap-1 text-sm text-accent hover:text-accent/80 transition-colors"
             >
               View all
               <ArrowRight className="h-4 w-4" />
