@@ -42,6 +42,8 @@ export const users = pgTable("users", {
   displayName: text("display_name"),
   avatarUrl: text("avatar_url"),
   bio: text("bio"),
+  geminiApiKeyEnc: text("gemini_api_key_enc"),
+  geminiApiSecretEnc: text("gemini_api_secret_enc"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
