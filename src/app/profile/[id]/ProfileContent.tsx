@@ -24,30 +24,31 @@ import type {
 } from "@/types/api";
 
 interface ProfileContentProps {
-  userId: string;
+  username: string;
 }
 
-export function ProfileContent({ userId }: ProfileContentProps) {
+export function ProfileContent({ username }: ProfileContentProps) {
   const { data: session } = useSession();
-  const isOwnProfile = session?.user?.id === userId;
   const {
     data: user,
     isLoading: userLoading,
     error: userError,
   } = useQuery({
-    queryKey: ["user", userId],
+    queryKey: ["user", username],
     queryFn: async () => {
-      const res = await fetch(`/api/users/${userId}`);
+      const res = await fetch(`/api/users/${username}`);
       const json: ApiResponse<UserResponse> = await res.json();
       if (json.error) throw new Error(json.error);
       return json.data!;
     },
   });
 
+  const isOwnProfile = session?.user?.id === user?.id;
+
   const { data: stats, isLoading: statsLoading } = useQuery({
-    queryKey: ["userStats", userId],
+    queryKey: ["userStats", username],
     queryFn: async () => {
-      const res = await fetch(`/api/users/${userId}/stats`);
+      const res = await fetch(`/api/users/${username}/stats`);
       const json: ApiResponse<UserStatsResponse> = await res.json();
       if (json.error) throw new Error(json.error);
       return json.data!;
@@ -245,10 +246,10 @@ export function ProfileContent({ userId }: ProfileContentProps) {
       </div>
 
       {/* Gemini Positions & Order History (own profile only) */}
-      {isOwnProfile && stats?.geminiConnected && (
+      {isOwnProfile && stats?.geminiConnected && user && (
         <>
-          <PositionsCard userId={userId} />
-          <OrderHistoryCard userId={userId} />
+          <PositionsCard userId={user.id} />
+          <OrderHistoryCard userId={user.id} />
         </>
       )}
     </div>

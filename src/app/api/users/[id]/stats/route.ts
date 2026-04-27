@@ -1,22 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { users, userTrades, constellationMembers, comments } from "@/lib/db/schema";
+import { userTrades, constellationMembers, comments } from "@/lib/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { getUserGeminiCredentials, fetchPositions, fetchSettledPositions, fetchOrderHistory } from "@/lib/market-data/gemini-authenticated";
+import { resolveUser } from "@/lib/db/resolve-user";
 import type { ApiResponse, UserStatsResponse } from "@/types/api";
 
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
+  const { id: idOrUsername } = await params;
 
   try {
-    const [user] = await db
-      .select({ id: users.id, geminiApiKeyEnc: users.geminiApiKeyEnc })
-      .from(users)
-      .where(eq(users.id, id))
-      .limit(1);
+    const user = await resolveUser(idOrUsername);
 
     if (!user) {
       return NextResponse.json<ApiResponse<null>>(
@@ -24,6 +21,8 @@ export async function GET(
         { status: 404 }
       );
     }
+
+    const id = user.id;
 
     // DB stats (constellations + comments)
     const [constellationStats, commentStats] = await Promise.all([

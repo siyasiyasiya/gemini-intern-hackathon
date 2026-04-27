@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { users, userTrades } from "@/lib/db/schema";
+import { userTrades } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
+import { resolveUser } from "@/lib/db/resolve-user";
 import type { ApiResponse } from "@/types/api";
 
 interface TradeResponse {
@@ -19,16 +20,12 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
+  const { id: idOrUsername } = await params;
   const { searchParams } = new URL(request.url);
   const limit = Math.min(parseInt(searchParams.get("limit") || "20"), 50);
 
   try {
-    const [user] = await db
-      .select({ id: users.id })
-      .from(users)
-      .where(eq(users.id, id))
-      .limit(1);
+    const user = await resolveUser(idOrUsername);
 
     if (!user) {
       return NextResponse.json<ApiResponse<null>>(
@@ -49,7 +46,7 @@ export async function GET(
         createdAt: userTrades.createdAt,
       })
       .from(userTrades)
-      .where(eq(userTrades.userId, id))
+      .where(eq(userTrades.userId, user.id))
       .orderBy(desc(userTrades.createdAt))
       .limit(limit);
 

@@ -6,11 +6,11 @@ export default async function ProfilePage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = await params;
+  const { id: username } = await params;
 
   return (
     <Suspense fallback={<ProfileSkeleton />}>
-      <ProfileContent userId={id} />
+      <ProfileContent username={username} />
     </Suspense>
   );
 }

@@ -4,6 +4,8 @@ import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import type { ApiResponse, UserResponse } from "@/types/api";
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -11,6 +13,8 @@ export async function GET(
   const { id } = await params;
 
   try {
+    // Support lookup by UUID or username
+    const isUuid = UUID_REGEX.test(id);
     const [user] = await db
       .select({
         id: users.id,
@@ -21,7 +25,7 @@ export async function GET(
         createdAt: users.createdAt,
       })
       .from(users)
-      .where(eq(users.id, id))
+      .where(isUuid ? eq(users.id, id) : eq(users.username, id))
       .limit(1);
 
     if (!user) {
@@ -37,15 +41,7 @@ export async function GET(
     };
 
     return NextResponse.json<ApiResponse<UserResponse>>({ data: response });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to fetch user";
-    // Invalid UUID format from Postgres will throw here
-    if (message.includes("invalid input syntax")) {
-      return NextResponse.json<ApiResponse<null>>(
-        { error: "User not found" },
-        { status: 404 }
-      );
-    }
+  } catch {
     return NextResponse.json<ApiResponse<null>>(
       { error: "Failed to fetch user" },
       { status: 500 }

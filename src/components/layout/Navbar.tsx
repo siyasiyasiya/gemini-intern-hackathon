@@ -34,7 +34,7 @@ export function Navbar() {
           {session ? (
             <>
               <Link
-                href={`/profile/${session.user.id}`}
+                href={`/profile/${session.user.username}`}
                 className="flex items-center gap-2 rounded-full px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
               >
                 <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center">
@@ -95,7 +95,7 @@ export function Navbar() {
           {session ? (
             <>
               <Link
-                href={`/profile/${session.user.id}`}
+                href={`/profile/${session.user.username}`}
                 onClick={() => setMenuOpen(false)}
                 className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
               >

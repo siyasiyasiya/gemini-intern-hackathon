@@ -21,7 +21,7 @@ export function LeaderboardEntry({ entry }: LeaderboardEntryProps) {
 
   return (
     <Link
-      href={`/profile/${entry.userId}`}
+      href={`/profile/${entry.username}`}
       className={cn(
         "flex items-center gap-3 px-3 py-2.5 transition-colors hover:bg-secondary",
         isTop3 && "bg-secondary"
