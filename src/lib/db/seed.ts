@@ -136,41 +136,44 @@ const fallbackTickers: Record<string, string[]> = {
   economics: ["FED-RATE-CUT-JUN25", "CPI-ABOVE-3-JUN25", "RECESSION-2025"],
 };
 
+// Map Gemini API categories to our constellation topics
+const categoryToTopic: Record<string, string> = {
+  Crypto: "crypto",
+  Politics: "politics",
+  Sports: "sports",
+  Tech: "technology",
+  Business: "technology",
+  Economics: "economics",
+  Commodities: "economics",
+  Culture: "sports",
+  Weather: "economics",
+};
+
 async function fetchGeminiTickers(): Promise<Record<string, string[]> | null> {
   try {
     const res = await fetch("https://api.gemini.com/v1/prediction-markets/events?limit=30", {
       signal: AbortSignal.timeout(5000),
     });
     if (!res.ok) return null;
-    const events = await res.json();
+    const json = await res.json();
+    const events = json?.data;
     if (!Array.isArray(events) || events.length === 0) return null;
 
-    // Collect all tickers from events
-    const tickers: string[] = [];
+    const result: Record<string, string[]> = {
+      crypto: [], politics: [], sports: [], technology: [], economics: [],
+    };
+
     for (const event of events) {
-      if (event.markets && Array.isArray(event.markets)) {
-        for (const m of event.markets) {
-          if (m.ticker || m.pair) tickers.push(m.ticker || m.pair);
-        }
-      } else if (event.ticker || event.pair) {
-        tickers.push(event.ticker || event.pair);
+      const topic = categoryToTopic[event.category] || null;
+      if (!topic || !event.ticker) continue;
+      if (result[topic].length < 3) {
+        result[topic].push(event.ticker);
       }
     }
 
-    if (tickers.length === 0) return null;
-
-    // Distribute tickers across topics (3 each, cycling)
-    const topics = ["crypto", "politics", "sports", "technology", "economics"];
-    const result: Record<string, string[]> = {};
-    for (const t of topics) result[t] = [];
-
-    for (let i = 0; i < tickers.length && i < 15; i++) {
-      result[topics[i % topics.length]].push(tickers[i]);
-    }
-
-    // Ensure each topic has at least 2
-    for (const t of topics) {
-      if (result[t].length < 2) return null; // fallback entirely
+    // Only use API tickers if every topic got at least 1
+    for (const t of Object.keys(result)) {
+      if (result[t].length === 0) return null;
     }
 
     return result;
@@ -299,18 +302,121 @@ async function seed() {
   `);
   console.log("  Dropped old tables/enums.");
 
-  console.log("Creating tables from migration...");
-  const fs = await import("fs");
-  const path = await import("path");
-  const migrationSql = fs.readFileSync(
-    path.join(process.cwd(), "drizzle", "0000_many_khan.sql"),
-    "utf-8"
-  );
-  // drizzle migrations use "--> statement-breakpoint" as separator
-  const statements = migrationSql.split("--> statement-breakpoint").map(s => s.trim()).filter(Boolean);
-  for (const stmt of statements) {
-    await pool.query(stmt);
-  }
+  console.log("Creating tables...");
+  await pool.query(`
+    CREATE TYPE "public"."constellation_role" AS ENUM('owner', 'moderator', 'member');
+    CREATE TYPE "public"."constellation_topic" AS ENUM('politics', 'crypto', 'sports', 'entertainment', 'science', 'economics', 'technology', 'other');
+    CREATE TYPE "public"."notification_type" AS ENUM('comment_reply', 'room_invite', 'market_resolved', 'leaderboard_rank');
+    CREATE TYPE "public"."trade_direction" AS ENUM('yes', 'no');
+
+    CREATE TABLE "users" (
+      "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+      "username" text NOT NULL,
+      "email" text NOT NULL,
+      "password_hash" text NOT NULL,
+      "display_name" text,
+      "avatar_url" text,
+      "bio" text,
+      "gemini_api_key_enc" text,
+      "gemini_api_secret_enc" text,
+      "created_at" timestamp with time zone DEFAULT now() NOT NULL,
+      "updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+      CONSTRAINT "users_username_unique" UNIQUE("username"),
+      CONSTRAINT "users_email_unique" UNIQUE("email")
+    );
+
+    CREATE TABLE "constellations" (
+      "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+      "name" text NOT NULL,
+      "slug" text NOT NULL,
+      "description" text,
+      "about" text,
+      "rules" text,
+      "banner_url" text,
+      "topic" "constellation_topic" DEFAULT 'other' NOT NULL,
+      "is_public" boolean DEFAULT true NOT NULL,
+      "invite_code" text,
+      "creator_id" uuid NOT NULL REFERENCES "users"("id"),
+      "member_count" integer DEFAULT 0 NOT NULL,
+      "created_at" timestamp with time zone DEFAULT now() NOT NULL,
+      "updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+      CONSTRAINT "constellations_slug_unique" UNIQUE("slug"),
+      CONSTRAINT "constellations_invite_code_unique" UNIQUE("invite_code")
+    );
+
+    CREATE TABLE "constellation_members" (
+      "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+      "constellation_id" uuid NOT NULL REFERENCES "constellations"("id") ON DELETE CASCADE,
+      "user_id" uuid NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+      "role" "constellation_role" DEFAULT 'member' NOT NULL,
+      "joined_at" timestamp with time zone DEFAULT now() NOT NULL
+    );
+
+    CREATE TABLE "tracked_markets" (
+      "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+      "constellation_id" uuid NOT NULL REFERENCES "constellations"("id") ON DELETE CASCADE,
+      "market_ticker" text NOT NULL,
+      "pinned_at" timestamp with time zone DEFAULT now() NOT NULL,
+      "pinned_by" uuid NOT NULL REFERENCES "users"("id")
+    );
+
+    CREATE TABLE "comments" (
+      "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+      "constellation_id" uuid NOT NULL REFERENCES "constellations"("id") ON DELETE CASCADE,
+      "user_id" uuid NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+      "market_ticker" text,
+      "parent_id" uuid,
+      "content" text NOT NULL,
+      "position_direction" "trade_direction",
+      "position_amount" real,
+      "created_at" timestamp with time zone DEFAULT now() NOT NULL,
+      "updated_at" timestamp with time zone DEFAULT now() NOT NULL
+    );
+
+    CREATE TABLE "watchlist_items" (
+      "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+      "user_id" uuid NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+      "constellation_id" uuid NOT NULL REFERENCES "constellations"("id") ON DELETE CASCADE,
+      "market_ticker" text NOT NULL,
+      "added_at" timestamp with time zone DEFAULT now() NOT NULL
+    );
+
+    CREATE TABLE "user_trades" (
+      "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+      "user_id" uuid NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+      "constellation_id" uuid NOT NULL REFERENCES "constellations"("id") ON DELETE CASCADE,
+      "market_ticker" text NOT NULL,
+      "direction" "trade_direction" NOT NULL,
+      "amount" real NOT NULL,
+      "price_at_trade" real NOT NULL,
+      "resolved" boolean DEFAULT false NOT NULL,
+      "pnl" real,
+      "created_at" timestamp with time zone DEFAULT now() NOT NULL
+    );
+
+    CREATE TABLE "leaderboard_entries" (
+      "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+      "user_id" uuid NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+      "constellation_id" uuid REFERENCES "constellations"("id") ON DELETE CASCADE,
+      "total_pnl" real DEFAULT 0 NOT NULL,
+      "total_trades" integer DEFAULT 0 NOT NULL,
+      "win_rate" real DEFAULT 0 NOT NULL,
+      "rank" integer,
+      "period" text DEFAULT 'all_time' NOT NULL,
+      "updated_at" timestamp with time zone DEFAULT now() NOT NULL
+    );
+
+    CREATE TABLE "notifications" (
+      "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+      "user_id" uuid NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+      "type" "notification_type" NOT NULL,
+      "title" text NOT NULL,
+      "body" text,
+      "link" text,
+      "read" boolean DEFAULT false NOT NULL,
+      "created_at" timestamp with time zone DEFAULT now() NOT NULL
+    );
+  `);
   console.log("  Created all tables.\n");
 
   // ── 2. Insert users ───────────────────────────────────────────────────
