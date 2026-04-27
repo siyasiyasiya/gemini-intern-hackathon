@@ -224,7 +224,7 @@ export function CreateConstellationForm() {
           <button
             type="button"
             onClick={() => setIsPublic(!isPublic)}
-            className="flex items-center gap-3 w-full rounded-lg border border-border px-4 py-2.5"
+            className="flex items-center gap-3 w-full px-4 py-2.5"
           >
             <div
               className={cn(
