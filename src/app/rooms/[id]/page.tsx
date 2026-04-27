@@ -11,6 +11,7 @@ import { MarketFeed } from "@/components/markets/MarketFeed";
 import { MarketDetail } from "@/components/markets/MarketDetail";
 import { CommentThread } from "@/components/comments/CommentThread";
 import { Leaderboard } from "@/components/leaderboard/Leaderboard";
+import { useSocket } from "@/hooks/useSocket";
 import type { RoomResponse } from "@/types/api";
 
 export default function RoomDetailPage() {
@@ -18,6 +19,7 @@ export default function RoomDetailPage() {
   const { data: session } = useSession();
   const queryClient = useQueryClient();
   const [selectedMarket, setSelectedMarket] = useState<string | null>(null);
+  useSocket(id);
 
   const { data: roomData, isLoading: roomLoading } = useQuery({
     queryKey: ["room", id],
