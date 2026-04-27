@@ -70,6 +70,7 @@ export interface UserStatsResponse {
   commentsPosted: number;
   bestTrade: number;
   worstTrade: number;
+  geminiConnected?: boolean;
 }
 
 export interface TrackedMarketResponse {
