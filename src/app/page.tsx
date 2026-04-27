@@ -23,7 +23,7 @@ export default function Home() {
     <main className="mx-auto max-w-6xl px-4 lg:px-6 py-16">
       {/* Hero */}
       <div className="text-center mb-20">
-        <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 border border-primary/20 px-4 py-1.5 text-sm text-primary mb-8">
+        <div className="inline-flex items-center gap-2 rounded-full bg-secondary border border-border px-4 py-1.5 text-sm text-muted-foreground mb-8">
           Prediction Markets + Community
         </div>
         <h1 className="text-5xl sm:text-6xl font-bold tracking-tight mb-5 bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent">

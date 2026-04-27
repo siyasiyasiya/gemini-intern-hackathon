@@ -37,8 +37,8 @@ export function Navbar() {
                 href={`/profile/${session.user.id}`}
                 className="flex items-center gap-2 rounded-full px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
               >
-                <div className="h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center">
-                  <User className="h-3.5 w-3.5 text-primary" />
+                <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center">
+                  <User className="h-3.5 w-3.5 text-foreground" />
                 </div>
                 {session.user.name}
               </Link>

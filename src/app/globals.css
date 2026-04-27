@@ -1,35 +1,46 @@
 @import "tailwindcss";
 
 :root {
-  --background: #000000;
+  --background: #010304;
   --foreground: #ffffff;
-  --card: #121212;
+  --foreground-secondary: rgba(255, 255, 255, 0.6);
+  --card: rgba(255, 255, 255, 0.08);
   --card-foreground: #ffffff;
-  --card-hover: #1a1a1a;
-  --primary: #00d4a1;
-  --primary-foreground: #000000;
-  --secondary: #1e1e1e;
+  --card-hover: rgba(255, 255, 255, 0.12);
+  --primary: #ffffff;
+  --primary-foreground: #010304;
+  --secondary: rgba(255, 255, 255, 0.1);
   --secondary-foreground: #ffffff;
-  --muted: #2a2a2a;
-  --muted-foreground: #8b8b8b;
-  --accent: #00d4a1;
-  --border: #2a2a2a;
-  --border-hover: #3a3a3a;
-  --ring: #00d4a1;
-  --destructive: #ff4d4d;
-  --success: #00d4a1;
-  --warning: #f5a623;
-  --yes-bg: rgba(0, 212, 161, 0.12);
-  --yes-bg-hover: rgba(0, 212, 161, 0.2);
-  --yes-text: #00d4a1;
-  --no-bg: rgba(255, 77, 77, 0.12);
-  --no-bg-hover: rgba(255, 77, 77, 0.2);
-  --no-text: #ff4d4d;
+  --muted: #343536;
+  --muted-foreground: rgba(255, 255, 255, 0.6);
+  --accent: #26ddf9;
+  --border: #343536;
+  --border-hover: #4d4f4f;
+  --ring: #ffffff;
+  --destructive: #fd6d6d;
+  --success: #41b868;
+  --warning: #f9c566;
+  --yes-bg: rgba(65, 184, 104, 0.16);
+  --yes-bg-hover: rgba(65, 184, 104, 0.24);
+  --yes-text: #41b868;
+  --yes-primary: #0e8535;
+  --yes-primary-hover: #0a6428;
+  --no-bg: rgba(253, 109, 109, 0.16);
+  --no-bg-hover: rgba(253, 109, 109, 0.24);
+  --no-text: #fd6d6d;
+  --no-primary: #ca3a3a;
+  --no-primary-hover: #972b2b;
+  --input-border: #4d4f4f;
+  --input-border-hover: #676868;
+  --disabled-bg: #343536;
+  --disabled-text: #676868;
+  --modal-bg: #1a1c1d;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-foreground-secondary: var(--foreground-secondary);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
   --color-card-hover: var(--card-hover);
@@ -49,9 +60,18 @@
   --color-yes-bg: var(--yes-bg);
   --color-yes-bg-hover: var(--yes-bg-hover);
   --color-yes-text: var(--yes-text);
+  --color-yes-primary: var(--yes-primary);
+  --color-yes-primary-hover: var(--yes-primary-hover);
   --color-no-bg: var(--no-bg);
   --color-no-bg-hover: var(--no-bg-hover);
   --color-no-text: var(--no-text);
+  --color-no-primary: var(--no-primary);
+  --color-no-primary-hover: var(--no-primary-hover);
+  --color-input-border: var(--input-border);
+  --color-input-border-hover: var(--input-border-hover);
+  --color-disabled-bg: var(--disabled-bg);
+  --color-disabled-text: var(--disabled-text);
+  --color-modal-bg: var(--modal-bg);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
