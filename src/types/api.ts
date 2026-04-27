@@ -71,6 +71,8 @@ export interface UserStatsResponse {
   bestTrade: number;
   worstTrade: number;
   geminiConnected?: boolean;
+  /** "gemini" = live API data, "local" = seeded/simulated trades, "none" = no trade data */
+  dataSource?: "gemini" | "local" | "none";
 }
 
 export interface TrackedMarketResponse {

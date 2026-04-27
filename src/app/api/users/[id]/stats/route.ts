@@ -45,6 +45,7 @@ export async function GET(
     let winRate = 0;
     let bestTrade = 0;
     let worstTrade = 0;
+    let dataSource: "gemini" | "local" | "none" = "none";
 
     if (geminiConnected) {
       try {
@@ -91,6 +92,8 @@ export async function GET(
             bestTrade = Math.max(...profits);
             worstTrade = Math.min(...profits);
           }
+
+          dataSource = "gemini";
         }
       } catch {
         // Gemini calls failed — fall back to zeros
@@ -113,6 +116,7 @@ export async function GET(
       winRate = totalTrades > 0 ? (tradeStats.wins || 0) / totalTrades : 0;
       bestTrade = tradeStats?.bestTrade || 0;
       worstTrade = tradeStats?.worstTrade || 0;
+      dataSource = totalTrades > 0 ? "local" : "none";
     }
 
     const response: UserStatsResponse = {
@@ -124,6 +128,7 @@ export async function GET(
       bestTrade: Math.round(bestTrade * 100) / 100,
       worstTrade: Math.round(worstTrade * 100) / 100,
       geminiConnected,
+      dataSource,
     };
 
     return NextResponse.json<ApiResponse<UserStatsResponse>>({ data: response });

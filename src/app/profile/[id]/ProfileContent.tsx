@@ -125,10 +125,15 @@ export function ProfileContent({ userId }: ProfileContentProps) {
                 <Calendar className="h-3.5 w-3.5" />
                 Joined {timeAgo(new Date(user.createdAt))}
               </span>
-              {stats?.geminiConnected && (
+              {stats?.dataSource === "gemini" && (
                 <span className="flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-400">
                   <CheckCircle2 className="h-3 w-3" />
                   Gemini Connected
+                </span>
+              )}
+              {stats?.dataSource === "local" && (
+                <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-400">
+                  Simulated Trades
                 </span>
               )}
             </div>
@@ -146,6 +151,16 @@ export function ProfileContent({ userId }: ProfileContentProps) {
       </div>
 
       {/* Stats Grid */}
+      {!statsLoading && stats?.dataSource && stats.dataSource !== "none" && (
+        <p className="text-xs text-muted-foreground">
+          Trading stats from{" "}
+          {stats.dataSource === "gemini" ? (
+            <span className="text-emerald-400">Gemini account</span>
+          ) : (
+            <span className="text-amber-400">simulated trades</span>
+          )}
+        </p>
+      )}
       {statsLoading ? (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
