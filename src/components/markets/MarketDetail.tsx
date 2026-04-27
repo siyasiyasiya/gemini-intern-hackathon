@@ -26,17 +26,17 @@ export function MarketDetail({ ticker, onBack, onSelectRelated }: MarketDetailPr
   if (isLoading) {
     return (
       <div className="space-y-4 animate-pulse">
-        <div className="h-6 w-48 rounded bg-secondary" />
-        <div className="h-4 w-full rounded bg-secondary" />
-        <div className="h-4 w-2/3 rounded bg-secondary" />
-        <div className="h-48 rounded bg-secondary" />
+        <div className="h-6 w-48 rounded bg-muted" />
+        <div className="h-4 w-full rounded bg-muted" />
+        <div className="h-4 w-2/3 rounded bg-muted" />
+        <div className="h-48 rounded bg-muted" />
       </div>
     );
   }
 
   if (error || !market) {
     return (
-      <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
+      <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
         {error?.message || "Market not found"}
       </div>
     );
@@ -47,91 +47,98 @@ export function MarketDetail({ ticker, onBack, onSelectRelated }: MarketDetailPr
   const noPercent = Math.round(market.noPrice * 100);
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <div className="space-y-5">
+      {/* Back + header */}
       <div>
         {onBack && (
           <button
             onClick={onBack}
-            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground mb-3 transition-colors"
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mb-3 transition-colors"
           >
-            <ArrowLeft className="h-3 w-3" /> Back to markets
+            <ArrowLeft className="h-3.5 w-3.5" /> All markets
           </button>
         )}
-        <div className="flex items-center gap-2 mb-1">
-          <span className="rounded bg-secondary px-2 py-0.5 text-xs font-mono text-muted-foreground">
-            {market.ticker}
-          </span>
-          <span
-            className={cn(
-              "flex items-center gap-1 text-xs font-medium",
-              isPositive ? "text-success" : "text-destructive"
-            )}
-          >
-            {isPositive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-            {isPositive ? "+" : ""}
-            {market.changePercent24h.toFixed(1)}%
-          </span>
+        <div className="flex items-center gap-3 mb-2">
+          {market.imageUrl ? (
+            <img src={market.imageUrl} alt="" className="h-10 w-10 rounded-full object-cover" />
+          ) : (
+            <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+              <span className="text-xs font-bold text-muted-foreground">{market.ticker.slice(0, 2)}</span>
+            </div>
+          )}
+          <div>
+            <p className="text-xs text-muted-foreground capitalize">{market.category}</p>
+            <span
+              className={cn(
+                "flex items-center gap-1 text-xs font-medium",
+                isPositive ? "text-yes-text" : "text-no-text"
+              )}
+            >
+              {isPositive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+              {isPositive ? "+" : ""}
+              {market.changePercent24h.toFixed(1)}% 24h
+            </span>
+          </div>
         </div>
-        <h2 className="text-lg font-semibold text-foreground">{market.title}</h2>
-        <p className="text-sm text-muted-foreground mt-1">{market.description}</p>
+        <h2 className="text-base font-semibold text-foreground leading-tight">{market.title}</h2>
+        <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">{market.description}</p>
       </div>
 
-      {/* Large YES/NO display */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-lg border border-success/30 bg-success/10 p-4 text-center">
-          <div className="text-xs font-medium text-success mb-1">YES</div>
-          <div className="text-3xl font-bold text-success">{yesPercent}%</div>
+      {/* YES/NO buttons */}
+      <div className="grid grid-cols-2 gap-2">
+        <div className="rounded-xl bg-yes-bg p-4 text-center">
+          <div className="text-xs font-medium text-yes-text mb-1">Yes</div>
+          <div className="text-2xl font-bold text-yes-text">{yesPercent}%</div>
         </div>
-        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-center">
-          <div className="text-xs font-medium text-destructive mb-1">NO</div>
-          <div className="text-3xl font-bold text-destructive">{noPercent}%</div>
+        <div className="rounded-xl bg-no-bg p-4 text-center">
+          <div className="text-xs font-medium text-no-text mb-1">No</div>
+          <div className="text-2xl font-bold text-no-text">{noPercent}%</div>
         </div>
       </div>
 
       {/* Price chart */}
-      <div className="rounded-lg border border-border bg-card p-4">
-        <h3 className="text-sm font-medium text-foreground mb-3">Price History (30d)</h3>
+      <div className="rounded-xl border border-border bg-card p-4">
+        <h3 className="text-xs font-medium text-muted-foreground mb-3">Price History (30d)</h3>
         <PriceChart history={market.history} />
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="rounded-lg border border-border bg-card p-3 text-center">
-          <BarChart3 className="h-4 w-4 mx-auto text-muted-foreground mb-1" />
-          <div className="text-xs text-muted-foreground">24h Volume</div>
-          <div className="text-sm font-medium">${formatCompactNumber(market.volume24h)}</div>
+      <div className="grid grid-cols-3 gap-2">
+        <div className="rounded-xl bg-secondary p-3 text-center">
+          <BarChart3 className="h-3.5 w-3.5 mx-auto text-muted-foreground mb-1" />
+          <div className="text-[10px] text-muted-foreground">24h Vol</div>
+          <div className="text-xs font-medium">${formatCompactNumber(market.volume24h)}</div>
         </div>
-        <div className="rounded-lg border border-border bg-card p-3 text-center">
-          <BarChart3 className="h-4 w-4 mx-auto text-muted-foreground mb-1" />
-          <div className="text-xs text-muted-foreground">Total Volume</div>
-          <div className="text-sm font-medium">${formatCompactNumber(market.totalVolume)}</div>
+        <div className="rounded-xl bg-secondary p-3 text-center">
+          <BarChart3 className="h-3.5 w-3.5 mx-auto text-muted-foreground mb-1" />
+          <div className="text-[10px] text-muted-foreground">Total Vol</div>
+          <div className="text-xs font-medium">${formatCompactNumber(market.totalVolume)}</div>
         </div>
-        <div className="rounded-lg border border-border bg-card p-3 text-center">
-          <Clock className="h-4 w-4 mx-auto text-muted-foreground mb-1" />
-          <div className="text-xs text-muted-foreground">Resolves</div>
-          <div className="text-sm font-medium">{timeLeft(market.resolutionDate)}</div>
+        <div className="rounded-xl bg-secondary p-3 text-center">
+          <Clock className="h-3.5 w-3.5 mx-auto text-muted-foreground mb-1" />
+          <div className="text-[10px] text-muted-foreground">Resolves</div>
+          <div className="text-xs font-medium">{timeLeft(market.resolutionDate)}</div>
         </div>
       </div>
 
       {/* Resolution source */}
-      <div className="rounded-lg border border-border bg-card p-3">
-        <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
+      <div className="rounded-xl bg-secondary p-3">
+        <div className="flex items-center gap-1 text-[10px] text-muted-foreground mb-0.5">
           <ExternalLink className="h-3 w-3" /> Resolution Source
         </div>
-        <div className="text-sm text-foreground">{market.resolutionSource}</div>
+        <div className="text-xs text-foreground">{market.resolutionSource}</div>
       </div>
 
       {/* Related markets */}
       {market.relatedTickers.length > 0 && (
         <div>
-          <h3 className="text-sm font-medium text-foreground mb-2">Related Markets</h3>
-          <div className="flex flex-wrap gap-2">
+          <h3 className="text-xs font-medium text-muted-foreground mb-2">Related</h3>
+          <div className="flex flex-wrap gap-1.5">
             {market.relatedTickers.map((t) => (
               <button
                 key={t}
                 onClick={() => onSelectRelated?.(t)}
-                className="rounded-full bg-secondary px-3 py-1 text-xs font-mono text-muted-foreground hover:text-foreground hover:bg-accent/20 transition-colors"
+                className="rounded-full bg-secondary px-3 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
               >
                 {t}
               </button>

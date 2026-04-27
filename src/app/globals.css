@@ -1,22 +1,30 @@
 @import "tailwindcss";
 
 :root {
-  --background: #09090b;
-  --foreground: #fafafa;
-  --card: #18181b;
-  --card-foreground: #fafafa;
-  --primary: #6d28d9;
-  --primary-foreground: #fafafa;
-  --secondary: #27272a;
-  --secondary-foreground: #fafafa;
-  --muted: #27272a;
-  --muted-foreground: #a1a1aa;
-  --accent: #7c3aed;
-  --border: #27272a;
-  --ring: #6d28d9;
-  --destructive: #ef4444;
-  --success: #22c55e;
-  --warning: #eab308;
+  --background: #000000;
+  --foreground: #ffffff;
+  --card: #121212;
+  --card-foreground: #ffffff;
+  --card-hover: #1a1a1a;
+  --primary: #00d4a1;
+  --primary-foreground: #000000;
+  --secondary: #1e1e1e;
+  --secondary-foreground: #ffffff;
+  --muted: #2a2a2a;
+  --muted-foreground: #8b8b8b;
+  --accent: #00d4a1;
+  --border: #2a2a2a;
+  --border-hover: #3a3a3a;
+  --ring: #00d4a1;
+  --destructive: #ff4d4d;
+  --success: #00d4a1;
+  --warning: #f5a623;
+  --yes-bg: rgba(0, 212, 161, 0.12);
+  --yes-bg-hover: rgba(0, 212, 161, 0.2);
+  --yes-text: #00d4a1;
+  --no-bg: rgba(255, 77, 77, 0.12);
+  --no-bg-hover: rgba(255, 77, 77, 0.2);
+  --no-text: #ff4d4d;
 }
 
 @theme inline {
@@ -24,6 +32,7 @@
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
+  --color-card-hover: var(--card-hover);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
@@ -32,10 +41,17 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-border: var(--border);
+  --color-border-hover: var(--border-hover);
   --color-ring: var(--ring);
   --color-destructive: var(--destructive);
   --color-success: var(--success);
   --color-warning: var(--warning);
+  --color-yes-bg: var(--yes-bg);
+  --color-yes-bg-hover: var(--yes-bg-hover);
+  --color-yes-text: var(--yes-text);
+  --color-no-bg: var(--no-bg);
+  --color-no-bg-hover: var(--no-bg-hover);
+  --color-no-text: var(--no-text);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -44,6 +60,8 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 * {
