@@ -6,11 +6,17 @@ export async function GET(
   { params }: { params: Promise<{ ticker: string }> }
 ) {
   const { ticker } = await params;
-  const market = getMarketByTicker(ticker);
 
-  if (!market) {
-    return NextResponse.json({ error: "Market not found" }, { status: 404 });
+  try {
+    const market = await getMarketByTicker(ticker);
+
+    if (!market) {
+      return NextResponse.json({ error: "Market not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ data: market });
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Failed to fetch market";
+    return NextResponse.json({ error: message }, { status: 502 });
   }
-
-  return NextResponse.json({ data: market });
 }

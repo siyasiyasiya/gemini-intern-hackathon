@@ -10,12 +10,17 @@ export async function GET(request: NextRequest) {
   const search = searchParams.get("search");
   const status = searchParams.get("status") as MarketStatus | null;
 
-  const markets = getMarkets({
-    category: category || undefined,
-    sort: sort || undefined,
-    search: search || undefined,
-    status: status || undefined,
-  });
+  try {
+    const markets = await getMarkets({
+      category: category || undefined,
+      sort: sort || undefined,
+      search: search || undefined,
+      status: status || undefined,
+    });
 
-  return NextResponse.json({ data: markets });
+    return NextResponse.json({ data: markets });
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Failed to fetch markets";
+    return NextResponse.json({ error: message }, { status: 502 });
+  }
 }

@@ -1,5 +1,26 @@
-import type { Market, MarketDetail, MarketFilters, MarketSortOption } from "@/types/market";
-import { MOCK_MARKETS, getMarketByTicker, searchMarkets, getMarketsByCategory } from "./mock-data";
+import type { Market, MarketDetail, MarketFilters, MarketSortOption, MarketCategory } from "@/types/market";
+import {
+  fetchGeminiEvents,
+  fetchGeminiEvent,
+  geminiEventToMarket,
+  geminiEventToMarketDetail,
+} from "./gemini-api";
+
+// Map our lowercase categories to Gemini's mixed-case values for the API query
+const CATEGORY_TO_GEMINI: Partial<Record<MarketCategory, string>> = {
+  politics: "Politics",
+  crypto: "Crypto",
+  sports: "Sports",
+  entertainment: "Entertainment",
+  economics: "Economics",
+  technology: "Tech",
+  science: "Science",
+  commodities: "Commodities",
+  business: "Business",
+  weather: "Weather",
+  media: "Media",
+  culture: "Culture",
+};
 
 function sortMarkets(markets: Market[], sort: MarketSortOption): Market[] {
   const sorted = [...markets];
@@ -26,30 +47,48 @@ function sortMarkets(markets: Market[], sort: MarketSortOption): Market[] {
   }
 }
 
-export function getMarkets(filters?: MarketFilters): Market[] {
-  let markets = [...MOCK_MARKETS];
+export async function getMarkets(filters?: MarketFilters): Promise<Market[]> {
+  const geminiCategory = filters?.category
+    ? CATEGORY_TO_GEMINI[filters.category]
+    : undefined;
 
-  if (filters?.category) {
-    markets = markets.filter((m) => m.category === filters.category);
-  }
-  if (filters?.status) {
+  const geminiStatus = filters?.status === "active" ? "active" : undefined;
+
+  const response = await fetchGeminiEvents({
+    category: geminiCategory,
+    search: filters?.search,
+    status: geminiStatus,
+    limit: 50,
+  });
+
+  let markets = response.data.map(geminiEventToMarket);
+
+  // Client-side filtering for statuses Gemini doesn't directly map
+  if (filters?.status && filters.status !== "active") {
     markets = markets.filter((m) => m.status === filters.status);
   }
-  if (filters?.search) {
-    const lower = filters.search.toLowerCase();
-    markets = markets.filter(
-      (m) =>
-        m.title.toLowerCase().includes(lower) ||
-        m.ticker.toLowerCase().includes(lower)
-    );
-  }
-  if (filters?.sort) {
-    markets = sortMarkets(markets, filters.sort);
-  } else {
-    markets = sortMarkets(markets, "trending");
-  }
 
-  return markets;
+  const sort = filters?.sort ?? "trending";
+  return sortMarkets(markets, sort);
 }
 
-export { getMarketByTicker, searchMarkets, getMarketsByCategory };
+export async function getMarketByTicker(ticker: string): Promise<MarketDetail | null> {
+  const event = await fetchGeminiEvent(ticker);
+  if (!event) return null;
+
+  // Fetch related events in the same category
+  const related = await fetchGeminiEvents({
+    category: event.category,
+    limit: 4,
+  });
+
+  return geminiEventToMarketDetail(event, related.data);
+}
+
+export async function getMarketsByCategory(category: MarketCategory): Promise<Market[]> {
+  return getMarkets({ category });
+}
+
+export async function searchMarkets(query: string): Promise<Market[]> {
+  return getMarkets({ search: query });
+}
