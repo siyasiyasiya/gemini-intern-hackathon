@@ -3,8 +3,18 @@ import { db } from "@/lib/db";
 import { userTrades, constellationMembers, comments } from "@/lib/db/schema";
 import { eq, and, isNotNull, sql, desc, asc } from "drizzle-orm";
 import { getUserGeminiCredentials, fetchPositions, fetchSettledPositions, fetchOrderHistory } from "@/lib/market-data/gemini-authenticated";
+import { fetchGeminiEvent } from "@/lib/market-data/gemini-api";
 import { resolveUser } from "@/lib/db/resolve-user";
 import type { ApiResponse, UserStatsResponse, TradeDetail } from "@/types/api";
+
+async function resolveMarketTitle(ticker: string): Promise<string> {
+  try {
+    const event = await fetchGeminiEvent(ticker);
+    return event?.title ?? ticker;
+  } catch {
+    return ticker;
+  }
+}
 
 export async function GET(
   _request: NextRequest,
@@ -193,6 +203,24 @@ export async function GET(
 
       dataSource = totalTrades > 0 ? "local" : "none";
     }
+
+    // Resolve contract tickers to human-readable market titles
+    const tickersToResolve = new Set<string>();
+    if (bestTrade) tickersToResolve.add(bestTrade.market);
+    if (worstTrade) tickersToResolve.add(worstTrade.market);
+
+    const titleMap = new Map<string, string>();
+    if (tickersToResolve.size > 0) {
+      const results = await Promise.all(
+        Array.from(tickersToResolve).map(async (t) => [t, await resolveMarketTitle(t)] as const)
+      );
+      for (const [ticker, title] of results) {
+        titleMap.set(ticker, title);
+      }
+    }
+
+    if (bestTrade) bestTrade.market = titleMap.get(bestTrade.market) ?? bestTrade.market;
+    if (worstTrade) worstTrade.market = titleMap.get(worstTrade.market) ?? worstTrade.market;
 
     const response: UserStatsResponse = {
       totalTrades,
