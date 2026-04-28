@@ -145,7 +145,7 @@ export function MarketDetail({ ticker, constellationSlug, onBack, onSelectRelate
       {/* Price chart */}
       <div className="rounded-xl border border-border bg-card p-4">
         <h3 className="text-xs font-medium text-muted-foreground mb-3">
-          {isCategorical ? "Outcome Prices (30d)" : "Price History (30d)"}
+          {isCategorical ? "Outcome Prices" : "Price History"}
         </h3>
         <PriceChart history={market.history} contractHistories={market.contractHistories} />
       </div>
