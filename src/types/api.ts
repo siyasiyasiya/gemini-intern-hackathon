@@ -51,6 +51,7 @@ export interface CommentResponse {
   likedByMe: boolean;
   createdAt: string;
   user: UserResponse;
+  replyCount?: number;
   replies?: CommentResponse[];
 }
 

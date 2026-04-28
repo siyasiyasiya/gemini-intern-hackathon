@@ -129,41 +129,31 @@ export async function GET(
       conditions.push(isNull(comments.parentId));
     }
 
+    // For top-level queries, include reply count subquery
+    const replyCountSql = !parentId
+      ? sql<number>`(SELECT count(*)::int FROM comments r WHERE r.parent_id = ${comments.id})`.as("reply_count")
+      : sql<number>`0`.as("reply_count");
+
     const rows = await db
-      .select(commentSelect)
+      .select({
+        ...commentSelect,
+        replyCount: replyCountSql,
+      })
       .from(comments)
       .innerJoin(users, eq(comments.userId, users.id))
       .where(and(...conditions))
-      .orderBy(desc(comments.createdAt));
+      .orderBy(parentId ? comments.createdAt : desc(comments.createdAt));
 
-    const allReplyRows = new Map<string, (typeof rows)>();
     const allCommentIds = rows.map((r) => r.id);
-
-    if (!parentId) {
-      for (const row of rows) {
-        const replies = await db
-          .select(commentSelect)
-          .from(comments)
-          .innerJoin(users, eq(comments.userId, users.id))
-          .where(eq(comments.parentId, row.id))
-          .orderBy(comments.createdAt)
-          .limit(3);
-
-        allReplyRows.set(row.id, replies);
-        for (const r of replies) allCommentIds.push(r.id);
-      }
-    }
-
     const likeMap = await getLikesForComments(allCommentIds, currentUserId);
 
-    const commentsWithReplies: CommentResponse[] = rows.map((row) => {
-      const replyRows = allReplyRows.get(row.id) || [];
-      const replies = replyRows.map((r) => toCommentResponse(r, likeMap));
-      return toCommentResponse(row, likeMap, replies);
-    });
+    const result: CommentResponse[] = rows.map((row) => ({
+      ...toCommentResponse(row, likeMap),
+      replyCount: (row as any).replyCount ?? 0,
+    }));
 
     return NextResponse.json<ApiResponse<CommentResponse[]>>({
-      data: commentsWithReplies,
+      data: result,
     });
   } catch {
     return NextResponse.json<ApiResponse<null>>(

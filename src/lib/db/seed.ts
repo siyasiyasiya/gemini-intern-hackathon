@@ -282,140 +282,142 @@ interface CommentDef {
   replies?: { userIndex: number; content: string; daysAgo: number }[];
 }
 
+// Use T(n) as placeholder for ticker at index n — resolved at insert time
 function getComments(ci: number): CommentDef[] {
   switch (ci) {
-    case 0: // Crypto Alpha
+    case 0: // Crypto Alpha — tickers: [BTCUSD15M, ETHUSD15M, CPIAUG26, FEDFUNDS26]
       return [
         {
-          userIndex: 1, content: "BTC funding rates are extremely positive right now. Market is overleveraged long. I'm taking the other side.", positionDirection: "no", positionAmount: 500, daysAgo: 5,
+          userIndex: 1, content: "{{market:T0}} funding rates are extremely positive right now. Market is overleveraged long. I'm taking the other side on {{market:T0}}.", positionDirection: "no", positionAmount: 500, taggedMarkets: [0], daysAgo: 5,
           replies: [
-            { userIndex: 0, content: "Agreed. Open interest at ATH, something has to give.", daysAgo: 5 },
+            { userIndex: 0, content: "Agreed. Open interest at ATH on {{market:T0}}, something has to give.", daysAgo: 5 },
             { userIndex: 3, content: "Counterpoint: spot ETF inflows are still strong. Don't fight the flows.", daysAgo: 4 },
             { userIndex: 7, content: "What's your stop loss on this?", daysAgo: 4 },
           ],
         },
-        { userIndex: 0, content: "DeFi TVL just crossed $200B again. The market is not pricing this in.", positionDirection: "yes", positionAmount: 200, taggedMarkets: [0], daysAgo: 3 },
-        { userIndex: 3, content: "Fed minutes coming out tomorrow. Expect volatility.", daysAgo: 2 },
-        { userIndex: 4, content: "On-chain data shows whales accumulating ETH aggressively. Smart money is loading up.", positionDirection: "yes", positionAmount: 300, taggedMarkets: [1], daysAgo: 1,
+        { userIndex: 0, content: "DeFi TVL just crossed $200B again. {{market:T0}} is not pricing this in.", positionDirection: "yes", positionAmount: 200, taggedMarkets: [0], daysAgo: 3 },
+        { userIndex: 3, content: "Fed minutes coming out tomorrow. Expect volatility on {{market:T2}} and {{market:T3}}.", taggedMarkets: [2, 3], daysAgo: 2 },
+        { userIndex: 4, content: "On-chain data shows whales accumulating ETH aggressively. Loading up on {{market:T1}}.", positionDirection: "yes", positionAmount: 300, taggedMarkets: [1], daysAgo: 1,
           replies: [
-            { userIndex: 1, content: "Which wallets are you tracking? I see mixed signals.", daysAgo: 1 },
+            { userIndex: 1, content: "Which wallets are you tracking? I see mixed signals on {{market:T1}}.", daysAgo: 1 },
           ],
         },
         { userIndex: 10, content: "New here, just joined! Excited to learn from you all.", daysAgo: 0 },
       ];
-    case 1: // Sports Edge
+    case 1: // Sports Edge — tickers: [NBAPLAYOFFS26, NFL1STPICK26, WCSEMIS26]
       return [
         {
-          userIndex: 2, content: "NBA playoff model update: Celtics have a 72% chance of making the finals based on adjusted net rating.", positionDirection: "yes", positionAmount: 150, daysAgo: 7,
+          userIndex: 2, content: "NBA playoff model update: Celtics have a 72% chance. Going YES on {{market:T0}}.", positionDirection: "yes", positionAmount: 150, taggedMarkets: [0], daysAgo: 7,
           replies: [
             { userIndex: 5, content: "What about injury adjustments? Tatum's been dealing with that knee.", daysAgo: 6 },
-            { userIndex: 0, content: "Your model has been fire this season. Tailing.", daysAgo: 6 },
+            { userIndex: 0, content: "Your model has been fire this season. Tailing on {{market:T0}}.", daysAgo: 6 },
           ],
         },
-        { userIndex: 6, content: "Anyone watching the World Cup qualifiers? Some value on underdogs.", daysAgo: 4 },
-        { userIndex: 7, content: "NFL draft is gonna shake up futures markets big time this year.", daysAgo: 2 },
-        { userIndex: 0, content: "Line movement on the Lakers game looks sharp. Pros are on the under.", positionDirection: "no", positionAmount: 100, daysAgo: 1 },
+        { userIndex: 6, content: "Anyone watching the World Cup qualifiers? Some value on underdogs in {{market:T2}}.", taggedMarkets: [2], daysAgo: 4 },
+        { userIndex: 7, content: "NFL draft is gonna shake up {{market:T1}} big time this year.", taggedMarkets: [1], daysAgo: 2 },
+        { userIndex: 0, content: "Line movement on the Lakers game looks sharp. Pros are on the under.", positionDirection: "no", positionAmount: 100, taggedMarkets: [0], daysAgo: 1 },
       ];
-    case 2: // Policy & Markets
+    case 2: // Policy & Markets — tickers: [USELECTION26, USSENCHG26, CPIAUG26, FEDFUNDS26]
       return [
         {
-          userIndex: 5, content: "New polling aggregate has the Senate race at 52-48. Markets are pricing 60-40. There's value here.", positionDirection: "no", positionAmount: 400, taggedMarkets: [0], daysAgo: 8,
+          userIndex: 5, content: "New polling aggregate has {{market:T1}} at 52-48. Markets are pricing 60-40. There's value here.", positionDirection: "no", positionAmount: 400, taggedMarkets: [1], daysAgo: 8,
           replies: [
             { userIndex: 3, content: "Polls this far out are basically noise. I'd wait until after the debates.", daysAgo: 7 },
             { userIndex: 4, content: "The prediction market is usually more accurate than polls by this point in the cycle.", daysAgo: 7 },
           ],
         },
-        { userIndex: 0, content: "Trade policy changes incoming. Tariff markets are mispriced IMO.", positionDirection: "yes", positionAmount: 250, daysAgo: 4 },
-        { userIndex: 3, content: "CPI report lands Thursday. Consensus is 3.1%. I think it comes in hot.", positionDirection: "yes", positionAmount: 200, taggedMarkets: [1], daysAgo: 2,
+        { userIndex: 0, content: "Trade policy changes incoming. {{market:T0}} is mispriced IMO.", positionDirection: "yes", positionAmount: 250, taggedMarkets: [0], daysAgo: 4 },
+        { userIndex: 3, content: "CPI report lands Thursday. Consensus is 3.1%. I think {{market:T2}} comes in hot.", positionDirection: "yes", positionAmount: 200, taggedMarkets: [2], daysAgo: 2,
           replies: [
-            { userIndex: 8, content: "Shelter inflation is sticky. I agree with the over bet.", daysAgo: 1 },
+            { userIndex: 8, content: "Shelter inflation is sticky. I agree with the over bet on {{market:T2}}.", daysAgo: 1 },
           ],
         },
-        { userIndex: 4, content: "Government shutdown odds just spiked. Watch the budget negotiations this week.", daysAgo: 1 },
+        { userIndex: 4, content: "Government shutdown odds just spiked. Watch the budget negotiations — {{market:T3}} is moving.", taggedMarkets: [3], daysAgo: 1 },
       ];
-    case 3: // AI & Future Tech
+    case 3: // AI & Future Tech — tickers: [BESTAI26, APPLECAR26, FUSION26, WARMEST26, BESTPIC26, GR1ALBUM26]
       return [
         {
-          userIndex: 4, content: "GPT-5 rumored for Q3. If it passes the bar exam with 95%+, the AGI markets will move fast.", positionDirection: "yes", positionAmount: 300, taggedMarkets: [0], daysAgo: 10,
+          userIndex: 4, content: "GPT-5 rumored for Q3. If it passes the bar exam with 95%+, {{market:T0}} will move fast.", positionDirection: "yes", positionAmount: 300, taggedMarkets: [0], daysAgo: 10,
           replies: [
-            { userIndex: 1, content: "Benchmark performance ≠ AGI. But the markets don't care about that distinction.", daysAgo: 9 },
+            { userIndex: 1, content: "Benchmark performance ≠ AGI. But {{market:T0}} doesn't care about that distinction.", daysAgo: 9 },
             { userIndex: 9, content: "More interested in the reasoning capabilities. Benchmarks are increasingly gamed.", daysAgo: 8 },
-            { userIndex: 0, content: "Bought YES at $0.35. Feels like free money.", daysAgo: 8 },
+            { userIndex: 0, content: "Bought YES on {{market:T0}} at $0.35. Feels like free money.", daysAgo: 8 },
           ],
         },
-        { userIndex: 8, content: "Apple's new mixed reality headset could be the sleeper hit market of the year.", daysAgo: 5 },
-        { userIndex: 3, content: "Fusion breakthrough at NIF is getting overhyped. Commercial viability is decades away.", positionDirection: "no", positionAmount: 150, taggedMarkets: [2], daysAgo: 3 },
-        { userIndex: 0, content: "The AI music generation lawsuit outcomes will set huge precedents for entertainment markets.", daysAgo: 1 },
+        { userIndex: 8, content: "Apple's new mixed reality headset could be the sleeper hit. Watching {{market:T1}} closely.", taggedMarkets: [1], daysAgo: 5 },
+        { userIndex: 3, content: "Fusion breakthrough at NIF is getting overhyped. Going NO on {{market:T2}}.", positionDirection: "no", positionAmount: 150, taggedMarkets: [2], daysAgo: 3 },
+        { userIndex: 0, content: "The AI music generation lawsuit outcomes will set huge precedents for {{market:T4}} and {{market:T5}}.", taggedMarkets: [4, 5], daysAgo: 1 },
         { userIndex: 10, content: "What resources do you all use to track AI benchmarks?", daysAgo: 0,
           replies: [
-            { userIndex: 4, content: "Papers With Code leaderboards + Epoch AI database. Also follow @AISafetyMemes on Twitter for the real alpha.", daysAgo: 0 },
+            { userIndex: 4, content: "Papers With Code leaderboards + Epoch AI database for {{market:T0}} tracking.", daysAgo: 0 },
           ],
         },
       ];
-    case 4: // Whale Watchers (PRIVATE)
+    case 4: // Whale Watchers (PRIVATE) — tickers: [BTCUSD15M, ETHUSD15M, CPIAUG26, FEDFUNDS26, USELECTION26, USSENCHG26]
       return [
         {
-          userIndex: 0, content: "Position update: I'm 60% allocated to crypto YES positions, 30% political NO, 10% cash. Total bankroll $12k.", positionDirection: "yes", positionAmount: 7200, daysAgo: 6,
+          userIndex: 0, content: "Position update: 60% allocated to {{market:T0}} YES, 30% {{market:T4}} NO, 10% cash. Total bankroll $12k.", positionDirection: "yes", positionAmount: 7200, taggedMarkets: [0, 4], daysAgo: 6,
           replies: [
-            { userIndex: 1, content: "Heavy into crypto. I'm more balanced — 40/40/20. The political markets have been paying lately.", daysAgo: 5 },
-            { userIndex: 3, content: "I'm sitting on mostly cash. Waiting for the CPI print to deploy.", daysAgo: 5 },
+            { userIndex: 1, content: "Heavy into crypto. I'm more balanced — 40/40/20. The political markets on {{market:T4}} have been paying lately.", daysAgo: 5 },
+            { userIndex: 3, content: "I'm sitting on mostly cash. Waiting for the {{market:T2}} print to deploy.", daysAgo: 5 },
           ],
         },
-        { userIndex: 1, content: "Just closed my ETH position for +$800. Taking profits while I can.", positionDirection: "no", positionAmount: 0, daysAgo: 3 },
-        { userIndex: 3, content: "Hot take: the market is pricing election outcomes correctly for once. No edge to be found.", daysAgo: 1 },
+        { userIndex: 1, content: "Just closed my {{market:T1}} position for +$800. Taking profits while I can.", taggedMarkets: [1], daysAgo: 3 },
+        { userIndex: 3, content: "Hot take: {{market:T4}} is pricing election outcomes correctly for once. No edge to be found.", taggedMarkets: [4], daysAgo: 1 },
       ];
-    case 5: // The Water Cooler (NO categories)
+    case 5: // The Water Cooler (NO categories) — tickers: [BTCUSD15M, NBAPLAYOFFS26, BESTPIC26]
       return [
         {
           userIndex: 6, content: "Anyone else notice prediction markets are way more fun than actual trading? No leverage to blow up your account lol", daysAgo: 12,
           replies: [
-            { userIndex: 7, content: "Until you YOLO your whole bankroll on a 95% YES that resolves NO 😂", daysAgo: 11 },
+            { userIndex: 7, content: "Until you YOLO your whole bankroll on a 95% YES that resolves NO", daysAgo: 11 },
             { userIndex: 0, content: "Been there. The pain is real.", daysAgo: 11 },
             { userIndex: 9, content: "That's why bankroll management is key. Never risk more than 5% per trade.", daysAgo: 10 },
           ],
         },
-        { userIndex: 8, content: "What's everyone's prediction for the weirdest market that resolves YES this year?", daysAgo: 7 },
+        { userIndex: 8, content: "What's everyone's prediction for the weirdest market that resolves YES this year? I'm watching {{market:T2}}.", taggedMarkets: [2], daysAgo: 7 },
         { userIndex: 10, content: "How do resolution disputes work? Had a market that seemed wrong.", daysAgo: 5,
           replies: [
             { userIndex: 6, content: "Each platform has its own resolution process. Gemini uses predetermined oracle sources.", daysAgo: 4 },
           ],
         },
         { userIndex: 0, content: "Just hit my best month ever. +$2k across all positions. Feeling good.", daysAgo: 2 },
-        { userIndex: 2, content: "Anyone watching the Super Bowl market lines? Way off from what I'd expect.", daysAgo: 1 },
+        { userIndex: 2, content: "Anyone watching {{market:T1}}? Lines are way off from what I'd expect.", taggedMarkets: [1], daysAgo: 1 },
         { userIndex: 9, content: "Hot take: most prediction market traders would be better off dollar-cost-averaging into index funds.", daysAgo: 0 },
       ];
-    case 6: // Awards Season
+    case 6: // Awards Season — tickers: [BESTPIC26, GR1ALBUM26, EMMY26]
       return [
         {
-          userIndex: 8, content: "Early Oscar buzz: the front-runner for Best Picture is looking strong after the festival circuit. Guild awards will tell us more.", positionDirection: "yes", positionAmount: 200, daysAgo: 14,
+          userIndex: 8, content: "Early Oscar buzz: {{market:T0}} front-runner is looking strong after the festival circuit. Guild awards will tell us more.", positionDirection: "yes", positionAmount: 200, taggedMarkets: [0], daysAgo: 14,
           replies: [
-            { userIndex: 0, content: "Festival buzz doesn't always translate. Remember the year everyone was sure about that one film?", daysAgo: 13 },
+            { userIndex: 0, content: "Festival buzz doesn't always translate for {{market:T0}}. Remember the year everyone was sure?", daysAgo: 13 },
             { userIndex: 5, content: "SAG ensemble is the best predictor historically. Wait for that.", daysAgo: 12 },
           ],
         },
-        { userIndex: 0, content: "Grammy predictions: the album of the year race is wide open. Market is underpricing the pop category.", positionDirection: "yes", positionAmount: 100, daysAgo: 5 },
+        { userIndex: 0, content: "Grammy predictions: {{market:T1}} race is wide open. Market is underpricing the pop category.", positionDirection: "yes", positionAmount: 100, taggedMarkets: [1], daysAgo: 5 },
+        { userIndex: 5, content: "Emmy noms are out. {{market:T2}} has some interesting value plays this year.", taggedMarkets: [2], daysAgo: 2 },
       ];
-    case 7: // Climate Bets
+    case 7: // Climate Bets — tickers: [WARMEST26, MOONLAND26]
       return [
         {
-          userIndex: 9, content: "2026 is tracking to be the warmest year on record. El Niño effects are compounding with baseline warming.", positionDirection: "yes", positionAmount: 500, daysAgo: 20,
+          userIndex: 9, content: "2026 is tracking to be the warmest year on record. Going big YES on {{market:T0}}.", positionDirection: "yes", positionAmount: 500, taggedMarkets: [0], daysAgo: 20,
           replies: [
-            { userIndex: 4, content: "What's your confidence interval? The NOAA model vs ECMWF diverge quite a bit.", daysAgo: 18 },
+            { userIndex: 4, content: "What's your confidence interval on {{market:T0}}? The NOAA model vs ECMWF diverge quite a bit.", daysAgo: 18 },
           ],
         },
-        { userIndex: 4, content: "Arctic sea ice extent hitting new lows. This data should move the temperature markets.", daysAgo: 3 },
+        { userIndex: 4, content: "Arctic sea ice extent hitting new lows. This data should move {{market:T0}} significantly.", taggedMarkets: [0], daysAgo: 3 },
       ];
-    case 8: // Election War Room (PRIVATE)
+    case 8: // Election War Room (PRIVATE) — tickers: [USELECTION26, USSENCHG26]
       return [
         {
-          userIndex: 5, content: "Internal model update: shifted 3 states based on new demographic data. Sharing the full spreadsheet in DMs.", daysAgo: 4,
+          userIndex: 5, content: "Internal model update: shifted 3 states on {{market:T0}} based on new demographic data. Sharing the full spreadsheet in DMs.", taggedMarkets: [0], daysAgo: 4,
           replies: [
-            { userIndex: 0, content: "The suburban shift is real. Your model captures it well.", daysAgo: 3 },
+            { userIndex: 0, content: "The suburban shift is real. Your model on {{market:T0}} captures it well.", daysAgo: 3 },
             { userIndex: 3, content: "What's your methodology for weighting different polling firms?", daysAgo: 3 },
           ],
         },
-        { userIndex: 4, content: "Early voting data is starting to trickle in. Turnout looks higher than expected in key counties.", daysAgo: 1 },
-        { userIndex: 0, content: "Interesting arbitrage opportunity between Polymarket and Gemini on the governor races.", positionDirection: "yes", positionAmount: 350, daysAgo: 0 },
+        { userIndex: 4, content: "Early voting data is starting to trickle in. Turnout looks higher than expected — bullish for {{market:T1}}.", taggedMarkets: [1], daysAgo: 1 },
+        { userIndex: 0, content: "Arbitrage opportunity between Polymarket and Gemini on {{market:T0}}. Going YES.", positionDirection: "yes", positionAmount: 350, taggedMarkets: [0], daysAgo: 0 },
       ];
     case 9: // Fresh Start (EMPTY — no comments)
       return [];
@@ -671,6 +673,14 @@ async function seed() {
     const commentDefs = getComments(ci);
     const tickers = tickersByConstellation[ci];
 
+    // Resolve T0, T1, etc. placeholders in content to actual tickers
+    function resolveContent(content: string): string {
+      return content.replace(/\{\{market:T(\d+)\}\}/g, (_match, idx) => {
+        const ticker = tickers[parseInt(idx, 10)];
+        return ticker ? `{{market:${ticker}}}` : _match;
+      });
+    }
+
     for (const cDef of commentDefs) {
       const taggedMarkets: string[] = [];
       if (cDef.taggedMarkets) {
@@ -684,7 +694,7 @@ async function seed() {
         .values({
           constellationId: insertedConstellations[ci].id,
           userId: insertedUsers[cDef.userIndex].id,
-          content: cDef.content,
+          content: resolveContent(cDef.content),
           positionDirection: cDef.positionDirection || null,
           positionAmount: cDef.positionAmount || null,
           taggedMarkets: taggedMarkets.length > 0 ? taggedMarkets : null,
@@ -702,7 +712,7 @@ async function seed() {
               constellationId: insertedConstellations[ci].id,
               userId: insertedUsers[reply.userIndex].id,
               parentId: parent.id,
-              content: reply.content,
+              content: resolveContent(reply.content),
               createdAt: daysAgo(reply.daysAgo),
             })
             .returning({ id: schema.comments.id });
