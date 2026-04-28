@@ -694,12 +694,20 @@ async function seed() {
         }
       }
 
+      // Set marketTicker from first tagged market, or a random ticker for position comments
+      const commentMarketTicker = taggedMarkets.length > 0
+        ? taggedMarkets[0]
+        : cDef.positionDirection && tickers.length > 0
+          ? tickers[Math.floor(Math.random() * tickers.length)]
+          : null;
+
       const [parent] = await db
         .insert(schema.comments)
         .values({
           constellationId: insertedConstellations[ci].id,
           userId: insertedUsers[cDef.userIndex].id,
           content: resolveContent(cDef.content),
+          marketTicker: commentMarketTicker,
           positionDirection: cDef.positionDirection || null,
           positionAmount: cDef.positionAmount || null,
           positionContractLabel: cDef.positionContractLabel || null,
