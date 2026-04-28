@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pin, X } from "lucide-react";
+import { BarChart3, X } from "lucide-react";
 import type { ApiResponse, TrackedMarketResponse } from "@/types/api";
 
 interface TrackedMarketsProps {
@@ -58,6 +58,7 @@ export function TrackedMarkets({ constellationSlug, canManage, onSelectMarket }:
       method: "DELETE",
     });
     queryClient.invalidateQueries({ queryKey: ["tracked-markets", constellationSlug] });
+    queryClient.invalidateQueries({ queryKey: ["constellation-markets", constellationSlug] });
   }
 
   if (!markets || markets.length === 0) return null;
@@ -65,8 +66,8 @@ export function TrackedMarkets({ constellationSlug, canManage, onSelectMarket }:
   return (
     <div className="mb-4">
       <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-        <Pin className="h-3 w-3" />
-        Pinned Markets
+        <BarChart3 className="h-3 w-3" />
+        Watchlist
       </div>
       <div className="space-y-1">
         {markets.map((m) => {
