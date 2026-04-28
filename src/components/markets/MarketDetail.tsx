@@ -150,22 +150,20 @@ export function MarketDetail({ ticker, constellationSlug, onBack, onSelectRelate
           <h3 className="text-xs font-medium text-muted-foreground">
             {showAutopsy ? "Market Autopsy" : isCategorical ? "Outcome Prices" : "Price History"}
           </h3>
-          {!isCategorical && (
-            <button
-              onClick={() => setShowAutopsy(!showAutopsy)}
-              className={cn(
-                "flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-medium transition-colors",
-                showAutopsy
-                  ? "bg-accent/10 text-accent"
-                  : "bg-secondary text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <Activity className="h-3 w-3" />
-              {showAutopsy ? "Simple" : "Autopsy"}
-            </button>
-          )}
+          <button
+            onClick={() => setShowAutopsy(!showAutopsy)}
+            className={cn(
+              "flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-medium transition-colors",
+              showAutopsy
+                ? "bg-accent/10 text-accent"
+                : "bg-secondary text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <Activity className="h-3 w-3" />
+            {showAutopsy ? "Simple" : "Autopsy"}
+          </button>
         </div>
-        {showAutopsy && !isCategorical ? (
+        {showAutopsy ? (
           <AutopsyTimeline ticker={ticker} />
         ) : (
           <PriceChart history={market.history} contractHistories={market.contractHistories} />
