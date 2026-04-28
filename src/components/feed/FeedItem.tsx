@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Comment } from "@/components/comments/Comment";
 import type { FeedItemResponse } from "@/types/api";
@@ -40,6 +40,15 @@ export function FeedItem({ item }: FeedItemProps) {
         >
           {item.constellation.topic}
         </span>
+        {item.marketTicker && (
+          <Link
+            href={`/markets/${encodeURIComponent(item.marketTicker)}`}
+            className="ml-auto flex items-center gap-1 rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-medium text-accent hover:bg-accent/20 transition-colors"
+          >
+            <BarChart3 className="h-2.5 w-2.5" />
+            {item.marketTicker}
+          </Link>
+        )}
       </div>
 
       {/* Comment content */}

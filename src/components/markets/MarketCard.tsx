@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import type { Market } from "@/types/market";
 import { cn, formatCompactNumber } from "@/lib/utils";
 import { BarChart3, Clock, Pin } from "lucide-react";
@@ -24,16 +25,15 @@ export function MarketCard({ market, onClick, pinned }: MarketCardProps) {
   const noPercent = Math.round(market.noPrice * 100);
   const isCategorical = market.outcomes && market.outcomes.length > 1;
 
-  return (
-    <button
-      onClick={() => onClick?.(market.ticker)}
-      className={cn(
-        "w-full text-left rounded-xl border border-border bg-card p-4",
-        "transition-all duration-150",
-        "hover:border-border-hover hover:bg-card-hover",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-      )}
-    >
+  const cardClassName = cn(
+    "w-full text-left rounded-xl border border-border bg-card p-4",
+    "transition-all duration-150",
+    "hover:border-border-hover hover:bg-card-hover",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+  );
+
+  const cardContent = (
+    <>
       {/* Header: avatar + category + title */}
       <div className="flex gap-3 mb-3">
         {market.imageUrl ? (
@@ -114,6 +114,20 @@ export function MarketCard({ market, onClick, pinned }: MarketCardProps) {
           {timeLeft(market.resolutionDate)}
         </span>
       </div>
-    </button>
+    </>
+  );
+
+  if (onClick) {
+    return (
+      <button onClick={() => onClick(market.ticker)} className={cardClassName}>
+        {cardContent}
+      </button>
+    );
+  }
+
+  return (
+    <Link href={`/markets/${encodeURIComponent(market.ticker)}`} className={cn(cardClassName, "block")}>
+      {cardContent}
+    </Link>
   );
 }

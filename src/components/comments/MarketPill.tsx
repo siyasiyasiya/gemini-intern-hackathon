@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import type { Market } from "@/types/market";
@@ -43,17 +44,15 @@ export function MarketPill({ ticker, onClick }: MarketPillProps) {
   const isResolved = market.status === "resolved_yes" || market.status === "resolved_no";
   const icon = CATEGORY_ICONS[market.category] || "📊";
 
-  return (
-    <button
-      type="button"
-      onClick={() => onClick?.(ticker)}
-      className={cn(
-        "group/pill relative inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium transition-colors",
-        isResolved
-          ? "border-muted bg-muted/50 text-muted-foreground"
-          : "border-accent/20 bg-accent/10 text-foreground hover:bg-accent/20"
-      )}
-    >
+  const pillClassName = cn(
+    "group/pill relative inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium transition-colors",
+    isResolved
+      ? "border-muted bg-muted/50 text-muted-foreground"
+      : "border-accent/20 bg-accent/10 text-foreground hover:bg-accent/20"
+  );
+
+  const pillContent = (
+    <>
       <span>{icon}</span>
       <span className="max-w-[180px] truncate">{market.title}</span>
       {isResolved ? (
@@ -68,9 +67,7 @@ export function MarketPill({ ticker, onClick }: MarketPillProps) {
           {market.status === "resolved_yes" ? "YES" : "NO"}
         </span>
       ) : (
-        <>
-          <span className="text-yes-text">{Math.round(market.yesPrice * 100)}¢</span>
-        </>
+        <span className="text-yes-text">{Math.round(market.yesPrice * 100)}¢</span>
       )}
 
       {/* Hover tooltip */}
@@ -82,6 +79,20 @@ export function MarketPill({ ticker, onClick }: MarketPillProps) {
           <span>Vol: {market.volume24h.toLocaleString()}</span>
         </span>
       </span>
-    </button>
+    </>
+  );
+
+  if (onClick) {
+    return (
+      <button type="button" onClick={() => onClick(ticker)} className={pillClassName}>
+        {pillContent}
+      </button>
+    );
+  }
+
+  return (
+    <Link href={`/markets/${encodeURIComponent(ticker)}`} className={pillClassName}>
+      {pillContent}
+    </Link>
   );
 }

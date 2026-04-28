@@ -139,13 +139,23 @@ export function Comment({
           </div>
 
           {comment.marketTicker && (
-            <button
-              onClick={() => onSelectMarket?.(comment.marketTicker!)}
-              className="mt-1 inline-flex items-center gap-1 rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-medium text-accent hover:bg-accent/20 transition-colors"
-            >
-              <BarChart3 className="h-2.5 w-2.5" />
-              {comment.marketTicker}
-            </button>
+            onSelectMarket ? (
+              <button
+                onClick={() => onSelectMarket(comment.marketTicker!)}
+                className="mt-1 inline-flex items-center gap-1 rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-medium text-accent hover:bg-accent/20 transition-colors"
+              >
+                <BarChart3 className="h-2.5 w-2.5" />
+                {comment.marketTicker}
+              </button>
+            ) : (
+              <Link
+                href={`/markets/${encodeURIComponent(comment.marketTicker)}`}
+                className="mt-1 inline-flex items-center gap-1 rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-medium text-accent hover:bg-accent/20 transition-colors"
+              >
+                <BarChart3 className="h-2.5 w-2.5" />
+                {comment.marketTicker}
+              </Link>
+            )
           )}
 
           {comment.positionDirection && comment.positionAmount != null && (
