@@ -1,19 +1,18 @@
 import { Pool } from "pg";
 import { drizzle } from "drizzle-orm/node-postgres";
 import bcrypt from "bcryptjs";
-import { eq } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import * as schema from "./schema";
+import { generateInviteCode } from "@/lib/utils";
 
-const DEMO_EMAIL = "demo@constellation.dev";
-const DEMO_PASSWORD = "demo1234";
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Helpers ────────────────────────────────────────────────────────────────
 
 function daysAgo(days: number): Date {
-  const d = new Date();
-  d.setDate(d.getDate() - days);
-  d.setHours(Math.floor(Math.random() * 24), Math.floor(Math.random() * 60));
-  return d;
+  return new Date(Date.now() - days * 86400000 - Math.random() * 86400000);
+}
+
+function hoursAgo(hours: number): Date {
+  return new Date(Date.now() - hours * 3600000 - Math.random() * 3600000);
 }
 
 function pick<T>(arr: T[]): T {
@@ -21,266 +20,422 @@ function pick<T>(arr: T[]): T {
 }
 
 function randBetween(min: number, max: number): number {
-  return Math.round((Math.random() * (max - min) + min) * 100) / 100;
+  return Math.round((min + Math.random() * (max - min)) * 100) / 100;
 }
 
-// ── User data ────────────────────────────────────────────────────────────────
+// ─── Data Definitions ───────────────────────────────────────────────────────
 
-const userData = [
-  { username: "demo_trader", email: DEMO_EMAIL, displayName: "Demo Trader", bio: "Exploring prediction markets. Long-term thinker." },
-  { username: "alex_macro", email: "alex@fake.dev", displayName: "Alex Chen", bio: "Macro analyst. Fed watcher. Data-driven." },
-  { username: "jordan_bets", email: "jordan@fake.dev", displayName: "Jordan Rivera", bio: "Sports + politics markets. Contrarian." },
-  { username: "sam_onchain", email: "sam@fake.dev", displayName: "Sam Patel", bio: "Crypto-native. On-chain data nerd." },
-  { username: "taylor_quant", email: "taylor@fake.dev", displayName: "Taylor Kim", bio: "Quant background. Probability > opinion." },
-  { username: "morgan_ai", email: "morgan@fake.dev", displayName: "Morgan Liu", bio: "AI researcher. Tech prediction markets." },
-  { username: "casey_wolf", email: "casey@fake.dev", displayName: "Casey Wolf", bio: "Election forecaster. Poll aggregation hobbyist." },
-  { username: "riley_degen", email: "riley@fake.dev", displayName: "Riley Brooks", bio: "Full degen. High conviction, high variance." },
+const DEMO_EMAIL = "demo@predictions.dev";
+const DEMO_PASSWORD = "demo1234";
+
+const usersData = [
+  { username: "demo_trader", email: DEMO_EMAIL, displayName: "Demo Trader", bio: "Full-time prediction market degen. Betting on everything from BTC to the next Best Picture winner.", avatarUrl: null },
+  { username: "alex_chen", email: "alex@example.com", displayName: "Alex Chen", bio: "Crypto maximalist. DeFi builder.", avatarUrl: null },
+  { username: "jordan_rivera", email: "jordan@example.com", displayName: "Jordan Rivera", bio: "Sports analytics nerd. Data-driven predictions.", avatarUrl: null },
+  { username: "morgan_liu", email: "morgan@example.com", displayName: "Morgan Liu", bio: "Econ PhD dropout. Now I just bet on my opinions.", avatarUrl: null },
+  { username: "sam_patel", email: "sam@example.com", displayName: "Sam Patel", bio: "AI researcher by day, prediction market trader by night.", avatarUrl: null },
+  { username: "taylor_kim", email: "taylor@example.com", displayName: "Taylor Kim", bio: "Political junkie. Elections are my Super Bowl.", avatarUrl: null },
+  { username: "riley_brooks", email: "riley@example.com", displayName: "Riley Brooks", bio: null, avatarUrl: null },
+  { username: "casey_wolf", email: "casey@example.com", displayName: "Casey Wolf", bio: "Lurker. Occasionally right.", avatarUrl: null },
+  { username: "jamie_garcia", email: "jamie@example.com", displayName: "Jamie Garcia", bio: "Entertainment industry insider. Oscar predictions are my specialty.", avatarUrl: null },
+  { username: "quinn_omalley", email: "quinn@example.com", displayName: "Quinn O'Malley", bio: "Climate scientist turned market maker.", avatarUrl: null },
+  { username: "new_user_123", email: "newuser@example.com", displayName: null, bio: null, avatarUrl: null },
 ];
 
-// ── Constellation data ───────────────────────────────────────────────────────
+interface ConstellationDef {
+  name: string;
+  slug: string;
+  description: string | null;
+  about: string | null;
+  rules: string | null;
+  categories: string[];
+  isPublic: boolean;
+  bannerUrl: string | null;
+  creatorIndex: number;
+  members: { userIndex: number; role: "owner" | "moderator" | "member" }[];
+}
 
-const constellationData = [
+const constellationsData: ConstellationDef[] = [
+  // 1. Multi-category: crypto + economics
   {
     name: "Crypto Alpha",
     slug: "crypto-alpha",
-    description: "Deep dives into crypto prediction markets",
-    about: "A community for crypto-focused prediction market traders. We discuss BTC price targets, ETH milestones, and altcoin markets. Data-driven analysis preferred.",
-    rules: "1. Back claims with data\n2. No shilling\n3. Share your positions honestly\n4. Be respectful",
-    topic: "crypto" as const,
+    description: "Deep dives into crypto markets, DeFi, and macro economics.",
+    about: "We combine on-chain analysis with macroeconomic signals to find alpha in crypto prediction markets. Weekly calls, shared research, and real-time trade alerts.",
+    rules: "1. Back your claims with data\n2. No shilling personal bags\n3. Share your position when making calls\n4. Be respectful even when you disagree",
+    categories: ["crypto", "economics"],
+    isPublic: true,
+    bannerUrl: null,
+    creatorIndex: 1,
+    members: [
+      { userIndex: 1, role: "owner" },
+      { userIndex: 0, role: "moderator" },
+      { userIndex: 3, role: "member" },
+      { userIndex: 4, role: "member" },
+      { userIndex: 7, role: "member" },
+      { userIndex: 10, role: "member" },
+    ],
   },
-  {
-    name: "Election Watch",
-    slug: "election-watch",
-    description: "Tracking political prediction markets",
-    about: "Non-partisan analysis of political prediction markets. We track elections worldwide, policy outcomes, and geopolitical events through the lens of market probabilities.",
-    rules: "1. Stay non-partisan\n2. Cite polls and data\n3. No personal attacks\n4. Markets, not opinions",
-    topic: "politics" as const,
-  },
+  // 2. Single category: sports
   {
     name: "Sports Edge",
     slug: "sports-edge",
-    description: "Sports betting market analysis",
-    about: "Community for sports prediction market enthusiasts. We analyze lines, track sharp money, and discuss sports outcomes from a probabilistic perspective.",
-    rules: "1. Share your reasoning\n2. Track your record\n3. No guaranteed picks\n4. Respect the variance",
-    topic: "sports" as const,
+    description: "Data-driven sports predictions and analysis.",
+    about: "Statistical models, injury reports, and line movement analysis for major sports leagues.",
+    rules: "1. Cite your sources\n2. No trolling after bad beats\n3. Share bankroll management tips",
+    categories: ["sports"],
+    isPublic: true,
+    bannerUrl: null,
+    creatorIndex: 2,
+    members: [
+      { userIndex: 2, role: "owner" },
+      { userIndex: 0, role: "member" },
+      { userIndex: 5, role: "member" },
+      { userIndex: 6, role: "member" },
+      { userIndex: 7, role: "member" },
+    ],
   },
+  // 3. Multi-category: politics + economics
   {
-    name: "Tech Futures",
-    slug: "tech-futures",
-    description: "AI, startups, and tech predictions",
-    about: "Where technologists trade on the future. AI timelines, startup outcomes, product launches, and tech policy markets.",
-    rules: "1. Insider info = ban\n2. Cite sources\n3. Constructive debate only\n4. Long-term thinking encouraged",
-    topic: "technology" as const,
+    name: "Policy & Markets",
+    slug: "policy-and-markets",
+    description: "Where political analysis meets prediction markets.",
+    about: "Forecasting elections, legislation, and their market impact. We track polling data, policy proposals, and geopolitical events.",
+    rules: "1. Keep it analytical, not partisan\n2. Update your priors when new data arrives\n3. No personal attacks",
+    categories: ["politics", "economics"],
+    isPublic: true,
+    bannerUrl: null,
+    creatorIndex: 5,
+    members: [
+      { userIndex: 5, role: "owner" },
+      { userIndex: 0, role: "member" },
+      { userIndex: 3, role: "moderator" },
+      { userIndex: 4, role: "member" },
+      { userIndex: 8, role: "member" },
+    ],
   },
+  // 4. Multi-category: technology + science + entertainment
   {
-    name: "Macro Moves",
-    slug: "macro-moves",
-    description: "Fed, inflation, and macro markets",
-    about: "For macro traders and economics enthusiasts. We track Fed decisions, inflation data, GDP forecasts, and global economic prediction markets.",
-    rules: "1. Data over narrative\n2. Timestamp your calls\n3. Acknowledge uncertainty\n4. No doom-posting without evidence",
-    topic: "economics" as const,
+    name: "AI & Future Tech",
+    slug: "ai-future-tech",
+    description: "Predictions on AI milestones, tech releases, and scientific breakthroughs.",
+    about: "Tracking AI benchmarks, product launches, and breakthrough research. From GPT-5 release dates to fusion energy timelines.",
+    rules: "1. Distinguish hype from substance\n2. Link primary sources\n3. Declare conflicts of interest",
+    categories: ["technology", "science", "entertainment"],
+    isPublic: true,
+    bannerUrl: null,
+    creatorIndex: 4,
+    members: [
+      { userIndex: 4, role: "owner" },
+      { userIndex: 0, role: "member" },
+      { userIndex: 1, role: "member" },
+      { userIndex: 3, role: "member" },
+      { userIndex: 9, role: "member" },
+      { userIndex: 8, role: "member" },
+      { userIndex: 10, role: "member" },
+    ],
+  },
+  // 5. PRIVATE constellation — invite only
+  {
+    name: "Whale Watchers",
+    slug: "whale-watchers",
+    description: "Private group for serious traders only.",
+    about: "High-conviction calls from experienced traders. Minimum $1k bankroll. We share real positions and hold each other accountable.",
+    rules: "1. Share real positions or don't post\n2. No screenshots outside the group\n3. Minimum 1 trade per week",
+    categories: ["crypto", "economics", "politics"],
+    isPublic: false,
+    bannerUrl: null,
+    creatorIndex: 0,
+    members: [
+      { userIndex: 0, role: "owner" },
+      { userIndex: 1, role: "moderator" },
+      { userIndex: 3, role: "member" },
+    ],
+  },
+  // 6. NO categories — general constellation
+  {
+    name: "The Water Cooler",
+    slug: "water-cooler",
+    description: "Anything goes. General prediction market chatter.",
+    about: "No topic restrictions. Talk about whatever markets interest you. Casual vibes only.",
+    rules: null,
+    categories: [],
+    isPublic: true,
+    bannerUrl: null,
+    creatorIndex: 6,
+    members: [
+      { userIndex: 6, role: "owner" },
+      { userIndex: 0, role: "member" },
+      { userIndex: 2, role: "member" },
+      { userIndex: 7, role: "member" },
+      { userIndex: 8, role: "member" },
+      { userIndex: 9, role: "member" },
+      { userIndex: 10, role: "member" },
+    ],
+  },
+  // 7. Single category: entertainment
+  {
+    name: "Awards Season",
+    slug: "awards-season",
+    description: "Oscars, Emmys, Grammys — predict the winners before they're announced.",
+    about: "We track early screenings, guild awards, and critic scores to forecast major entertainment awards. Seasonal activity peaks during awards season.",
+    rules: "1. No spoilers from early screenings\n2. Back predictions with evidence\n3. Update your picks as new info drops",
+    categories: ["entertainment"],
+    isPublic: true,
+    bannerUrl: null,
+    creatorIndex: 8,
+    members: [
+      { userIndex: 8, role: "owner" },
+      { userIndex: 0, role: "member" },
+      { userIndex: 5, role: "member" },
+    ],
+  },
+  // 8. Single category: science — small, no rules, no about
+  {
+    name: "Climate Bets",
+    slug: "climate-bets",
+    description: "Will global temps hit the target? Place your bets.",
+    about: null,
+    rules: null,
+    categories: ["science"],
+    isPublic: true,
+    bannerUrl: null,
+    creatorIndex: 9,
+    members: [
+      { userIndex: 9, role: "owner" },
+      { userIndex: 4, role: "member" },
+    ],
+  },
+  // 9. PRIVATE, single category — exclusive politics group
+  {
+    name: "Election War Room",
+    slug: "election-war-room",
+    description: "Invite-only election forecasting.",
+    about: "Serious election analysis with proprietary polling models. Members only.",
+    rules: "1. No leaking internal analysis\n2. Quantify your uncertainty\n3. Weekly forecast updates required",
+    categories: ["politics"],
+    isPublic: false,
+    bannerUrl: null,
+    creatorIndex: 5,
+    members: [
+      { userIndex: 5, role: "owner" },
+      { userIndex: 0, role: "moderator" },
+      { userIndex: 3, role: "member" },
+      { userIndex: 4, role: "member" },
+    ],
+  },
+  // 10. Empty constellation — just created, no activity
+  {
+    name: "Fresh Start",
+    slug: "fresh-start",
+    description: "Brand new constellation. Join and help shape the community!",
+    about: null,
+    rules: null,
+    categories: ["other"],
+    isPublic: true,
+    bannerUrl: null,
+    creatorIndex: 10,
+    members: [
+      { userIndex: 10, role: "owner" },
+    ],
   },
 ];
 
-// Membership matrix: [constellationIndex] -> array of { userIndex, role }
-const membershipMap: { userIndex: number; role: "owner" | "moderator" | "member" }[][] = [
-  // Crypto Alpha: demo owns, sam moderates
-  [
-    { userIndex: 0, role: "owner" },
-    { userIndex: 3, role: "moderator" },
-    { userIndex: 4, role: "member" },
-    { userIndex: 7, role: "member" },
-    { userIndex: 1, role: "member" },
-  ],
-  // Election Watch: casey owns, demo + jordan
-  [
-    { userIndex: 6, role: "owner" },
-    { userIndex: 0, role: "member" },
-    { userIndex: 2, role: "member" },
-    { userIndex: 1, role: "moderator" },
-  ],
-  // Sports Edge: jordan owns, riley + demo
-  [
-    { userIndex: 2, role: "owner" },
-    { userIndex: 7, role: "moderator" },
-    { userIndex: 0, role: "member" },
-    { userIndex: 4, role: "member" },
-    { userIndex: 3, role: "member" },
-    { userIndex: 5, role: "member" },
-  ],
-  // Tech Futures: demo owns, morgan moderates
-  [
-    { userIndex: 0, role: "owner" },
-    { userIndex: 5, role: "moderator" },
-    { userIndex: 4, role: "member" },
-    { userIndex: 1, role: "member" },
-    { userIndex: 6, role: "member" },
-  ],
-  // Macro Moves: alex owns, taylor moderates
-  [
-    { userIndex: 1, role: "owner" },
-    { userIndex: 4, role: "moderator" },
-    { userIndex: 0, role: "member" },
-    { userIndex: 3, role: "member" },
-    { userIndex: 5, role: "member" },
-  ],
-];
-
-// ── Fallback market tickers by topic ─────────────────────────────────────────
-
+// Fallback tickers if Gemini API is unavailable
 const fallbackTickers: Record<string, string[]> = {
-  crypto: ["BTCUSDP-27JUN25", "ETHUSDP-27JUN25", "SOLUSDP-27JUN25"],
-  politics: ["PRES2028-DEM", "PRES2028-REP", "SENATE2026-DEM"],
-  sports: ["NBA-CHAMP-2025", "NFL-SB-LX", "MLB-WS-2025"],
-  technology: ["AGI-BEFORE-2030", "AAPL-4T-2025", "OPENAI-IPO-2025"],
-  economics: ["FED-RATE-CUT-JUN25", "CPI-ABOVE-3-JUN25", "RECESSION-2025"],
+  crypto: ["BTCUSD15M", "ETHUSD15M", "SOLUSD15M"],
+  economics: ["CPIAUG26", "FEDFUNDS26", "USGDPQ326"],
+  sports: ["NBAPLAYOFFS26", "NFL1STPICK26", "WCSEMIS26"],
+  politics: ["USELECTION26", "USSENCHG26", "GOVRECALL26"],
+  technology: ["BESTAI26", "APPLECAR26", "METAQUEST26"],
+  science: ["WARMEST26", "MOONLAND26", "FUSION26"],
+  entertainment: ["BESTPIC26", "GR1ALBUM26", "EMMY26"],
+  other: ["MISC26A", "MISC26B", "MISC26C"],
 };
 
-// Map Gemini API categories to our constellation topics
-const categoryToTopic: Record<string, string> = {
-  Crypto: "crypto",
-  Politics: "politics",
-  Sports: "sports",
-  Tech: "technology",
-  Business: "technology",
-  Economics: "economics",
-  Commodities: "economics",
-  Culture: "sports",
-  Weather: "economics",
-};
+function getTickersForCategories(categories: string[]): string[] {
+  if (categories.length === 0) {
+    // No-category constellation gets a grab bag
+    return [
+      ...fallbackTickers.crypto.slice(0, 1),
+      ...fallbackTickers.sports.slice(0, 1),
+      ...fallbackTickers.entertainment.slice(0, 1),
+    ];
+  }
+  const tickers: string[] = [];
+  for (const cat of categories) {
+    const t = fallbackTickers[cat] || fallbackTickers.other;
+    tickers.push(...t.slice(0, 2));
+  }
+  return [...new Set(tickers)];
+}
 
-async function fetchGeminiTickers(): Promise<Record<string, string[]> | null> {
-  try {
-    const res = await fetch("https://api.gemini.com/v1/prediction-markets/events?limit=30", {
-      signal: AbortSignal.timeout(5000),
-    });
-    if (!res.ok) return null;
-    const json = await res.json();
-    const events = json?.data;
-    if (!Array.isArray(events) || events.length === 0) return null;
+// ─── Comment definitions per constellation ──────────────────────────────────
 
-    const result: Record<string, string[]> = {
-      crypto: [], politics: [], sports: [], technology: [], economics: [],
-    };
+interface CommentDef {
+  userIndex: number;
+  content: string;
+  positionDirection?: "yes" | "no";
+  positionAmount?: number;
+  taggedMarkets?: number[]; // indices into constellation's ticker array
+  daysAgo: number;
+  replies?: { userIndex: number; content: string; daysAgo: number }[];
+}
 
-    for (const event of events) {
-      const topic = categoryToTopic[event.category] || null;
-      if (!topic || !event.ticker) continue;
-      if (result[topic].length < 3) {
-        result[topic].push(event.ticker);
-      }
-    }
-
-    // Only use API tickers if every topic got at least 1
-    for (const t of Object.keys(result)) {
-      if (result[t].length === 0) return null;
-    }
-
-    return result;
-  } catch {
-    return null;
+function getComments(ci: number): CommentDef[] {
+  switch (ci) {
+    case 0: // Crypto Alpha
+      return [
+        {
+          userIndex: 1, content: "BTC funding rates are extremely positive right now. Market is overleveraged long. I'm taking the other side.", positionDirection: "no", positionAmount: 500, daysAgo: 5,
+          replies: [
+            { userIndex: 0, content: "Agreed. Open interest at ATH, something has to give.", daysAgo: 5 },
+            { userIndex: 3, content: "Counterpoint: spot ETF inflows are still strong. Don't fight the flows.", daysAgo: 4 },
+            { userIndex: 7, content: "What's your stop loss on this?", daysAgo: 4 },
+          ],
+        },
+        { userIndex: 0, content: "DeFi TVL just crossed $200B again. The market is not pricing this in.", positionDirection: "yes", positionAmount: 200, taggedMarkets: [0], daysAgo: 3 },
+        { userIndex: 3, content: "Fed minutes coming out tomorrow. Expect volatility.", daysAgo: 2 },
+        { userIndex: 4, content: "On-chain data shows whales accumulating ETH aggressively. Smart money is loading up.", positionDirection: "yes", positionAmount: 300, taggedMarkets: [1], daysAgo: 1,
+          replies: [
+            { userIndex: 1, content: "Which wallets are you tracking? I see mixed signals.", daysAgo: 1 },
+          ],
+        },
+        { userIndex: 10, content: "New here, just joined! Excited to learn from you all.", daysAgo: 0 },
+      ];
+    case 1: // Sports Edge
+      return [
+        {
+          userIndex: 2, content: "NBA playoff model update: Celtics have a 72% chance of making the finals based on adjusted net rating.", positionDirection: "yes", positionAmount: 150, daysAgo: 7,
+          replies: [
+            { userIndex: 5, content: "What about injury adjustments? Tatum's been dealing with that knee.", daysAgo: 6 },
+            { userIndex: 0, content: "Your model has been fire this season. Tailing.", daysAgo: 6 },
+          ],
+        },
+        { userIndex: 6, content: "Anyone watching the World Cup qualifiers? Some value on underdogs.", daysAgo: 4 },
+        { userIndex: 7, content: "NFL draft is gonna shake up futures markets big time this year.", daysAgo: 2 },
+        { userIndex: 0, content: "Line movement on the Lakers game looks sharp. Pros are on the under.", positionDirection: "no", positionAmount: 100, daysAgo: 1 },
+      ];
+    case 2: // Policy & Markets
+      return [
+        {
+          userIndex: 5, content: "New polling aggregate has the Senate race at 52-48. Markets are pricing 60-40. There's value here.", positionDirection: "no", positionAmount: 400, taggedMarkets: [0], daysAgo: 8,
+          replies: [
+            { userIndex: 3, content: "Polls this far out are basically noise. I'd wait until after the debates.", daysAgo: 7 },
+            { userIndex: 4, content: "The prediction market is usually more accurate than polls by this point in the cycle.", daysAgo: 7 },
+          ],
+        },
+        { userIndex: 0, content: "Trade policy changes incoming. Tariff markets are mispriced IMO.", positionDirection: "yes", positionAmount: 250, daysAgo: 4 },
+        { userIndex: 3, content: "CPI report lands Thursday. Consensus is 3.1%. I think it comes in hot.", positionDirection: "yes", positionAmount: 200, taggedMarkets: [1], daysAgo: 2,
+          replies: [
+            { userIndex: 8, content: "Shelter inflation is sticky. I agree with the over bet.", daysAgo: 1 },
+          ],
+        },
+        { userIndex: 4, content: "Government shutdown odds just spiked. Watch the budget negotiations this week.", daysAgo: 1 },
+      ];
+    case 3: // AI & Future Tech
+      return [
+        {
+          userIndex: 4, content: "GPT-5 rumored for Q3. If it passes the bar exam with 95%+, the AGI markets will move fast.", positionDirection: "yes", positionAmount: 300, taggedMarkets: [0], daysAgo: 10,
+          replies: [
+            { userIndex: 1, content: "Benchmark performance ≠ AGI. But the markets don't care about that distinction.", daysAgo: 9 },
+            { userIndex: 9, content: "More interested in the reasoning capabilities. Benchmarks are increasingly gamed.", daysAgo: 8 },
+            { userIndex: 0, content: "Bought YES at $0.35. Feels like free money.", daysAgo: 8 },
+          ],
+        },
+        { userIndex: 8, content: "Apple's new mixed reality headset could be the sleeper hit market of the year.", daysAgo: 5 },
+        { userIndex: 3, content: "Fusion breakthrough at NIF is getting overhyped. Commercial viability is decades away.", positionDirection: "no", positionAmount: 150, taggedMarkets: [2], daysAgo: 3 },
+        { userIndex: 0, content: "The AI music generation lawsuit outcomes will set huge precedents for entertainment markets.", daysAgo: 1 },
+        { userIndex: 10, content: "What resources do you all use to track AI benchmarks?", daysAgo: 0,
+          replies: [
+            { userIndex: 4, content: "Papers With Code leaderboards + Epoch AI database. Also follow @AISafetyMemes on Twitter for the real alpha.", daysAgo: 0 },
+          ],
+        },
+      ];
+    case 4: // Whale Watchers (PRIVATE)
+      return [
+        {
+          userIndex: 0, content: "Position update: I'm 60% allocated to crypto YES positions, 30% political NO, 10% cash. Total bankroll $12k.", positionDirection: "yes", positionAmount: 7200, daysAgo: 6,
+          replies: [
+            { userIndex: 1, content: "Heavy into crypto. I'm more balanced — 40/40/20. The political markets have been paying lately.", daysAgo: 5 },
+            { userIndex: 3, content: "I'm sitting on mostly cash. Waiting for the CPI print to deploy.", daysAgo: 5 },
+          ],
+        },
+        { userIndex: 1, content: "Just closed my ETH position for +$800. Taking profits while I can.", positionDirection: "no", positionAmount: 0, daysAgo: 3 },
+        { userIndex: 3, content: "Hot take: the market is pricing election outcomes correctly for once. No edge to be found.", daysAgo: 1 },
+      ];
+    case 5: // The Water Cooler (NO categories)
+      return [
+        {
+          userIndex: 6, content: "Anyone else notice prediction markets are way more fun than actual trading? No leverage to blow up your account lol", daysAgo: 12,
+          replies: [
+            { userIndex: 7, content: "Until you YOLO your whole bankroll on a 95% YES that resolves NO 😂", daysAgo: 11 },
+            { userIndex: 0, content: "Been there. The pain is real.", daysAgo: 11 },
+            { userIndex: 9, content: "That's why bankroll management is key. Never risk more than 5% per trade.", daysAgo: 10 },
+          ],
+        },
+        { userIndex: 8, content: "What's everyone's prediction for the weirdest market that resolves YES this year?", daysAgo: 7 },
+        { userIndex: 10, content: "How do resolution disputes work? Had a market that seemed wrong.", daysAgo: 5,
+          replies: [
+            { userIndex: 6, content: "Each platform has its own resolution process. Gemini uses predetermined oracle sources.", daysAgo: 4 },
+          ],
+        },
+        { userIndex: 0, content: "Just hit my best month ever. +$2k across all positions. Feeling good.", daysAgo: 2 },
+        { userIndex: 2, content: "Anyone watching the Super Bowl market lines? Way off from what I'd expect.", daysAgo: 1 },
+        { userIndex: 9, content: "Hot take: most prediction market traders would be better off dollar-cost-averaging into index funds.", daysAgo: 0 },
+      ];
+    case 6: // Awards Season
+      return [
+        {
+          userIndex: 8, content: "Early Oscar buzz: the front-runner for Best Picture is looking strong after the festival circuit. Guild awards will tell us more.", positionDirection: "yes", positionAmount: 200, daysAgo: 14,
+          replies: [
+            { userIndex: 0, content: "Festival buzz doesn't always translate. Remember the year everyone was sure about that one film?", daysAgo: 13 },
+            { userIndex: 5, content: "SAG ensemble is the best predictor historically. Wait for that.", daysAgo: 12 },
+          ],
+        },
+        { userIndex: 0, content: "Grammy predictions: the album of the year race is wide open. Market is underpricing the pop category.", positionDirection: "yes", positionAmount: 100, daysAgo: 5 },
+      ];
+    case 7: // Climate Bets
+      return [
+        {
+          userIndex: 9, content: "2026 is tracking to be the warmest year on record. El Niño effects are compounding with baseline warming.", positionDirection: "yes", positionAmount: 500, daysAgo: 20,
+          replies: [
+            { userIndex: 4, content: "What's your confidence interval? The NOAA model vs ECMWF diverge quite a bit.", daysAgo: 18 },
+          ],
+        },
+        { userIndex: 4, content: "Arctic sea ice extent hitting new lows. This data should move the temperature markets.", daysAgo: 3 },
+      ];
+    case 8: // Election War Room (PRIVATE)
+      return [
+        {
+          userIndex: 5, content: "Internal model update: shifted 3 states based on new demographic data. Sharing the full spreadsheet in DMs.", daysAgo: 4,
+          replies: [
+            { userIndex: 0, content: "The suburban shift is real. Your model captures it well.", daysAgo: 3 },
+            { userIndex: 3, content: "What's your methodology for weighting different polling firms?", daysAgo: 3 },
+          ],
+        },
+        { userIndex: 4, content: "Early voting data is starting to trickle in. Turnout looks higher than expected in key counties.", daysAgo: 1 },
+        { userIndex: 0, content: "Interesting arbitrage opportunity between Polymarket and Gemini on the governor races.", positionDirection: "yes", positionAmount: 350, daysAgo: 0 },
+      ];
+    case 9: // Fresh Start (EMPTY — no comments)
+      return [];
+    default:
+      return [];
   }
 }
 
-// ── Comment templates ────────────────────────────────────────────────────────
-
-function getComments(constellationIndex: number): {
-  content: string;
-  userIndex: number;
-  marketTicker?: boolean; // true = attach the first tracked market ticker
-  positionDirection?: "yes" | "no";
-  positionAmount?: number;
-  taggedMarketIndices?: number[]; // indices into constellation's tracked markets array
-  daysAgo: number;
-  replies?: { content: string; userIndex: number; daysAgo: number }[];
-}[] {
-  const commentSets = [
-    // Crypto Alpha
-    [
-      { content: "BTC breaking above 100k resistance. The prediction market {{market:TICKER_0}} is pricing in 68% chance of hitting 120k by end of June. Seems about right given the ETF inflows.", userIndex: 0, marketTicker: true, positionDirection: "yes" as const, positionAmount: 250, taggedMarketIndices: [0], daysAgo: 6,
-        replies: [
-          { content: "ETF inflows have slowed this week though. I'd put it closer to 55%.", userIndex: 3, daysAgo: 5 },
-          { content: "On-chain data still bullish. Whale accumulation hasn't stopped.", userIndex: 7, daysAgo: 5 },
-        ] },
-      { content: "Anyone tracking the ETH/BTC ratio market? Feels like ETH is about to have its run.", userIndex: 3, daysAgo: 4,
-        replies: [
-          { content: "Bought YES at 0.42. The Pectra upgrade narrative is building.", userIndex: 4, daysAgo: 3 },
-        ] },
-      { content: "Solana prediction markets are getting interesting. {{market:TICKER_2}} — the ecosystem growth is real but markets seem to be overpricing the short-term.", userIndex: 4, marketTicker: true, positionDirection: "no" as const, positionAmount: 100, taggedMarketIndices: [2], daysAgo: 2 },
-      { content: "Just published my weekly crypto markets recap in my profile. TL;DR: cautiously bullish on BTC, neutral on alts.", userIndex: 1, daysAgo: 1 },
-      { content: "Position update: Added to my BTC YES position. Cost basis at 0.65.", userIndex: 0, positionDirection: "yes" as const, positionAmount: 150, daysAgo: 0 },
-    ],
-    // Election Watch
-    [
-      { content: "New polling aggregate shows a tighter race than markets are pricing. Prediction markets at 62% but polls suggest 54-46.", userIndex: 6, marketTicker: true, daysAgo: 7,
-        replies: [
-          { content: "Markets have been more accurate than polls historically. I trust the 62%.", userIndex: 1, daysAgo: 6 },
-          { content: "Depends on which polls. Likely voter screens matter a lot here.", userIndex: 2, daysAgo: 6 },
-        ] },
-      { content: "Senate control market is mispriced IMO. The generic ballot has shifted 3 points and the market hasn't moved.", userIndex: 2, positionDirection: "yes" as const, positionAmount: 200, daysAgo: 4 },
-      { content: "Interesting divergence between state-level and national markets. Worth watching.", userIndex: 0, daysAgo: 3 },
-      { content: "Reminder: markets tend to overreact to single polls. Look at the trend, not individual data points.", userIndex: 1, daysAgo: 1 },
-    ],
-    // Sports Edge
-    [
-      { content: "NBA Finals market update: odds shifted after last night's game. The series is now priced at 55/45.", userIndex: 2, marketTicker: true, daysAgo: 5,
-        replies: [
-          { content: "Home court advantage is being underpriced here. Historical data says 60/40.", userIndex: 7, daysAgo: 4 },
-        ] },
-      { content: "NFL draft implications for the Super Bowl market are interesting. The top picks should shift some lines.", userIndex: 7, daysAgo: 3,
-        replies: [
-          { content: "Way too early for those markets but I'm already looking at the AFC futures.", userIndex: 4, daysAgo: 2 },
-        ] },
-      { content: "My model has the World Series market wrong by about 8%. Taking a position.", userIndex: 4, marketTicker: true, positionDirection: "no" as const, positionAmount: 300, daysAgo: 2 },
-      { content: "Injury reports are the edge in sports markets. Most people react too slowly to news.", userIndex: 0, daysAgo: 1 },
-      { content: "Posted my NBA model's picks for tonight. 3 games with >5% edge vs market.", userIndex: 3, daysAgo: 0 },
-      { content: "Great call on the injury angle. That's exactly how I made my best trades this month.", userIndex: 5, daysAgo: 0 },
-    ],
-    // Tech Futures
-    [
-      { content: "The AGI timeline market {{market:TICKER_0}} is fascinating. We went from 15% to 35% chance of AGI before 2030 in just 6 months.", userIndex: 5, marketTicker: true, taggedMarketIndices: [0], daysAgo: 6,
-        replies: [
-          { content: "Depends entirely on your definition. By some definitions we're already there.", userIndex: 0, daysAgo: 5 },
-          { content: "The market is pricing in the hype cycle too much. I'm selling YES here.", userIndex: 4, daysAgo: 5 },
-        ] },
-      { content: "Apple hitting $4T market cap prediction is at 72%. Seems high given the current growth rate.", userIndex: 0, positionDirection: "no" as const, positionAmount: 150, daysAgo: 4 },
-      { content: "OpenAI IPO market just opened. Starting at 45% for 2025. What does everyone think?", userIndex: 4, marketTicker: true, daysAgo: 3,
-        replies: [
-          { content: "With the revenue numbers they're reporting? I'd say >60%. Buying YES.", userIndex: 5, daysAgo: 2 },
-        ] },
-      { content: "Anthropic's latest model benchmarks should move some of these AI timeline markets.", userIndex: 1, daysAgo: 1 },
-      { content: "Position update: Closed my AAPL NO position for a small loss. The services revenue beat changed my thesis.", userIndex: 0, positionDirection: "yes" as const, positionAmount: 50, daysAgo: 0 },
-    ],
-    // Macro Moves
-    [
-      { content: "Fed funds futures are pricing in 2 cuts by year-end but {{market:TICKER_0}} only shows 45% for even one cut in June. Interesting divergence.", userIndex: 1, marketTicker: true, taggedMarketIndices: [0], daysAgo: 7,
-        replies: [
-          { content: "The June cut probability seems too low. Inflation data has been trending down.", userIndex: 4, daysAgo: 6 },
-          { content: "But labor market is still hot. I think the Fed stays put longer than markets expect.", userIndex: 0, daysAgo: 6 },
-        ] },
-      { content: "CPI print next week will be the catalyst. The prediction market for above 3% is at 38%.", userIndex: 4, positionDirection: "no" as const, positionAmount: 200, daysAgo: 4 },
-      { content: "Recession probability market hasn't moved in weeks despite mixed signals. Either the market is efficient or complacent.", userIndex: 3, daysAgo: 3 },
-      { content: "Historical analysis: when the yield curve uninverts, recession usually follows within 6-12 months. Markets seem to be ignoring this.", userIndex: 5, daysAgo: 2,
-        replies: [
-          { content: "This time might actually be different given the fiscal spending levels. But I've hedged my positions.", userIndex: 1, daysAgo: 1 },
-        ] },
-      { content: "My macro model is bearish for Q3. Taking NO positions on the growth markets.", userIndex: 0, positionDirection: "no" as const, positionAmount: 300, daysAgo: 0 },
-    ],
-  ];
-
-  return commentSets[constellationIndex];
-}
-
-// ── Main seed function ───────────────────────────────────────────────────────
+// ─── Main Seed Function ─────────────────────────────────────────────────────
 
 async function seed() {
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
   const db = drizzle(pool, { schema });
 
-  console.log("Starting full database seed...\n");
+  console.log("=".repeat(60));
+  console.log("COMPREHENSIVE SEED — dropping all data and rebuilding");
+  console.log("=".repeat(60));
 
-  // ── 1. Drop all existing tables/enums and recreate from scratch ────────
-  console.log("Dropping existing tables and enums...");
+  // ── Drop everything ────────────────────────────────────────────────────
+  console.log("\nDropping existing tables...");
   await pool.query(`
     DROP TABLE IF EXISTS notifications CASCADE;
     DROP TABLE IF EXISTS leaderboard_entries CASCADE;
@@ -290,21 +445,16 @@ async function seed() {
     DROP TABLE IF EXISTS comments CASCADE;
     DROP TABLE IF EXISTS tracked_markets CASCADE;
     DROP TABLE IF EXISTS constellation_members CASCADE;
-    DROP TABLE IF EXISTS community_members CASCADE;
     DROP TABLE IF EXISTS constellations CASCADE;
-    DROP TABLE IF EXISTS communities CASCADE;
     DROP TABLE IF EXISTS users CASCADE;
-    DROP TABLE IF EXISTS __drizzle_migrations CASCADE;
-    DROP TYPE IF EXISTS constellation_role CASCADE;
     DROP TYPE IF EXISTS constellation_topic CASCADE;
-    DROP TYPE IF EXISTS community_role CASCADE;
-    DROP TYPE IF EXISTS community_topic CASCADE;
-    DROP TYPE IF EXISTS notification_type CASCADE;
+    DROP TYPE IF EXISTS constellation_role CASCADE;
     DROP TYPE IF EXISTS trade_direction CASCADE;
+    DROP TYPE IF EXISTS notification_type CASCADE;
   `);
-  console.log("  Dropped old tables/enums.");
 
-  console.log("Creating tables...");
+  // ── Recreate tables ────────────────────────────────────────────────────
+  console.log("Recreating tables...");
   await pool.query(`
     CREATE TYPE "public"."constellation_role" AS ENUM('owner', 'moderator', 'member');
     CREATE TYPE "public"."constellation_topic" AS ENUM('politics', 'crypto', 'sports', 'entertainment', 'science', 'economics', 'technology', 'other');
@@ -313,8 +463,8 @@ async function seed() {
 
     CREATE TABLE "users" (
       "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-      "username" text NOT NULL,
-      "email" text NOT NULL,
+      "username" text NOT NULL UNIQUE,
+      "email" text NOT NULL UNIQUE,
       "password_hash" text NOT NULL,
       "display_name" text,
       "avatar_url" text,
@@ -322,35 +472,31 @@ async function seed() {
       "gemini_api_key_enc" text,
       "gemini_api_secret_enc" text,
       "created_at" timestamp with time zone DEFAULT now() NOT NULL,
-      "updated_at" timestamp with time zone DEFAULT now() NOT NULL,
-      CONSTRAINT "users_username_unique" UNIQUE("username"),
-      CONSTRAINT "users_email_unique" UNIQUE("email")
+      "updated_at" timestamp with time zone DEFAULT now() NOT NULL
     );
 
     CREATE TABLE "constellations" (
       "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
       "name" text NOT NULL,
-      "slug" text NOT NULL,
+      "slug" text NOT NULL UNIQUE,
       "description" text,
       "about" text,
       "rules" text,
       "banner_url" text,
-      "categories" text[] DEFAULT ARRAY[]::text[] NOT NULL,
-      "is_public" boolean DEFAULT true NOT NULL,
-      "invite_code" text,
+      "categories" text[] NOT NULL DEFAULT ARRAY[]::text[],
+      "is_public" boolean NOT NULL DEFAULT true,
+      "invite_code" text UNIQUE,
       "creator_id" uuid NOT NULL REFERENCES "users"("id"),
-      "member_count" integer DEFAULT 0 NOT NULL,
+      "member_count" integer NOT NULL DEFAULT 0,
       "created_at" timestamp with time zone DEFAULT now() NOT NULL,
-      "updated_at" timestamp with time zone DEFAULT now() NOT NULL,
-      CONSTRAINT "constellations_slug_unique" UNIQUE("slug"),
-      CONSTRAINT "constellations_invite_code_unique" UNIQUE("invite_code")
+      "updated_at" timestamp with time zone DEFAULT now() NOT NULL
     );
 
     CREATE TABLE "constellation_members" (
       "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
       "constellation_id" uuid NOT NULL REFERENCES "constellations"("id") ON DELETE CASCADE,
       "user_id" uuid NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
-      "role" "constellation_role" DEFAULT 'member' NOT NULL,
+      "role" "constellation_role" NOT NULL DEFAULT 'member',
       "joined_at" timestamp with time zone DEFAULT now() NOT NULL
     );
 
@@ -362,6 +508,7 @@ async function seed() {
       "pinned_by" uuid NOT NULL REFERENCES "users"("id"),
       CONSTRAINT "tracked_markets_constellation_ticker" UNIQUE("constellation_id", "market_ticker")
     );
+    CREATE UNIQUE INDEX "tracked_markets_constellation_ticker_idx" ON "tracked_markets" ("constellation_id", "market_ticker");
 
     CREATE TABLE "comments" (
       "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
@@ -413,7 +560,7 @@ async function seed() {
       "total_trades" integer DEFAULT 0 NOT NULL,
       "win_rate" real DEFAULT 0 NOT NULL,
       "rank" integer,
-      "period" text DEFAULT 'all_time' NOT NULL,
+      "period" text NOT NULL DEFAULT 'all_time',
       "updated_at" timestamp with time zone DEFAULT now() NOT NULL
     );
 
@@ -424,112 +571,111 @@ async function seed() {
       "title" text NOT NULL,
       "body" text,
       "link" text,
-      "read" boolean DEFAULT false NOT NULL,
+      "read" boolean NOT NULL DEFAULT false,
       "created_at" timestamp with time zone DEFAULT now() NOT NULL
     );
   `);
-  console.log("  Created all tables.\n");
 
-  // ── 2. Insert users ───────────────────────────────────────────────────
-  console.log("Inserting users...");
+  // ── 1. Insert users ──────────────────────────────────────────────────
+  console.log("\nInserting users...");
   const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 10);
-  const insertedUsers = await db
-    .insert(schema.users)
-    .values(
-      userData.map((u) => ({
+  const insertedUsers: { id: string; username: string }[] = [];
+
+  for (const u of usersData) {
+    const [user] = await db
+      .insert(schema.users)
+      .values({
         username: u.username,
         email: u.email,
         passwordHash,
         displayName: u.displayName,
+        avatarUrl: u.avatarUrl,
         bio: u.bio,
-      }))
-    )
-    .returning();
-  console.log(`  Inserted ${insertedUsers.length} users.\n`);
+        createdAt: daysAgo(Math.floor(Math.random() * 60) + 30),
+      })
+      .returning({ id: schema.users.id, username: schema.users.username });
+    insertedUsers.push(user);
+  }
+  console.log(`  Inserted ${insertedUsers.length} users.`);
 
-  // ── 3. Insert constellations ──────────────────────────────────────────
-  console.log("Inserting constellations...");
-  const insertedConstellations = await db
-    .insert(schema.constellations)
-    .values(
-      constellationData.map((c, i) => ({
+  // ── 2. Insert constellations + members ────────────────────────────────
+  console.log("\nInserting constellations...");
+  const insertedConstellations: { id: string; slug: string }[] = [];
+
+  for (const c of constellationsData) {
+    const [constellation] = await db
+      .insert(schema.constellations)
+      .values({
         name: c.name,
         slug: c.slug,
         description: c.description,
         about: c.about,
         rules: c.rules,
-        categories: [c.topic],
-        isPublic: true,
-        creatorId: insertedUsers[membershipMap[i].find((m) => m.role === "owner")!.userIndex].id,
-        memberCount: membershipMap[i].length,
-      }))
-    )
-    .returning();
-  console.log(`  Inserted ${insertedConstellations.length} constellations.\n`);
+        bannerUrl: c.bannerUrl,
+        categories: c.categories,
+        isPublic: c.isPublic,
+        inviteCode: generateInviteCode(),
+        creatorId: insertedUsers[c.creatorIndex].id,
+        memberCount: c.members.length,
+        createdAt: daysAgo(Math.floor(Math.random() * 30) + 15),
+      })
+      .returning({ id: schema.constellations.id, slug: schema.constellations.slug });
+    insertedConstellations.push(constellation);
 
-  // ── 4. Insert constellation members ───────────────────────────────────
-  console.log("Inserting constellation members...");
-  const memberValues: {
-    constellationId: string;
-    userId: string;
-    role: "owner" | "moderator" | "member";
-    joinedAt: Date;
-  }[] = [];
-
-  for (let ci = 0; ci < membershipMap.length; ci++) {
-    for (const m of membershipMap[ci]) {
-      memberValues.push({
-        constellationId: insertedConstellations[ci].id,
+    // Insert members
+    for (const m of c.members) {
+      await db.insert(schema.constellationMembers).values({
+        constellationId: constellation.id,
         userId: insertedUsers[m.userIndex].id,
         role: m.role,
-        joinedAt: daysAgo(Math.floor(Math.random() * 20) + 7),
+        joinedAt: daysAgo(Math.floor(Math.random() * 14)),
       });
     }
   }
+  console.log(`  Inserted ${insertedConstellations.length} constellations.`);
 
-  await db.insert(schema.constellationMembers).values(memberValues);
-  console.log(`  Inserted ${memberValues.length} memberships.\n`);
+  // ── 3. Insert tracked markets ─────────────────────────────────────────
+  console.log("\nInserting tracked markets...");
+  const tickersByConstellation: string[][] = [];
+  let trackedCount = 0;
 
-  // ── 5. Tracked markets (watchlist) ─────────────────────────────────
-  // Watchlist is now populated only via $mention in comments — no seeding.
-  console.log("Skipping tracked markets (watchlist grows via $mention).\n");
+  for (let ci = 0; ci < constellationsData.length; ci++) {
+    const tickers = getTickersForCategories(constellationsData[ci].categories);
+    tickersByConstellation.push(tickers);
 
-  // Fetch tickers for use in comment seeding
-  console.log("Fetching Gemini prediction market tickers for comment content...");
-  let tickersByTopic = await fetchGeminiTickers();
-  if (!tickersByTopic) {
-    console.log("  Gemini API unavailable, using fallback tickers.");
-    tickersByTopic = fallbackTickers;
-  } else {
-    console.log("  Got tickers from Gemini API.");
+    // Skip tracked markets for the empty constellation
+    if (ci === 9) continue;
+
+    for (const ticker of tickers) {
+      try {
+        await db.insert(schema.trackedMarkets).values({
+          constellationId: insertedConstellations[ci].id,
+          marketTicker: ticker,
+          pinnedBy: insertedUsers[constellationsData[ci].creatorIndex].id,
+          pinnedAt: daysAgo(Math.floor(Math.random() * 10)),
+        });
+        trackedCount++;
+      } catch {
+        // skip duplicates
+      }
+    }
   }
+  console.log(`  Inserted ${trackedCount} tracked markets.`);
 
-  const tickersByConstellation: string[][] = insertedConstellations.map((_, ci) => {
-    const topic = constellationData[ci].topic;
-    const tickers = tickersByTopic![topic] || fallbackTickers[topic];
-    return tickers?.slice(0, 3) || [];
-  });
-
-  // ── 6. Insert comments (with replies) ────────────────────────────────
-  console.log("Inserting comments...");
+  // ── 4. Insert comments + replies ──────────────────────────────────────
+  console.log("\nInserting comments...");
   let totalComments = 0;
-  const rootCommentIds: string[] = [];
+  const allCommentIds: string[] = [];
 
   for (let ci = 0; ci < insertedConstellations.length; ci++) {
     const commentDefs = getComments(ci);
-    const constellationTickers = tickersByConstellation[ci];
+    const tickers = tickersByConstellation[ci];
 
     for (const cDef of commentDefs) {
-      // Resolve TICKER_N placeholders in content
-      let resolvedContent = cDef.content;
       const taggedMarkets: string[] = [];
-      if (cDef.taggedMarketIndices) {
-        for (const idx of cDef.taggedMarketIndices) {
-          const ticker = constellationTickers[idx] || constellationTickers[0];
-          if (ticker) {
-            resolvedContent = resolvedContent.replace(`TICKER_${idx}`, ticker);
-            taggedMarkets.push(ticker);
-          }
+      if (cDef.taggedMarkets) {
+        for (const idx of cDef.taggedMarkets) {
+          if (tickers[idx]) taggedMarkets.push(tickers[idx]);
         }
       }
 
@@ -538,61 +684,62 @@ async function seed() {
         .values({
           constellationId: insertedConstellations[ci].id,
           userId: insertedUsers[cDef.userIndex].id,
-          content: resolvedContent,
-          marketTicker: cDef.marketTicker ? constellationTickers[0] : null,
+          content: cDef.content,
           positionDirection: cDef.positionDirection || null,
           positionAmount: cDef.positionAmount || null,
           taggedMarkets: taggedMarkets.length > 0 ? taggedMarkets : null,
           createdAt: daysAgo(cDef.daysAgo),
         })
-        .returning();
-      rootCommentIds.push(parent.id);
+        .returning({ id: schema.comments.id });
+      allCommentIds.push(parent.id);
       totalComments++;
 
       if (cDef.replies) {
         for (const reply of cDef.replies) {
-          await db.insert(schema.comments).values({
-            constellationId: insertedConstellations[ci].id,
-            userId: insertedUsers[reply.userIndex].id,
-            content: reply.content,
-            parentId: parent.id,
-            createdAt: daysAgo(reply.daysAgo),
-          });
+          const [r] = await db
+            .insert(schema.comments)
+            .values({
+              constellationId: insertedConstellations[ci].id,
+              userId: insertedUsers[reply.userIndex].id,
+              parentId: parent.id,
+              content: reply.content,
+              createdAt: daysAgo(reply.daysAgo),
+            })
+            .returning({ id: schema.comments.id });
+          allCommentIds.push(r.id);
           totalComments++;
         }
       }
     }
   }
-  console.log(`  Inserted ${totalComments} comments.\n`);
+  console.log(`  Inserted ${totalComments} comments.`);
 
-  // ── 6b. Insert comment likes (varying amounts for trending) ─────────
-  console.log("Inserting comment likes...");
-  const likeValues: { commentId: string; userId: string; createdAt: Date }[] = [];
+  // ── 5. Insert comment likes ───────────────────────────────────────────
+  console.log("\nInserting comment likes...");
+  let likeCount = 0;
 
-  // First few comments get lots of recent likes (trending), rest get older/fewer
-  for (let i = 0; i < rootCommentIds.length; i++) {
-    const commentId = rootCommentIds[i];
-    const isTrending = i % 5 === 0; // every 5th comment is "trending"
-    const numLikes = isTrending ? 5 + Math.floor(Math.random() * 3) : Math.floor(Math.random() * 3);
-    const likers = [...insertedUsers].sort(() => Math.random() - 0.5).slice(0, numLikes);
-    for (const liker of likers) {
-      likeValues.push({
-        commentId,
-        userId: liker.id,
-        // Trending comments get likes from the last 24h, others from last 7 days
-        createdAt: isTrending ? daysAgo(0) : daysAgo(Math.floor(Math.random() * 7)),
-      });
+  for (const commentId of allCommentIds) {
+    // Each comment gets 0 to 5 random likes
+    const numLikes = Math.floor(Math.random() * 6);
+    const shuffled = [...insertedUsers].sort(() => Math.random() - 0.5);
+    for (let i = 0; i < Math.min(numLikes, shuffled.length); i++) {
+      try {
+        await db.insert(schema.commentLikes).values({
+          commentId,
+          userId: shuffled[i].id,
+          createdAt: Math.random() > 0.5 ? hoursAgo(Math.floor(Math.random() * 24)) : daysAgo(Math.floor(Math.random() * 7)),
+        });
+        likeCount++;
+      } catch {
+        // skip duplicate
+      }
     }
   }
+  console.log(`  Inserted ${likeCount} comment likes.`);
 
-  if (likeValues.length > 0) {
-    await db.insert(schema.commentLikes).values(likeValues);
-  }
-  console.log(`  Inserted ${likeValues.length} comment likes.\n`);
-
-  // ── 7. Insert user trades ─────────────────────────────────────────────
-  console.log("Inserting user trades...");
-  const tradeValues: {
+  // ── 6. Insert trades ──────────────────────────────────────────────────
+  console.log("\nInserting trades...");
+  interface TradeValue {
     userId: string;
     constellationId: string;
     marketTicker: string;
@@ -602,20 +749,26 @@ async function seed() {
     resolved: boolean;
     pnl: number | null;
     createdAt: Date;
-  }[] = [];
+  }
+  const tradeValues: TradeValue[] = [];
 
-  // Generate trades for each user in their constellations
-  for (let ui = 0; ui < insertedUsers.length; ui++) {
-    // Find which constellations this user is in
-    const userConstellations: number[] = [];
-    for (let ci = 0; ci < membershipMap.length; ci++) {
-      if (membershipMap[ci].some((m) => m.userIndex === ui)) {
-        userConstellations.push(ci);
-      }
+  // Build membership map: which constellations each user belongs to
+  const userConstellationMap = new Map<number, number[]>();
+  for (let ci = 0; ci < constellationsData.length; ci++) {
+    for (const m of constellationsData[ci].members) {
+      const list = userConstellationMap.get(m.userIndex) || [];
+      list.push(ci);
+      userConstellationMap.set(m.userIndex, list);
     }
+  }
 
-    // Generate 5-10 trades per user
-    const numTrades = Math.floor(Math.random() * 6) + 5;
+  for (let ui = 0; ui < insertedUsers.length; ui++) {
+    const userConstellations = userConstellationMap.get(ui) || [];
+    if (userConstellations.length === 0) continue;
+
+    // Vary trade count: 0 for brand-new users, 5-15 for active
+    const numTrades = ui === 10 ? 0 : Math.floor(Math.random() * 11) + 5;
+
     for (let t = 0; t < numTrades; t++) {
       const ci = pick(userConstellations);
       const tickers = tickersByConstellation[ci];
@@ -624,10 +777,9 @@ async function seed() {
       const direction = Math.random() > 0.5 ? "yes" as const : "no" as const;
       const amount = pick([10, 25, 50, 100, 150, 200, 250, 300, 500]);
       const priceAtTrade = randBetween(0.15, 0.85);
-      const resolved = Math.random() > 0.4;
+      const resolved = Math.random() > 0.35;
       let pnl: number | null = null;
       if (resolved) {
-        // Simulate P&L: roughly 50/50 win/loss with varying magnitude
         const won = Math.random() > 0.45;
         pnl = won
           ? randBetween(amount * 0.1, amount * 0.8)
@@ -648,14 +800,15 @@ async function seed() {
     }
   }
 
-  await db.insert(schema.userTrades).values(tradeValues);
-  console.log(`  Inserted ${tradeValues.length} trades.\n`);
+  if (tradeValues.length > 0) {
+    await db.insert(schema.userTrades).values(tradeValues);
+  }
+  console.log(`  Inserted ${tradeValues.length} trades.`);
 
-  // ── 8. Compute & insert leaderboard entries ───────────────────────────
-  console.log("Computing leaderboard entries...");
+  // ── 7. Compute leaderboard ────────────────────────────────────────────
+  console.log("\nComputing leaderboard...");
+  const userStats = new Map<string, { totalPnl: number; totalTrades: number; wins: number }>();
 
-  // Group trades by user
-  const userStats: Map<string, { totalPnl: number; totalTrades: number; wins: number }> = new Map();
   for (const trade of tradeValues) {
     const stats = userStats.get(trade.userId) || { totalPnl: 0, totalTrades: 0, wins: 0 };
     stats.totalTrades++;
@@ -666,7 +819,6 @@ async function seed() {
     userStats.set(trade.userId, stats);
   }
 
-  // Sort by PnL for ranking
   const ranked = Array.from(userStats.entries())
     .map(([userId, stats]) => ({
       userId,
@@ -697,38 +849,40 @@ async function seed() {
     });
   }
 
-  await db.insert(schema.leaderboardEntries).values(leaderboardValues);
-  console.log(`  Inserted ${leaderboardValues.length} leaderboard entries.\n`);
+  if (leaderboardValues.length > 0) {
+    await db.insert(schema.leaderboardEntries).values(leaderboardValues);
+  }
+  console.log(`  Inserted ${leaderboardValues.length} leaderboard entries.`);
 
-  // ── 9. Insert notifications for demo user ─────────────────────────────
-  console.log("Inserting notifications for demo user...");
+  // ── 8. Insert notifications for demo user ─────────────────────────────
+  console.log("\nInserting notifications...");
   const demoUserId = insertedUsers[0].id;
 
   const notificationValues = [
     {
       userId: demoUserId,
       type: "comment_reply" as const,
-      title: "Sam Patel replied to your comment",
-      body: "ETF inflows have slowed this week though...",
-      link: `/rooms/${insertedConstellations[0].slug}`,
+      title: "Alex Chen replied to your comment",
+      body: "Counterpoint: spot ETF inflows are still strong...",
+      link: `/constellations/${insertedConstellations[0].slug}`,
       read: true,
       createdAt: daysAgo(5),
     },
     {
       userId: demoUserId,
-      type: "comment_reply" as const,
-      title: "Taylor Kim replied in Tech Futures",
-      body: "The market is pricing in the hype cycle too much...",
-      link: `/rooms/${insertedConstellations[3].slug}`,
+      type: "room_invite" as const,
+      title: "You were invited to Election War Room",
+      body: "Taylor Kim invited you to join a private constellation.",
+      link: `/constellations/${insertedConstellations[8].slug}`,
       read: true,
-      createdAt: daysAgo(5),
+      createdAt: daysAgo(4),
     },
     {
       userId: demoUserId,
       type: "market_resolved" as const,
-      title: "Market resolved: BTC above 100k",
+      title: "Market resolved: BTC 15-min prediction",
       body: "Your YES position resolved. Check your P&L.",
-      link: `/rooms/${insertedConstellations[0].slug}`,
+      link: `/constellations/${insertedConstellations[0].slug}`,
       read: false,
       createdAt: daysAgo(2),
     },
@@ -736,60 +890,59 @@ async function seed() {
       userId: demoUserId,
       type: "leaderboard_rank" as const,
       title: "You moved up on the leaderboard!",
-      body: `You're now ranked #${ranked.findIndex((r) => r.userId === demoUserId) + 1} overall.`,
-      link: `/rooms/${insertedConstellations[0].slug}`,
+      body: "You're now in the top 3 on Crypto Alpha.",
+      link: `/constellations/${insertedConstellations[0].slug}`,
       read: false,
       createdAt: daysAgo(1),
     },
     {
       userId: demoUserId,
-      type: "room_invite" as const,
-      title: "You were invited to Macro Moves",
-      body: "Alex Chen invited you to join the discussion.",
-      link: `/rooms/${insertedConstellations[4].slug}`,
-      read: false,
-      createdAt: daysAgo(3),
-    },
-    {
-      userId: demoUserId,
       type: "comment_reply" as const,
-      title: "Alex Chen replied in Macro Moves",
-      body: "But labor market is still hot...",
-      link: `/rooms/${insertedConstellations[4].slug}`,
+      title: "Morgan Liu replied to your comment",
+      body: "I'm sitting on mostly cash. Waiting for the CPI print...",
+      link: `/constellations/${insertedConstellations[4].slug}`,
       read: false,
-      createdAt: daysAgo(6),
+      createdAt: hoursAgo(3),
     },
     {
       userId: demoUserId,
       type: "market_resolved" as const,
       title: "CPI market resolved",
       body: "The CPI above 3% market resolved NO. Your position won!",
-      link: `/rooms/${insertedConstellations[4].slug}`,
+      link: `/constellations/${insertedConstellations[2].slug}`,
       read: false,
-      createdAt: daysAgo(0),
+      createdAt: hoursAgo(1),
     },
   ];
 
   await db.insert(schema.notifications).values(notificationValues);
-  console.log(`  Inserted ${notificationValues.length} notifications.\n`);
+  console.log(`  Inserted ${notificationValues.length} notifications.`);
 
   // ── Summary ───────────────────────────────────────────────────────────
-  console.log("=".repeat(50));
-  console.log("Seed complete!");
-  console.log("=".repeat(50));
+  console.log("\n" + "=".repeat(60));
+  console.log("SEED COMPLETE");
+  console.log("=".repeat(60));
   console.log(`  Users:          ${insertedUsers.length}`);
-  console.log(`  Constellations: ${insertedConstellations.length}`);
-  console.log(`  Members:        ${memberValues.length}`);
-  console.log(`  Tracked Markets:${insertedTrackedMarkets.length}`);
+  console.log(`  Constellations: ${insertedConstellations.length} (${constellationsData.filter(c => !c.isPublic).length} private)`);
+  console.log(`  Members:        ${constellationsData.reduce((sum, c) => sum + c.members.length, 0)}`);
+  console.log(`  Tracked Markets:${trackedCount}`);
   console.log(`  Comments:       ${totalComments}`);
+  console.log(`  Likes:          ${likeCount}`);
   console.log(`  Trades:         ${tradeValues.length}`);
   console.log(`  Leaderboard:    ${leaderboardValues.length}`);
   console.log(`  Notifications:  ${notificationValues.length}`);
   console.log();
+  console.log("Constellation variety:");
+  for (const c of constellationsData) {
+    const cats = c.categories.length > 0 ? c.categories.join(", ") : "(none)";
+    const vis = c.isPublic ? "public" : "PRIVATE";
+    console.log(`  ${c.name.padEnd(22)} ${vis.padEnd(8)} categories: ${cats}`);
+  }
+  console.log();
   console.log("Demo credentials:");
   console.log(`  Email:    ${DEMO_EMAIL}`);
   console.log(`  Password: ${DEMO_PASSWORD}`);
-  console.log("=".repeat(50));
+  console.log("=".repeat(60));
 
   await pool.end();
 }
