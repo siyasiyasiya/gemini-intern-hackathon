@@ -21,7 +21,7 @@ export function ConstellationStats({ constellationSlug }: { constellationSlug: s
     { icon: Target, label: "Accuracy", value: formatPercentage(stats.collectiveAccuracy) },
     { icon: DollarSign, label: "Volume", value: formatCurrency(stats.totalVolume) },
     { icon: BarChart3, label: "Trades", value: formatCompactNumber(stats.totalTrades) },
-    { icon: Users, label: "Active", value: String(stats.activeMemberCount) },
+    { icon: Users, label: "Members", value: String(stats.memberCount) },
   ];
 
   return (

@@ -104,17 +104,15 @@ export interface TrackedMarketResponse {
 }
 
 export interface ConsensusData {
-  consensusPercent: number; // 0-1, portion of money on YES
-  totalPositions: number;
+  consensusPercent: number; // 0-1, dollar-weighted portion of money on YES
+  totalPositions: number; // distinct current members with a position
   yesAmount: number;
   noAmount: number;
-  yesCount: number;
-  noCount: number;
 }
 
 export interface ConstellationStatsResponse {
   collectiveAccuracy: number;
   totalVolume: number;
   totalTrades: number;
-  activeMemberCount: number;
+  memberCount: number;
 }

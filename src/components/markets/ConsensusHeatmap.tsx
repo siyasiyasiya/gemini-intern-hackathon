@@ -16,20 +16,29 @@ function DivergenceLabel({ divergence }: { divergence: number }) {
 
   if (abs >= 0.15) {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-red-500/15 px-2 py-0.5 text-[10px] font-semibold text-red-400">
+      <span
+        className="inline-flex items-center gap-1 rounded-full bg-red-500/15 px-2 py-0.5 text-[10px] font-semibold text-red-400 cursor-help"
+        title={`Community consensus is ${pct} points ${divergence < 0 ? "below" : "above"} the market price — a contrarian signal`}
+      >
         CONTRARIAN {sign}{pct}%
       </span>
     );
   }
   if (abs >= 0.05) {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-yellow-500/15 px-2 py-0.5 text-[10px] font-semibold text-yellow-400">
+      <span
+        className="inline-flex items-center gap-1 rounded-full bg-yellow-500/15 px-2 py-0.5 text-[10px] font-semibold text-yellow-400 cursor-help"
+        title={`Community consensus is ${pct} points ${divergence < 0 ? "below" : "above"} the market price`}
+      >
         LEANING {sign}{pct}%
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-green-500/15 px-2 py-0.5 text-[10px] font-semibold text-green-400">
+    <span
+      className="inline-flex items-center gap-1 rounded-full bg-green-500/15 px-2 py-0.5 text-[10px] font-semibold text-green-400 cursor-help"
+      title="Community consensus is within 5 points of the market price"
+    >
       ALIGNED
     </span>
   );
@@ -48,7 +57,12 @@ export function ConsensusHeatmap({ constellationSlug, ticker, marketYesPrice }: 
     <div className="rounded-xl border border-border bg-card p-4 space-y-3">
       <div className="flex items-center gap-1.5">
         <Users className="h-3.5 w-3.5 text-muted-foreground" />
-        <h3 className="text-xs font-medium text-muted-foreground">Community Consensus</h3>
+        <h3
+          className="text-xs font-medium text-muted-foreground cursor-help"
+          title="Weighted by position size (volume), not headcount. Only includes current constellation members."
+        >
+          Community Consensus (by volume)
+        </h3>
       </div>
 
       {/* Community bar */}
@@ -81,7 +95,10 @@ export function ConsensusHeatmap({ constellationSlug, ticker, marketYesPrice }: 
 
       <div className="flex items-center justify-between">
         <DivergenceLabel divergence={divergence} />
-        <span className="text-[10px] text-muted-foreground">
+        <span
+          className="text-[10px] text-muted-foreground cursor-help"
+          title="Distinct members of this constellation who hold at least one position on this market"
+        >
           {data.totalPositions} member{data.totalPositions !== 1 ? "s" : ""} positioned
         </span>
       </div>

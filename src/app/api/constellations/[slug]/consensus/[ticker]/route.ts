@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { constellations, userTrades } from "@/lib/db/schema";
+import { constellations, constellationMembers, userTrades } from "@/lib/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import type { ApiResponse, ConsensusData } from "@/types/api";
 
@@ -21,14 +21,21 @@ export async function GET(
       return NextResponse.json<ApiResponse<null>>({ error: "Constellation not found" }, { status: 404 });
     }
 
+    // Only count trades from current constellation members
     const [result] = await db
       .select({
         yesAmount: sql<number>`coalesce(sum(${userTrades.amount}) filter (where ${userTrades.direction} = 'yes'), 0)`,
         noAmount: sql<number>`coalesce(sum(${userTrades.amount}) filter (where ${userTrades.direction} = 'no'), 0)`,
-        yesCount: sql<number>`count(distinct ${userTrades.userId}) filter (where ${userTrades.direction} = 'yes')`,
-        noCount: sql<number>`count(distinct ${userTrades.userId}) filter (where ${userTrades.direction} = 'no')`,
+        totalMembers: sql<number>`count(distinct ${userTrades.userId})`,
       })
       .from(userTrades)
+      .innerJoin(
+        constellationMembers,
+        and(
+          eq(userTrades.userId, constellationMembers.userId),
+          eq(constellationMembers.constellationId, constellation.id)
+        )
+      )
       .where(
         and(
           eq(userTrades.constellationId, constellation.id),
@@ -46,11 +53,9 @@ export async function GET(
 
     const data: ConsensusData = {
       consensusPercent: yesAmount / total,
-      totalPositions: (result?.yesCount || 0) + (result?.noCount || 0),
+      totalPositions: result?.totalMembers || 0,
       yesAmount,
       noAmount,
-      yesCount: result?.yesCount || 0,
-      noCount: result?.noCount || 0,
     };
 
     return NextResponse.json<ApiResponse<ConsensusData>>({ data });
