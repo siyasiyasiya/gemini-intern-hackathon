@@ -552,7 +552,7 @@ function TopTraders({ traders }: { traders: LeaderboardEntryResponse[] }) {
       <div className="flex items-center justify-between mb-5">
         <h2 className="text-lg font-semibold">Top Traders</h2>
         <Link
-          href="/constellations"
+          href="/leaderboard"
           className="flex items-center gap-1 text-sm text-accent hover:text-accent/80 transition-colors"
         >
           Full leaderboard
