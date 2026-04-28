@@ -92,6 +92,7 @@ export default function ConstellationDetailPage() {
             {selectedMarket ? (
               <MarketDetail
                 ticker={selectedMarket}
+                constellationSlug={slug}
                 onBack={() => setSelectedMarket(null)}
                 onSelectRelated={(ticker) => setSelectedMarket(ticker)}
               />
