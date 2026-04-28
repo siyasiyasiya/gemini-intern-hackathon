@@ -1,9 +1,92 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { constellations, comments, users } from "@/lib/db/schema";
+import { constellations, comments, users, commentLikes } from "@/lib/db/schema";
 import { eq, and, isNull, desc, sql } from "drizzle-orm";
 import type { ApiResponse, CommentResponse } from "@/types/api";
+
+const commentSelect = {
+  id: comments.id,
+  constellationId: comments.constellationId,
+  userId: comments.userId,
+  marketTicker: comments.marketTicker,
+  parentId: comments.parentId,
+  content: comments.content,
+  positionDirection: comments.positionDirection,
+  positionAmount: comments.positionAmount,
+  taggedMarkets: comments.taggedMarkets,
+  createdAt: comments.createdAt,
+  userName: users.username,
+  userDisplayName: users.displayName,
+  userAvatarUrl: users.avatarUrl,
+};
+
+async function getLikesForComments(commentIds: string[], currentUserId?: string) {
+  if (commentIds.length === 0) return new Map<string, { count: number; likedByMe: boolean }>();
+
+  const counts = await db
+    .select({
+      commentId: commentLikes.commentId,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(commentLikes)
+    .where(sql`${commentLikes.commentId} in ${commentIds}`)
+    .groupBy(commentLikes.commentId);
+
+  const likeMap = new Map<string, { count: number; likedByMe: boolean }>();
+  for (const c of counts) {
+    likeMap.set(c.commentId, { count: c.count, likedByMe: false });
+  }
+
+  if (currentUserId) {
+    const myLikes = await db
+      .select({ commentId: commentLikes.commentId })
+      .from(commentLikes)
+      .where(and(
+        sql`${commentLikes.commentId} in ${commentIds}`,
+        eq(commentLikes.userId, currentUserId)
+      ));
+
+    for (const l of myLikes) {
+      const entry = likeMap.get(l.commentId);
+      if (entry) entry.likedByMe = true;
+      else likeMap.set(l.commentId, { count: 0, likedByMe: true });
+    }
+  }
+
+  return likeMap;
+}
+
+function toCommentResponse(
+  r: any,
+  likeMap: Map<string, { count: number; likedByMe: boolean }>,
+  replies: CommentResponse[] = []
+): CommentResponse {
+  const likes = likeMap.get(r.id) || { count: 0, likedByMe: false };
+  return {
+    id: r.id,
+    constellationId: r.constellationId,
+    userId: r.userId,
+    marketTicker: r.marketTicker,
+    parentId: r.parentId,
+    content: r.content,
+    positionDirection: r.positionDirection,
+    positionAmount: r.positionAmount,
+    taggedMarkets: r.taggedMarkets,
+    likeCount: likes.count,
+    likedByMe: likes.likedByMe,
+    createdAt: r.createdAt instanceof Date ? r.createdAt.toISOString() : r.createdAt,
+    user: {
+      id: r.userId,
+      username: r.userName,
+      displayName: r.userDisplayName,
+      avatarUrl: r.userAvatarUrl,
+      bio: null,
+      createdAt: "",
+    },
+    replies,
+  };
+}
 
 export async function GET(
   request: NextRequest,
@@ -13,6 +96,10 @@ export async function GET(
   const { searchParams } = new URL(request.url);
   const marketTicker = searchParams.get("marketTicker");
   const parentId = searchParams.get("parentId");
+  const taggedMarket = searchParams.get("taggedMarket");
+
+  const session = await auth();
+  const currentUserId = session?.user?.id;
 
   try {
     const [constellation] = await db
@@ -25,10 +112,7 @@ export async function GET(
       return NextResponse.json<ApiResponse<null>>({ error: "Constellation not found" }, { status: 404 });
     }
 
-    const constellationId = constellation.id;
-    const taggedMarket = searchParams.get("taggedMarket");
-
-    const conditions = [eq(comments.constellationId, constellationId)];
+    const conditions = [eq(comments.constellationId, constellation.id)];
 
     if (marketTicker) {
       conditions.push(eq(comments.marketTicker, marketTicker));
@@ -44,22 +128,6 @@ export async function GET(
       conditions.push(isNull(comments.parentId));
     }
 
-    const commentSelect = {
-      id: comments.id,
-      constellationId: comments.constellationId,
-      userId: comments.userId,
-      marketTicker: comments.marketTicker,
-      parentId: comments.parentId,
-      content: comments.content,
-      positionDirection: comments.positionDirection,
-      positionAmount: comments.positionAmount,
-      taggedMarkets: comments.taggedMarkets,
-      createdAt: comments.createdAt,
-      userName: users.username,
-      userDisplayName: users.displayName,
-      userAvatarUrl: users.avatarUrl,
-    };
-
     const rows = await db
       .select(commentSelect)
       .from(comments)
@@ -67,47 +135,31 @@ export async function GET(
       .where(and(...conditions))
       .orderBy(desc(comments.createdAt));
 
-    function toCommentResponse(r: typeof rows[number]): CommentResponse {
-      return {
-        id: r.id,
-        constellationId: r.constellationId,
-        userId: r.userId,
-        marketTicker: r.marketTicker,
-        parentId: r.parentId,
-        content: r.content,
-        positionDirection: r.positionDirection,
-        positionAmount: r.positionAmount,
-        taggedMarkets: r.taggedMarkets,
-        createdAt: r.createdAt.toISOString(),
-        user: {
-          id: r.userId,
-          username: r.userName,
-          displayName: r.userDisplayName,
-          avatarUrl: r.userAvatarUrl,
-          bio: null,
-          createdAt: "",
-        },
-      };
+    const allReplyRows = new Map<string, (typeof rows)>();
+    const allCommentIds = rows.map((r) => r.id);
+
+    if (!parentId) {
+      for (const row of rows) {
+        const replies = await db
+          .select(commentSelect)
+          .from(comments)
+          .innerJoin(users, eq(comments.userId, users.id))
+          .where(eq(comments.parentId, row.id))
+          .orderBy(comments.createdAt)
+          .limit(3);
+
+        allReplyRows.set(row.id, replies);
+        for (const r of replies) allCommentIds.push(r.id);
+      }
     }
 
-    const commentsWithReplies: CommentResponse[] = await Promise.all(
-      rows.map(async (row) => {
-        const replies = parentId
-          ? []
-          : await db
-              .select(commentSelect)
-              .from(comments)
-              .innerJoin(users, eq(comments.userId, users.id))
-              .where(eq(comments.parentId, row.id))
-              .orderBy(comments.createdAt)
-              .limit(3);
+    const likeMap = await getLikesForComments(allCommentIds, currentUserId);
 
-        return {
-          ...toCommentResponse(row),
-          replies: replies.map(toCommentResponse),
-        };
-      })
-    );
+    const commentsWithReplies: CommentResponse[] = rows.map((row) => {
+      const replyRows = allReplyRows.get(row.id) || [];
+      const replies = replyRows.map((r) => toCommentResponse(r, likeMap));
+      return toCommentResponse(row, likeMap, replies);
+    });
 
     return NextResponse.json<ApiResponse<CommentResponse[]>>({
       data: commentsWithReplies,
@@ -189,6 +241,8 @@ export async function POST(
       positionDirection: newComment.positionDirection,
       positionAmount: newComment.positionAmount,
       taggedMarkets: newComment.taggedMarkets,
+      likeCount: 0,
+      likedByMe: false,
       createdAt: newComment.createdAt.toISOString(),
       user: {
         id: user.id,

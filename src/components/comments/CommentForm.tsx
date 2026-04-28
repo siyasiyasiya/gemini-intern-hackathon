@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
-import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MarketAutocomplete } from "./MarketAutocomplete";
 import type { Market } from "@/types/market";
@@ -33,6 +32,59 @@ const CATEGORY_ICONS: Record<string, string> = {
   other: "📊",
 };
 
+function createPillElement(market: Market): HTMLSpanElement {
+  const icon = CATEGORY_ICONS[market.category] || "📊";
+  const label = market.title.length > 28 ? market.title.slice(0, 28) + "…" : market.title;
+  const pill = document.createElement("span");
+  pill.contentEditable = "false";
+  pill.dataset.marketTicker = market.ticker;
+  pill.dataset.marketTitle = market.title;
+  pill.dataset.marketCategory = market.category;
+  pill.className =
+    "inline-flex items-center gap-0.5 rounded-full bg-accent/10 border border-accent/20 px-1.5 py-px text-xs font-medium text-foreground mx-0.5 align-baseline cursor-default select-none";
+  pill.textContent = `${icon} ${label}`;
+  return pill;
+}
+
+function getTextBeforeCursor(editor: HTMLElement): string | null {
+  const sel = window.getSelection();
+  if (!sel || sel.rangeCount === 0) return null;
+  const range = sel.getRangeAt(0);
+  if (!editor.contains(range.startContainer)) return null;
+
+  const preRange = document.createRange();
+  preRange.selectNodeContents(editor);
+  preRange.setEnd(range.startContainer, range.startOffset);
+  const fragment = preRange.cloneContents();
+  const div = document.createElement("div");
+  div.appendChild(fragment);
+  return div.textContent ?? "";
+}
+
+function extractContent(editor: HTMLElement): {
+  text: string;
+  tickers: string[];
+} {
+  const tickers: string[] = [];
+  let text = "";
+  for (const node of Array.from(editor.childNodes)) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      text += node.textContent ?? "";
+    } else if (node instanceof HTMLElement) {
+      if (node.dataset.marketTicker) {
+        const ticker = node.dataset.marketTicker;
+        text += `{{market:${ticker}}}`;
+        if (!tickers.includes(ticker)) tickers.push(ticker);
+      } else if (node.tagName === "BR") {
+        text += "\n";
+      } else {
+        text += node.textContent ?? "";
+      }
+    }
+  }
+  return { text, tickers };
+}
+
 export function CommentForm({
   constellationSlug,
   marketTicker,
@@ -41,151 +93,164 @@ export function CommentForm({
   onCancel,
   placeholder = "Share your thoughts... (type $ to tag a market)",
 }: CommentFormProps) {
-  const [content, setContent] = useState("");
   const [showPosition, setShowPosition] = useState(false);
   const [direction, setDirection] = useState<"yes" | "no">("yes");
   const [amount, setAmount] = useState("50");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [taggedMarkets, setTaggedMarkets] = useState<Market[]>([]);
+  const [isEmpty, setIsEmpty] = useState(true);
   const [autocomplete, setAutocomplete] = useState<{
     query: string;
     position: { top: number; left: number };
   } | null>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const editorRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  // Track where the $ trigger started so we can remove it on select
-  const triggerStartRef = useRef<number | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
-  const handleContentChange = useCallback((value: string) => {
-    setContent(value);
+  const checkAutocomplete = useCallback(() => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    const textBefore = getTextBeforeCursor(editor);
+    if (!textBefore) { setAutocomplete(null); return; }
 
-    const textarea = textareaRef.current;
-    if (!textarea) return;
+    const lastDollar = textBefore.lastIndexOf("$");
+    if (lastDollar === -1) { setAutocomplete(null); return; }
 
-    const cursorPos = textarea.selectionStart;
-    const textBeforeCursor = value.slice(0, cursorPos);
-
-    // Find the last $ that starts a market mention
-    const lastDollar = textBeforeCursor.lastIndexOf("$");
-    if (lastDollar === -1) {
-      setAutocomplete(null);
-      triggerStartRef.current = null;
-      return;
-    }
-
-    // Only trigger if $ is at start of text or preceded by whitespace
-    const charBefore = lastDollar > 0 ? textBeforeCursor[lastDollar - 1] : " ";
+    const charBefore = lastDollar > 0 ? textBefore[lastDollar - 1] : " ";
     if (charBefore !== " " && charBefore !== "\n" && lastDollar !== 0) {
       setAutocomplete(null);
-      triggerStartRef.current = null;
       return;
     }
 
-    const query = textBeforeCursor.slice(lastDollar + 1);
-
-    // Close if there's a space after query started (user moved on)
-    if (query.includes(" ") || query.includes("\n")) {
-      setAutocomplete(null);
-      triggerStartRef.current = null;
-      return;
-    }
+    const query = textBefore.slice(lastDollar + 1);
+    if (query.includes(" ") || query.includes("\n")) { setAutocomplete(null); return; }
 
     if (query.length >= 1) {
-      triggerStartRef.current = lastDollar;
-      const rect = textarea.getBoundingClientRect();
+      const rect = editor.getBoundingClientRect();
       const containerRect = containerRef.current?.getBoundingClientRect();
       const top = rect.bottom - (containerRect?.top ?? 0) + 4;
       setAutocomplete({ query, position: { top, left: 0 } });
     } else {
       setAutocomplete(null);
-      triggerStartRef.current = null;
     }
   }, []);
 
-  const handleSelectMarket = useCallback(
-    (market: Market) => {
-      const textarea = textareaRef.current;
-      if (!textarea) return;
+  const handleInput = useCallback(() => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    const tc = editor.textContent?.trim() ?? "";
+    setIsEmpty(tc.length === 0 && editor.querySelectorAll("[data-market-ticker]").length === 0);
+    checkAutocomplete();
+  }, [checkAutocomplete]);
 
-      // Remove the "$query" text from content
-      const cursorPos = textarea.selectionStart;
-      const dollarPos = triggerStartRef.current ?? content.lastIndexOf("$");
-      const before = content.slice(0, dollarPos);
-      const after = content.slice(cursorPos);
-      const newContent = before + after;
+  const handleSelectMarket = useCallback((market: Market) => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
 
-      setContent(newContent);
+    const range = sel.getRangeAt(0);
+    const textNode = range.startContainer;
 
-      // Add to tagged markets if not already there
-      if (!taggedMarkets.some((m) => m.ticker === market.ticker)) {
-        setTaggedMarkets((prev) => [...prev, market]);
+    if (textNode.nodeType === Node.TEXT_NODE && textNode.textContent) {
+      const text = textNode.textContent;
+      const cursorOffset = range.startOffset;
+      const textUpToCursor = text.slice(0, cursorOffset);
+      const lastDollar = textUpToCursor.lastIndexOf("$");
+
+      if (lastDollar !== -1) {
+        const beforeDollar = text.slice(0, lastDollar);
+        const afterCursor = text.slice(cursorOffset);
+        const parent = textNode.parentNode!;
+        const pill = createPillElement(market);
+        const spaceAfter = document.createTextNode("\u00A0");
+
+        if (beforeDollar) {
+          parent.insertBefore(document.createTextNode(beforeDollar), textNode);
+        }
+        parent.insertBefore(pill, textNode);
+        parent.insertBefore(spaceAfter, textNode);
+
+        if (afterCursor) {
+          textNode.textContent = afterCursor;
+        } else {
+          parent.removeChild(textNode);
+        }
+
+        const newRange = document.createRange();
+        newRange.setStartAfter(spaceAfter);
+        newRange.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(newRange);
       }
+    }
 
-      setAutocomplete(null);
-      triggerStartRef.current = null;
+    setAutocomplete(null);
+    setIsEmpty(false);
+    editor.focus();
+  }, []);
 
-      // Refocus textarea at the position where $query was
-      setTimeout(() => {
-        textarea.focus();
-        textarea.setSelectionRange(dollarPos, dollarPos);
-      }, 0);
-    },
-    [content, taggedMarkets]
-  );
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (autocomplete && ["ArrowDown", "ArrowUp", "Enter"].includes(e.key)) {
+      return; // handled by MarketAutocomplete
+    }
+    if (e.key === "Enter" && !e.shiftKey && !autocomplete) {
+      e.preventDefault();
+      formRef.current?.requestSubmit();
+    }
+  }, [autocomplete]);
 
-  const removeTaggedMarket = (ticker: string) => {
-    setTaggedMarkets((prev) => prev.filter((m) => m.ticker !== ticker));
-  };
+  const handlePaste = useCallback((e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const text = e.clipboardData.getData("text/plain");
+    document.execCommand("insertText", false, text);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const trimmed = content.trim();
-    if (!trimmed || isSubmitting) return;
+    const editor = editorRef.current;
+    if (!editor || isSubmitting) return;
+
+    const { text, tickers } = extractContent(editor);
+    const trimmed = text.trim();
+    if (!trimmed) return;
 
     setIsSubmitting(true);
     try {
-      // Build the final content with market tokens appended
-      let finalContent = trimmed;
-      if (taggedMarkets.length > 0) {
-        const tokens = taggedMarkets
-          .map((m) => `{{market:${m.ticker}}}`)
-          .join(" ");
-        finalContent = `${trimmed}\n${tokens}`;
-      }
-
       await onSubmit({
-        content: finalContent,
+        content: trimmed,
         marketTicker,
         parentId,
         positionDirection: showPosition ? direction : undefined,
         positionAmount: showPosition ? Number(amount) / 100 : undefined,
-        taggedMarkets:
-          taggedMarkets.length > 0
-            ? taggedMarkets.map((m) => m.ticker)
-            : undefined,
+        taggedMarkets: tickers.length > 0 ? tickers : undefined,
       });
-      setContent("");
+      editor.innerHTML = "";
+      setIsEmpty(true);
       setShowPosition(false);
       setAmount("50");
-      setTaggedMarkets([]);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Suppress unused variable warning
   void constellationSlug;
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3">
+    <form ref={formRef} onSubmit={handleSubmit} className="space-y-3">
       <div ref={containerRef} className="relative">
-        <textarea
-          ref={textareaRef}
-          value={content}
-          onChange={(e) => handleContentChange(e.target.value)}
-          placeholder={placeholder}
-          rows={3}
-          className="w-full resize-none rounded-lg border border-input-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none"
+        <div
+          ref={editorRef}
+          contentEditable
+          suppressContentEditableWarning
+          role="textbox"
+          onInput={handleInput}
+          onKeyDown={handleKeyDown}
+          onPaste={handlePaste}
+          data-placeholder={placeholder}
+          className={cn(
+            "min-h-[4.5rem] w-full rounded-lg border border-input-border bg-background px-3 py-2 text-sm text-foreground leading-relaxed focus:border-foreground focus:outline-none",
+            "empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground empty:before:pointer-events-none"
+          )}
         />
         {autocomplete && (
           <MarketAutocomplete
@@ -196,28 +261,6 @@ export function CommentForm({
           />
         )}
       </div>
-
-      {/* Tagged market pills */}
-      {taggedMarkets.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {taggedMarkets.map((market) => (
-            <span
-              key={market.ticker}
-              className="inline-flex items-center gap-1 rounded-full bg-accent/10 border border-accent/20 px-2 py-0.5 text-xs font-medium text-foreground"
-            >
-              <span>{CATEGORY_ICONS[market.category] || "📊"}</span>
-              <span className="max-w-[160px] truncate">{market.title}</span>
-              <button
-                type="button"
-                onClick={() => removeTaggedMarket(market.ticker)}
-                className="ml-0.5 rounded-full p-0.5 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </span>
-          ))}
-        </div>
-      )}
 
       {marketTicker && (
         <div className="flex items-center gap-2">
@@ -286,7 +329,7 @@ export function CommentForm({
         )}
         <button
           type="submit"
-          disabled={!content.trim() || isSubmitting}
+          disabled={isEmpty || isSubmitting}
           className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
         >
           {isSubmitting ? "Posting..." : "Post"}

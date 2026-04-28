@@ -105,6 +105,8 @@ export async function GET(request: NextRequest) {
       positionDirection: r.positionDirection,
       positionAmount: r.positionAmount,
       taggedMarkets: r.taggedMarkets,
+      likeCount: 0,
+      likedByMe: false,
       createdAt: r.createdAt.toISOString(),
       user: {
         id: r.userId,
