@@ -194,7 +194,7 @@ export function Comment({
             {!isThreadReply && replyCount > 0 && onViewThread && (
               <button
                 onClick={() => onViewThread(comment.id)}
-                className="flex items-center gap-1 text-xs font-medium text-accent hover:underline transition-colors"
+                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
                 <MessageSquare className="h-3.5 w-3.5" />
                 {replyCount} {replyCount === 1 ? "reply" : "replies"}
