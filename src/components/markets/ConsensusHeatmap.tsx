@@ -59,7 +59,21 @@ function CategoricalConsensus({
 }) {
   const { data, isLoading } = useCategoricalConsensus(constellationSlug, ticker, true);
 
-  if (isLoading || !data) return null;
+  if (isLoading) return null;
+
+  if (!data || data.outcomes.length === 0) {
+    return (
+      <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+        <div className="flex items-center gap-1.5">
+          <Users className="h-3.5 w-3.5 text-muted-foreground" />
+          <h3 className="text-xs font-medium text-muted-foreground">Community Positions</h3>
+        </div>
+        <p className="text-[10px] text-muted-foreground">
+          No positions shared yet. Share your position in a comment to contribute.
+        </p>
+      </div>
+    );
+  }
 
   // Build display rows: top 5 + "N others" if needed
   const visible = data.outcomes.slice(0, MAX_VISIBLE_OUTCOMES);
