@@ -591,15 +591,18 @@ async function seed() {
   console.log("Inserting comment likes...");
   const likeValues: { commentId: string; userId: string; createdAt: Date }[] = [];
 
-  for (const commentId of rootCommentIds) {
-    // Give each comment a random number of likes (0-6) from random users
-    const numLikes = Math.floor(Math.random() * 7);
+  // First few comments get lots of recent likes (trending), rest get older/fewer
+  for (let i = 0; i < rootCommentIds.length; i++) {
+    const commentId = rootCommentIds[i];
+    const isTrending = i % 5 === 0; // every 5th comment is "trending"
+    const numLikes = isTrending ? 5 + Math.floor(Math.random() * 3) : Math.floor(Math.random() * 3);
     const likers = [...insertedUsers].sort(() => Math.random() - 0.5).slice(0, numLikes);
     for (const liker of likers) {
       likeValues.push({
         commentId,
         userId: liker.id,
-        createdAt: daysAgo(Math.floor(Math.random() * 7)),
+        // Trending comments get likes from the last 24h, others from last 7 days
+        createdAt: isTrending ? daysAgo(0) : daysAgo(Math.floor(Math.random() * 7)),
       });
     }
   }

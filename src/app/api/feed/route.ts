@@ -67,10 +67,12 @@ export async function GET(request: NextRequest) {
     if (sort === "trending") {
       const trendingScore = sql<number>`(
         (SELECT count(*)::int FROM comment_likes cl
-         WHERE cl.comment_id = ${comments.id})
+         WHERE cl.comment_id = ${comments.id}
+         AND cl.created_at > now() - interval '24 hours')
         +
         (SELECT count(*)::int FROM comments r
-         WHERE r.parent_id = ${comments.id})
+         WHERE r.parent_id = ${comments.id}
+         AND r.created_at > now() - interval '24 hours')
       )`;
       orderBy = [desc(trendingScore), desc(comments.createdAt)];
     } else {
