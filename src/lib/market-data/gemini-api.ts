@@ -159,7 +159,7 @@ export async function fetchGeminiEvents(params?: {
   }
   if (params?.search) url.searchParams.append("search", params.search);
   if (params?.status) url.searchParams.append("status[]", params.status);
-  if (params?.limit) url.searchParams.set("limit", String(params.limit));
+  url.searchParams.set("limit", String(params?.limit ?? 500));
   if (params?.offset) url.searchParams.set("offset", String(params.offset));
 
   const res = await fetch(url.toString(), { next: { revalidate: 60 } });
