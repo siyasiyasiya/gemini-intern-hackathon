@@ -63,7 +63,6 @@ export async function getMarkets(filters?: MarketFilters & { categories?: Market
     category: geminiCategory,
     search: filters?.search,
     status: geminiStatus,
-    limit: 300,
   });
 
   let markets = response.data.map(geminiEventToMarket);
