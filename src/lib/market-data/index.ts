@@ -76,9 +76,11 @@ export async function getMarkets(filters?: MarketFilters & { categories?: Market
     markets = markets.filter((m) => m.category === filters.category);
   }
 
-  // Client-side filtering for statuses Gemini doesn't directly map
-  if (filters?.status && filters.status !== "active") {
-    markets = markets.filter((m) => m.status === filters.status);
+  // Client-side status filtering (Gemini API doesn't reliably filter by status)
+  if (geminiStatus === "active") {
+    markets = markets.filter((m) => m.status === "active");
+  } else if (geminiStatus) {
+    markets = markets.filter((m) => m.status === geminiStatus);
   }
 
   const sort = filters?.sort ?? "trending";
