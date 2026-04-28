@@ -398,7 +398,7 @@ function MarketPill({ market }: { market: Market }) {
 
   return (
     <Link
-      href="/constellations"
+      href={`/markets/${encodeURIComponent(market.ticker)}`}
       className="flex-shrink-0 w-[280px] rounded-xl border border-border bg-card p-4 transition-all hover:border-border-hover hover:bg-card-hover hover:shadow-sm"
     >
       <div className="flex items-start gap-3 mb-3">
