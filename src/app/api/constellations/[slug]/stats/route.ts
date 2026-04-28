@@ -36,7 +36,7 @@ export async function GET(
 
     const [memberStats] = await db
       .select({
-        activeMemberCount: sql<number>`count(distinct ${constellationMembers.userId})::int`,
+        memberCount: sql<number>`count(distinct ${constellationMembers.userId})::int`,
       })
       .from(constellationMembers)
       .where(eq(constellationMembers.constellationId, constellation.id));
@@ -49,7 +49,7 @@ export async function GET(
       collectiveAccuracy: Math.round(collectiveAccuracy * 1000) / 1000,
       totalVolume: tradeStats?.totalVolume || 0,
       totalTrades: tradeStats?.totalTrades || 0,
-      activeMemberCount: memberStats?.activeMemberCount || 0,
+      memberCount: memberStats?.memberCount || 0,
     };
 
     return NextResponse.json<ApiResponse<ConstellationStatsResponse>>({ data: response });
