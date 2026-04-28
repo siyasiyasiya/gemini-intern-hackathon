@@ -122,6 +122,19 @@ export interface ConsensusData {
   noAmount: number;
 }
 
+export interface OutcomeConsensusEntry {
+  label: string;
+  amount: number;
+  percent: number; // 0-1, share of total positioned volume
+  count: number;   // number of distinct positions
+}
+
+export interface CategoricalConsensusData {
+  outcomes: OutcomeConsensusEntry[];
+  totalPositions: number;
+  totalAmount: number;
+}
+
 export interface ConstellationStatsResponse {
   collectiveAccuracy: number;
   totalVolume: number;

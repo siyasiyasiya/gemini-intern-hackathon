@@ -277,6 +277,7 @@ interface CommentDef {
   content: string;
   positionDirection?: "yes" | "no";
   positionAmount?: number;
+  positionContractLabel?: string;
   taggedMarkets?: number[]; // indices into constellation's ticker array
   daysAgo: number;
   replies?: { userIndex: number; content: string; daysAgo: number }[];
@@ -337,14 +338,19 @@ function getComments(ci: number): CommentDef[] {
     case 3: // AI & Future Tech — tickers: [BESTAI26, GEMINI35, NASAMOON, GDP2026, SURV50, EUROWIN26]
       return [
         {
-          userIndex: 4, content: "GPT-5 rumored for Q3. If it passes the bar exam with 95%+, {{market:T0}} will move fast.", positionDirection: "yes", positionAmount: 300, taggedMarkets: [0], daysAgo: 10,
+          userIndex: 4, content: "GPT-5 rumored for Q3. If it passes the bar exam with 95%+, {{market:T0}} will move fast.", positionDirection: "yes", positionAmount: 300, positionContractLabel: "ChatGPT", taggedMarkets: [0], daysAgo: 10,
           replies: [
             { userIndex: 1, content: "Benchmark performance ≠ AGI. But {{market:T0}} doesn't care about that distinction.", daysAgo: 9 },
             { userIndex: 9, content: "More interested in the reasoning capabilities. Benchmarks are increasingly gamed.", daysAgo: 8 },
             { userIndex: 0, content: "Bought YES on {{market:T0}} at $0.35. Feels like free money.", daysAgo: 8 },
           ],
         },
+        { userIndex: 1, content: "Claude's reasoning evals are unmatched. Going heavy on Claude for {{market:T0}}.", positionDirection: "yes", positionAmount: 500, positionContractLabel: "Claude", taggedMarkets: [0], daysAgo: 8 },
+        { userIndex: 0, content: "Gemini 2.5 just dropped. Multimodal is where the real competition is. YES on Gemini for {{market:T0}}.", positionDirection: "yes", positionAmount: 200, positionContractLabel: "Gemini", taggedMarkets: [0], daysAgo: 6 },
+        { userIndex: 9, content: "Don't sleep on Claude — Anthropic's scaling is aggressive. Adding more.", positionDirection: "yes", positionAmount: 350, positionContractLabel: "Claude", taggedMarkets: [0], daysAgo: 5 },
         { userIndex: 8, content: "{{market:T1}} is the race to watch right now. Google is under pressure to ship.", taggedMarkets: [1], daysAgo: 5 },
+        { userIndex: 3, content: "Grok is a dark horse. xAI has the compute. Small position.", positionDirection: "yes", positionAmount: 75, positionContractLabel: "Grok", taggedMarkets: [0], daysAgo: 4 },
+        { userIndex: 5, content: "ChatGPT still has the distribution advantage. Enterprise adoption is massive.", positionDirection: "yes", positionAmount: 250, positionContractLabel: "ChatGPT", taggedMarkets: [0], daysAgo: 3 },
         { userIndex: 3, content: "{{market:T2}} is a long shot but the Artemis program is back on track. Going small YES.", positionDirection: "yes", positionAmount: 50, taggedMarkets: [2], daysAgo: 3 },
         { userIndex: 0, content: "Interesting cross-category play: {{market:T4}} and {{market:T5}} are both entertainment markets you can pair for diversification.", taggedMarkets: [4, 5], daysAgo: 1 },
         { userIndex: 10, content: "What resources do you all use to track AI benchmarks?", daysAgo: 0,
@@ -696,6 +702,7 @@ async function seed() {
           content: resolveContent(cDef.content),
           positionDirection: cDef.positionDirection || null,
           positionAmount: cDef.positionAmount || null,
+          positionContractLabel: cDef.positionContractLabel || null,
           taggedMarkets: taggedMarkets.length > 0 ? taggedMarkets : null,
           createdAt: daysAgo(cDef.daysAgo),
         })

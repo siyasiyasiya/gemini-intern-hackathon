@@ -175,6 +175,7 @@ export function MarketDetail({ ticker, constellationSlug, onBack, onSelectRelate
           constellationSlug={constellationSlug}
           ticker={ticker}
           marketYesPrice={market.yesPrice}
+          outcomes={market.outcomes}
         />
       )}
 
