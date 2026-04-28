@@ -1,10 +1,10 @@
-import type { Market, MarketDetail, MarketFilters, MarketSortOption, MarketCategory } from "@/types/market";
+import type { Market, MarketDetail, MarketFilters, MarketSortOption, MarketCategory, MultiContractHistory } from "@/types/market";
 import {
   fetchGeminiEvents,
   fetchGeminiEvent,
-  fetchContractCandles,
   geminiEventToMarket,
   geminiEventToMarketDetail,
+  fetchContractCandles,
   getFeaturedContract,
 } from "./gemini-api";
 
@@ -85,13 +85,49 @@ export async function getMarkets(filters?: MarketFilters & { categories?: Market
   return sortMarkets(markets, sort);
 }
 
+// Default colors for contracts that don't have one from the API
+const DEFAULT_COLORS = ["#22c55e", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#14b8a6", "#f97316"];
+
 export async function getMarketByTicker(ticker: string): Promise<MarketDetail | null> {
   const event = await fetchGeminiEvent(ticker);
   if (!event) return null;
 
-  const featuredContract = getFeaturedContract(event.contracts);
+  const isCategorical = event.contracts.length > 1;
 
-  // Fetch related events + price history candles in parallel
+  if (isCategorical) {
+    // Pick top 5 contracts with valid prices for multi-line chart
+    const contractsWithPrices = event.contracts
+      .filter((c) => c.prices?.buy?.yes || c.prices?.lastTradePrice)
+      .sort((a, b) => {
+        const pa = parseFloat(a.prices.buy?.yes || a.prices.lastTradePrice || "0");
+        const pb = parseFloat(b.prices.buy?.yes || b.prices.lastTradePrice || "0");
+        return pb - pa;
+      })
+      .slice(0, 5);
+
+    const [related, ...candleResults] = await Promise.all([
+      fetchGeminiEvents({ category: event.category, limit: 4 }),
+      ...contractsWithPrices.map((c) =>
+        c.instrumentSymbol
+          ? fetchContractCandles(c.instrumentSymbol, "1day")
+          : Promise.resolve([])
+      ),
+    ]);
+
+    const contractHistories: MultiContractHistory[] = contractsWithPrices.map((c, i) => ({
+      contractLabel: c.label,
+      color: c.color || DEFAULT_COLORS[i % DEFAULT_COLORS.length],
+      instrumentSymbol: c.instrumentSymbol,
+      history: candleResults[i],
+    }));
+
+    const primaryHistory = contractHistories[0]?.history || [];
+
+    return geminiEventToMarketDetail(event, related.data, primaryHistory, contractHistories);
+  }
+
+  // Binary path
+  const featuredContract = getFeaturedContract(event.contracts);
   const [related, history] = await Promise.all([
     fetchGeminiEvents({ category: event.category, limit: 4 }),
     featuredContract?.instrumentSymbol
