@@ -1,12 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { LogOut, User, Menu, X, Settings } from "lucide-react";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 export function Navbar() {
   const { data: session } = useSession();
+  const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
@@ -23,14 +26,24 @@ export function Navbar() {
             {session && (
               <Link
                 href="/feed"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className={cn(
+                  "text-sm transition-colors",
+                  pathname === "/feed"
+                    ? "text-foreground font-medium"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
               >
                 Feed
               </Link>
             )}
             <Link
               href="/constellations"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              className={cn(
+                "text-sm transition-colors",
+                pathname.startsWith("/constellations")
+                  ? "text-foreground font-medium"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
             >
               Explore
             </Link>
@@ -96,7 +109,12 @@ export function Navbar() {
           <Link
             href="/constellations"
             onClick={() => setMenuOpen(false)}
-            className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+            className={cn(
+              "block rounded-lg px-3 py-2.5 text-sm transition-colors",
+              pathname.startsWith("/constellations")
+                ? "text-foreground font-medium bg-secondary"
+                : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+            )}
           >
             Explore
           </Link>
@@ -105,7 +123,12 @@ export function Navbar() {
               <Link
                 href="/feed"
                 onClick={() => setMenuOpen(false)}
-                className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                className={cn(
+                  "block rounded-lg px-3 py-2.5 text-sm transition-colors",
+                  pathname === "/feed"
+                    ? "text-foreground font-medium bg-secondary"
+                    : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                )}
               >
                 Feed
               </Link>
