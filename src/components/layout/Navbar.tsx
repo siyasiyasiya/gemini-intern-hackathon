@@ -23,6 +23,17 @@ export function Navbar() {
             <span className="text-base font-semibold tracking-tight">Constellation</span>
           </Link>
           <div className="hidden sm:flex items-center gap-6">
+            <Link
+              href="/"
+              className={cn(
+                "text-sm transition-colors",
+                pathname === "/"
+                  ? "text-foreground font-medium"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Home
+            </Link>
             {session && (
               <Link
                 href="/feed"
@@ -106,6 +117,18 @@ export function Navbar() {
       {/* Mobile menu */}
       {menuOpen && (
         <div className="sm:hidden border-t border-border bg-background px-4 py-3 space-y-1">
+          <Link
+            href="/"
+            onClick={() => setMenuOpen(false)}
+            className={cn(
+              "block rounded-lg px-3 py-2.5 text-sm transition-colors",
+              pathname === "/"
+                ? "text-foreground font-medium bg-secondary"
+                : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+            )}
+          >
+            Home
+          </Link>
           <Link
             href="/constellations"
             onClick={() => setMenuOpen(false)}
