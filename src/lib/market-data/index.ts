@@ -24,6 +24,15 @@ const CATEGORY_TO_GEMINI: Partial<Record<MarketCategory, string>> = {
   culture: "Culture",
 };
 
+function pickTimeframe(expiryDate: string): "5m" | "1hr" | "6hr" | "1day" {
+  const msLeft = new Date(expiryDate).getTime() - Date.now();
+  const hoursLeft = msLeft / (1000 * 60 * 60);
+  if (hoursLeft < 6) return "5m";
+  if (hoursLeft < 48) return "1hr";
+  if (hoursLeft < 336) return "6hr"; // 2 weeks
+  return "1day";
+}
+
 function sortMarkets(markets: Market[], sort: MarketSortOption): Market[] {
   const sorted = [...markets];
   switch (sort) {
@@ -94,6 +103,7 @@ export async function getMarketByTicker(ticker: string): Promise<MarketDetail | 
   const event = await fetchGeminiEvent(ticker);
   if (!event) return null;
 
+  const timeframe = pickTimeframe(event.expiryDate);
   const isCategorical = event.contracts.length > 1;
 
   if (isCategorical) {
@@ -111,7 +121,7 @@ export async function getMarketByTicker(ticker: string): Promise<MarketDetail | 
       fetchGeminiEvents({ category: event.category, limit: 4 }),
       ...contractsWithPrices.map((c) =>
         c.instrumentSymbol
-          ? fetchContractCandles(c.instrumentSymbol, "1day")
+          ? fetchContractCandles(c.instrumentSymbol, timeframe)
           : Promise.resolve([])
       ),
     ]);
@@ -133,7 +143,7 @@ export async function getMarketByTicker(ticker: string): Promise<MarketDetail | 
   const [related, history] = await Promise.all([
     fetchGeminiEvents({ category: event.category, limit: 4 }),
     featuredContract?.instrumentSymbol
-      ? fetchContractCandles(featuredContract.instrumentSymbol, "1day")
+      ? fetchContractCandles(featuredContract.instrumentSymbol, timeframe)
       : Promise.resolve([]),
   ]);
 
