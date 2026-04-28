@@ -113,6 +113,18 @@ export const comments = pgTable("comments", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+// Comment Likes
+export const commentLikes = pgTable("comment_likes", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  commentId: uuid("comment_id")
+    .notNull()
+    .references(() => comments.id, { onDelete: "cascade" }),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 // Watchlist Items
 export const watchlistItems = pgTable("watchlist_items", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -178,6 +190,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   constellations: many(constellations),
   constellationMembers: many(constellationMembers),
   comments: many(comments),
+  commentLikes: many(commentLikes),
   trades: many(userTrades),
   notifications: many(notifications),
   watchlistItems: many(watchlistItems),
@@ -200,10 +213,16 @@ export const trackedMarketsRelations = relations(trackedMarkets, ({ one }) => ({
   pinnedByUser: one(users, { fields: [trackedMarkets.pinnedBy], references: [users.id] }),
 }));
 
-export const commentsRelations = relations(comments, ({ one }) => ({
+export const commentsRelations = relations(comments, ({ one, many }) => ({
   constellation: one(constellations, { fields: [comments.constellationId], references: [constellations.id] }),
   user: one(users, { fields: [comments.userId], references: [users.id] }),
   parent: one(comments, { fields: [comments.parentId], references: [comments.id] }),
+  likes: many(commentLikes),
+}));
+
+export const commentLikesRelations = relations(commentLikes, ({ one }) => ({
+  comment: one(comments, { fields: [commentLikes.commentId], references: [comments.id] }),
+  user: one(users, { fields: [commentLikes.userId], references: [users.id] }),
 }));
 
 export const userTradesRelations = relations(userTrades, ({ one }) => ({
