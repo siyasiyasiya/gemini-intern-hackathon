@@ -181,7 +181,7 @@ export function Comment({
               {likeCount > 0 && <span>{likeCount}</span>}
             </button>
 
-            {onReply && (
+            {onReply && !(!isThreadReply && replyCount > 0 && onViewThread) && (
               <button
                 onClick={() => onReply(comment.id)}
                 className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
