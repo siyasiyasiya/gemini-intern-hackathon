@@ -59,14 +59,11 @@ export async function getMarkets(filters?: MarketFilters & { categories?: Market
 
   const geminiStatus = filters?.status === "active" ? "active" : undefined;
 
-  // Gemini API returns mixed categories even with a filter, so fetch more
-  // to ensure we have enough after client-side filtering
-  const needsClientFilter = !!(filters?.categories?.length || filters?.category);
   const response = await fetchGeminiEvents({
     category: geminiCategory,
     search: filters?.search,
     status: geminiStatus,
-    limit: needsClientFilter ? 200 : 50,
+    limit: 300,
   });
 
   let markets = response.data.map(geminiEventToMarket);
