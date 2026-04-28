@@ -59,7 +59,7 @@ export async function getMarkets(filters?: MarketFilters & { categories?: Market
     geminiCategory = CATEGORY_TO_GEMINI[filters.category];
   }
 
-  const geminiStatus = filters?.status === "active" ? "active" : undefined;
+  const geminiStatus = filters?.status ?? "active";
 
   const response = await fetchGeminiEvents({
     category: geminiCategory,
