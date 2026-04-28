@@ -52,6 +52,16 @@ export interface CommentResponse {
   replies?: CommentResponse[];
 }
 
+export interface FeedItemResponse extends CommentResponse {
+  constellation: {
+    id: string;
+    name: string;
+    slug: string;
+    topic: string;
+  };
+  replyCount: number;
+}
+
 export interface LeaderboardEntryResponse {
   rank: number;
   userId: string;

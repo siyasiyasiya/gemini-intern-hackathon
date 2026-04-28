@@ -20,6 +20,14 @@ export function Navbar() {
             <span className="text-base font-semibold tracking-tight">Constellation</span>
           </Link>
           <div className="hidden sm:flex items-center gap-6">
+            {session && (
+              <Link
+                href="/feed"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Feed
+              </Link>
+            )}
             <Link
               href="/constellations"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -94,6 +102,13 @@ export function Navbar() {
           </Link>
           {session ? (
             <>
+              <Link
+                href="/feed"
+                onClick={() => setMenuOpen(false)}
+                className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+              >
+                Feed
+              </Link>
               <Link
                 href={`/profile/${session.user.username}`}
                 onClick={() => setMenuOpen(false)}
