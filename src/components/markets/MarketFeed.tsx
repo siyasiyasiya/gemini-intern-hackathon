@@ -50,6 +50,7 @@ export function MarketFeed({ onSelectMarket, constellationSlug }: MarketFeedProp
   const markets = constellationSlug
     ? (constellationQuery.data?.data || [])
     : (globalQuery.data || []);
+  const trackedTickers = new Set(constellationQuery.data?.watchlistTickers || []);
   const isLoading = activeQuery.isLoading;
   const error = activeQuery.error;
 
@@ -102,6 +103,7 @@ export function MarketFeed({ onSelectMarket, constellationSlug }: MarketFeedProp
               key={market.ticker}
               market={market}
               onClick={onSelectMarket}
+              pinned={trackedTickers.has(market.ticker)}
             />
           ))}
         </div>

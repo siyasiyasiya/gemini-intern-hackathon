@@ -10,7 +10,6 @@ import { MemberList } from "@/components/constellations/MemberList";
 import { ConstellationAbout } from "@/components/constellations/ConstellationAbout";
 import { ConstellationRules } from "@/components/constellations/ConstellationRules";
 import { ConstellationStats } from "@/components/constellations/ConstellationStats";
-import { TrackedMarkets } from "@/components/constellations/TrackedMarkets";
 import { MarketFeed } from "@/components/markets/MarketFeed";
 import { MarketDetail } from "@/components/markets/MarketDetail";
 import { CommentThread } from "@/components/comments/CommentThread";
@@ -84,11 +83,6 @@ export default function ConstellationDetailPage() {
         {/* Left sidebar: tracked markets + market feed */}
         <aside className="hidden lg:block w-80 border-r border-border overflow-y-auto">
           <div className="p-4">
-            <TrackedMarkets
-              constellationSlug={slug}
-              canManage={canManage}
-              onSelectMarket={(ticker) => setSelectedMarket(ticker)}
-            />
             {selectedMarket ? (
               <MarketDetail
                 ticker={selectedMarket}

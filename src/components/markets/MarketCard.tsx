@@ -2,7 +2,7 @@
 
 import type { Market } from "@/types/market";
 import { cn, formatCompactNumber } from "@/lib/utils";
-import { BarChart3, Clock } from "lucide-react";
+import { BarChart3, Clock, Pin } from "lucide-react";
 
 function timeLeft(dateStr: string): string {
   const diff = new Date(dateStr).getTime() - Date.now();
@@ -16,9 +16,10 @@ function timeLeft(dateStr: string): string {
 interface MarketCardProps {
   market: Market;
   onClick?: (ticker: string) => void;
+  pinned?: boolean;
 }
 
-export function MarketCard({ market, onClick }: MarketCardProps) {
+export function MarketCard({ market, onClick, pinned }: MarketCardProps) {
   const yesPercent = Math.round(market.yesPrice * 100);
   const noPercent = Math.round(market.noPrice * 100);
 
@@ -48,9 +49,17 @@ export function MarketCard({ market, onClick }: MarketCardProps) {
           </div>
         )}
         <div className="min-w-0 flex-1">
-          <p className="text-xs text-muted-foreground capitalize mb-0.5">
-            {market.category}
-          </p>
+          <div className="flex items-center gap-1.5 mb-0.5">
+            <p className="text-xs text-muted-foreground capitalize">
+              {market.category}
+            </p>
+            {pinned && (
+              <span className="flex items-center gap-0.5 text-[10px] font-medium text-accent">
+                <Pin className="h-2.5 w-2.5" />
+                Tracked
+              </span>
+            )}
+          </div>
           <h3
             className="text-sm font-semibold text-foreground leading-tight line-clamp-2"
             style={{ overflowWrap: "break-word", wordBreak: "normal" }}
