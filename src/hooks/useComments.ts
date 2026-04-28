@@ -46,6 +46,7 @@ export function useCreateComment(
       parentId?: string;
       positionDirection?: "yes" | "no";
       positionAmount?: number;
+      positionContractLabel?: string;
       taggedMarkets?: string[];
     }) => {
       const res = await fetch(`/api/constellations/${constellationSlug}/comments`, {

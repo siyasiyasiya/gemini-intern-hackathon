@@ -22,6 +22,7 @@ interface MarketCardProps {
 export function MarketCard({ market, onClick, pinned }: MarketCardProps) {
   const yesPercent = Math.round(market.yesPrice * 100);
   const noPercent = Math.round(market.noPrice * 100);
+  const isCategorical = market.outcomes && market.outcomes.length > 1;
 
   return (
     <button
@@ -69,19 +70,38 @@ export function MarketCard({ market, onClick, pinned }: MarketCardProps) {
         </div>
       </div>
 
-      {/* YES / NO buttons — Gemini style */}
-      <div className="grid grid-cols-2 gap-2 mb-3">
-        <div className="rounded-lg bg-yes-bg px-3 py-2.5 text-center transition-colors hover:bg-yes-bg-hover">
-          <span className="text-sm font-medium text-yes-text">
-            Yes {yesPercent}%
-          </span>
+      {isCategorical ? (
+        <div className="space-y-1.5 mb-3">
+          {market.outcomes!.slice(0, 3).map((o) => (
+            <div key={o.ticker} className="flex items-center gap-2 text-sm">
+              <span
+                className="inline-block h-2 w-2 rounded-full flex-shrink-0"
+                style={{ backgroundColor: o.color || "#6b7280" }}
+              />
+              <span className="text-foreground truncate flex-1">{o.label}</span>
+              <span className="font-medium text-foreground">{Math.round(o.yesPrice * 100)}%</span>
+            </div>
+          ))}
+          {market.outcomes!.length > 3 && (
+            <div className="text-xs text-muted-foreground pl-4">
+              +{market.outcomes!.length - 3} more
+            </div>
+          )}
         </div>
-        <div className="rounded-lg bg-no-bg px-3 py-2.5 text-center transition-colors hover:bg-no-bg-hover">
-          <span className="text-sm font-medium text-no-text">
-            No {noPercent}%
-          </span>
+      ) : (
+        <div className="grid grid-cols-2 gap-2 mb-3">
+          <div className="rounded-lg bg-yes-bg px-3 py-2.5 text-center transition-colors hover:bg-yes-bg-hover">
+            <span className="text-sm font-medium text-yes-text">
+              Yes {yesPercent}%
+            </span>
+          </div>
+          <div className="rounded-lg bg-no-bg px-3 py-2.5 text-center transition-colors hover:bg-no-bg-hover">
+            <span className="text-sm font-medium text-no-text">
+              No {noPercent}%
+            </span>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Footer: volume + time */}
       <div className="flex items-center justify-between text-xs text-muted-foreground">

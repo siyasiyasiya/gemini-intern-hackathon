@@ -46,6 +46,7 @@ export interface CommentResponse {
   content: string;
   positionDirection: "yes" | "no" | null;
   positionAmount: number | null;
+  positionContractLabel?: string | null;
   taggedMarkets: string[] | null;
   likeCount: number;
   likedByMe: boolean;

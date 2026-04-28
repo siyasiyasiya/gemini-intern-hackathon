@@ -3,18 +3,20 @@
 import { useState, useRef, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { MarketAutocomplete } from "./MarketAutocomplete";
-import type { Market } from "@/types/market";
+import type { Market, ContractSummary } from "@/types/market";
 
 interface CommentFormProps {
   constellationSlug: string;
   marketTicker?: string;
   parentId?: string;
+  outcomes?: ContractSummary[];
   onSubmit: (data: {
     content: string;
     marketTicker?: string;
     parentId?: string;
     positionDirection?: "yes" | "no";
     positionAmount?: number;
+    positionContractLabel?: string;
     taggedMarkets?: string[];
   }) => Promise<void>;
   onCancel?: () => void;
@@ -89,6 +91,7 @@ export function CommentForm({
   constellationSlug,
   marketTicker,
   parentId,
+  outcomes,
   onSubmit,
   onCancel,
   placeholder = "Share your thoughts... (type $ to tag a market)",
@@ -96,6 +99,7 @@ export function CommentForm({
   const [showPosition, setShowPosition] = useState(false);
   const [direction, setDirection] = useState<"yes" | "no">("yes");
   const [amount, setAmount] = useState("50");
+  const [selectedOutcome, setSelectedOutcome] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEmpty, setIsEmpty] = useState(true);
   const [autocomplete, setAutocomplete] = useState<{
@@ -222,12 +226,14 @@ export function CommentForm({
         parentId,
         positionDirection: showPosition ? direction : undefined,
         positionAmount: showPosition ? Number(amount) / 100 : undefined,
+        positionContractLabel: showPosition && selectedOutcome ? selectedOutcome : undefined,
         taggedMarkets: tickers.length > 0 ? tickers : undefined,
       });
       editor.innerHTML = "";
       setIsEmpty(true);
       setShowPosition(false);
       setAmount("50");
+      setSelectedOutcome("");
     } finally {
       setIsSubmitting(false);
     }
@@ -278,7 +284,21 @@ export function CommentForm({
           </button>
 
           {showPosition && (
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              {outcomes && outcomes.length > 1 && (
+                <select
+                  value={selectedOutcome}
+                  onChange={(e) => setSelectedOutcome(e.target.value)}
+                  className="rounded border border-input-border bg-background px-2 py-1 text-xs text-foreground focus:border-foreground focus:outline-none"
+                >
+                  <option value="">Pick outcome...</option>
+                  {outcomes.map((o) => (
+                    <option key={o.ticker} value={o.label}>
+                      {o.label} ({Math.round(o.yesPrice * 100)}%)
+                    </option>
+                  ))}
+                </select>
+              )}
               <button
                 type="button"
                 onClick={() => setDirection("yes")}

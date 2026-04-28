@@ -1,3 +1,19 @@
+export interface ContractSummary {
+  label: string;
+  ticker: string;
+  instrumentSymbol: string;
+  color?: string;
+  yesPrice: number;
+  noPrice: number; // actual from API, not 1-yesPrice
+}
+
+export interface MultiContractHistory {
+  contractLabel: string;
+  color: string;
+  instrumentSymbol: string;
+  history: PricePoint[];
+}
+
 export interface Market {
   ticker: string;
   title: string;
@@ -14,6 +30,7 @@ export interface Market {
   imageUrl?: string;
   slug?: string;
   eventType?: "binary" | "categorical";
+  outcomes?: ContractSummary[];
 }
 
 export interface MarketDetail extends Market {
@@ -21,6 +38,7 @@ export interface MarketDetail extends Market {
   history: PricePoint[];
   relatedTickers: string[];
   contracts?: GeminiContract[];
+  contractHistories?: MultiContractHistory[];
 }
 
 export interface PricePoint {

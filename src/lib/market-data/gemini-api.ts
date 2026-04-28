@@ -6,6 +6,8 @@ import type {
   MarketCategory,
   GeminiContract,
   PricePoint,
+  ContractSummary,
+  MultiContractHistory,
 } from "@/types/market";
 
 const BASE_URL = "https://api.gemini.com/v1/prediction-markets";
@@ -86,6 +88,27 @@ export function getFeaturedContract(contracts: GeminiContract[]): GeminiContract
   });
 }
 
+function buildOutcomes(contracts: GeminiContract[]): ContractSummary[] | undefined {
+  if (contracts.length <= 1) return undefined;
+  const outcomes: ContractSummary[] = [];
+  for (const c of contracts) {
+    const yp = parseFloat(c.prices.buy?.yes || c.prices.lastTradePrice || "0");
+    const np = parseFloat(c.prices.buy?.no || "0");
+    if (yp === 0 && np === 0 && !c.prices.lastTradePrice) continue;
+    outcomes.push({
+      label: c.label,
+      ticker: c.ticker,
+      instrumentSymbol: c.instrumentSymbol,
+      color: c.color,
+      yesPrice: yp,
+      noPrice: np,
+    });
+  }
+  if (outcomes.length <= 1) return undefined;
+  outcomes.sort((a, b) => b.yesPrice - a.yesPrice);
+  return outcomes;
+}
+
 export function geminiEventToMarket(event: GeminiEvent): Market {
   const contract = getFeaturedContract(event.contracts);
   const yesPrice = contract
@@ -124,13 +147,15 @@ export function geminiEventToMarket(event: GeminiEvent): Market {
     imageUrl: event.imageUrl,
     slug: event.slug,
     eventType: event.type,
+    outcomes: buildOutcomes(event.contracts),
   };
 }
 
 export function geminiEventToMarketDetail(
   event: GeminiEvent,
   relatedEvents: GeminiEvent[],
-  history: PricePoint[] = []
+  history: PricePoint[] = [],
+  contractHistories?: MultiContractHistory[]
 ): MarketDetail {
   const base = geminiEventToMarket(event);
   return {
@@ -142,6 +167,7 @@ export function geminiEventToMarketDetail(
       .slice(0, 3)
       .map((e) => e.ticker),
     contracts: event.contracts,
+    contractHistories,
   };
 }
 

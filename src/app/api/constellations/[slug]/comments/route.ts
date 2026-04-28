@@ -15,6 +15,7 @@ const commentSelect = {
   content: comments.content,
   positionDirection: comments.positionDirection,
   positionAmount: comments.positionAmount,
+  positionContractLabel: comments.positionContractLabel,
   taggedMarkets: comments.taggedMarkets,
   createdAt: comments.createdAt,
   userName: users.username,
@@ -73,6 +74,7 @@ function toCommentResponse(
     content: r.content,
     positionDirection: r.positionDirection,
     positionAmount: r.positionAmount,
+    positionContractLabel: r.positionContractLabel,
     taggedMarkets: r.taggedMarkets,
     likeCount: likes.count,
     likedByMe: likes.likedByMe,
@@ -189,7 +191,7 @@ export async function POST(
     }
 
     const body = await request.json();
-    const { content, marketTicker, parentId, positionDirection, positionAmount, taggedMarkets } = body;
+    const { content, marketTicker, parentId, positionDirection, positionAmount, positionContractLabel, taggedMarkets } = body;
 
     if (!content || typeof content !== "string" || content.trim().length === 0) {
       return NextResponse.json<ApiResponse<null>>(
@@ -212,6 +214,7 @@ export async function POST(
         parentId: parentId || null,
         positionDirection: positionDirection || null,
         positionAmount: positionAmount != null ? Number(positionAmount) : null,
+        positionContractLabel: positionContractLabel || null,
         taggedMarkets: taggedMarketsArr,
       })
       .returning();
@@ -247,6 +250,7 @@ export async function POST(
       content: newComment.content,
       positionDirection: newComment.positionDirection,
       positionAmount: newComment.positionAmount,
+      positionContractLabel: newComment.positionContractLabel,
       taggedMarkets: newComment.taggedMarkets,
       likeCount: 0,
       likedByMe: false,

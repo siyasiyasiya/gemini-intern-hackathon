@@ -147,6 +147,7 @@ export function Comment({
                   : "bg-no-bg text-no-text"
               )}
             >
+              {comment.positionContractLabel && `${comment.positionContractLabel} · `}
               {comment.positionDirection === "yes" ? "YES" : "NO"}{" "}
               ${Math.round(comment.positionAmount)}
             </span>

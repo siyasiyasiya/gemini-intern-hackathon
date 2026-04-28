@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useMarketDetail } from "@/hooks/useMarketDetail";
 import { PriceChart } from "./PriceChart";
 import { cn, formatCompactNumber } from "@/lib/utils";
@@ -24,6 +25,7 @@ interface MarketDetailProps {
 
 export function MarketDetail({ ticker, constellationSlug, onBack, onSelectRelated }: MarketDetailProps) {
   const { data: market, isLoading, error } = useMarketDetail(ticker);
+  const [selectedOutcomeIdx, setSelectedOutcomeIdx] = useState(0);
 
   if (isLoading) {
     return (
@@ -44,9 +46,11 @@ export function MarketDetail({ ticker, constellationSlug, onBack, onSelectRelate
     );
   }
 
+  const isCategorical = market.outcomes && market.outcomes.length > 1;
+  const selectedOutcome = isCategorical ? market.outcomes![Math.min(selectedOutcomeIdx, market.outcomes!.length - 1)] : null;
   const isPositive = market.changePercent24h >= 0;
-  const yesPercent = Math.round(market.yesPrice * 100);
-  const noPercent = Math.round(market.noPrice * 100);
+  const yesPercent = selectedOutcome ? Math.round(selectedOutcome.yesPrice * 100) : Math.round(market.yesPrice * 100);
+  const noPercent = selectedOutcome ? Math.round(selectedOutcome.noPrice * 100) : Math.round(market.noPrice * 100);
 
   return (
     <div className="space-y-5">
@@ -70,38 +74,100 @@ export function MarketDetail({ ticker, constellationSlug, onBack, onSelectRelate
           )}
           <div>
             <p className="text-xs text-muted-foreground capitalize">{market.category}</p>
-            <span
-              className={cn(
-                "flex items-center gap-1 text-xs font-medium",
-                isPositive ? "text-yes-text" : "text-no-text"
-              )}
-            >
-              {isPositive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-              {isPositive ? "+" : ""}
-              {market.changePercent24h.toFixed(1)}% 24h
-            </span>
+            {!isCategorical && (
+              <span
+                className={cn(
+                  "flex items-center gap-1 text-xs font-medium",
+                  isPositive ? "text-yes-text" : "text-no-text"
+                )}
+              >
+                {isPositive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                {isPositive ? "+" : ""}
+                {market.changePercent24h.toFixed(1)}% 24h
+              </span>
+            )}
           </div>
         </div>
         <h2 className="text-base font-semibold text-foreground leading-tight">{market.title}</h2>
         <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">{market.description}</p>
       </div>
 
-      {/* YES/NO buttons */}
-      <div className="grid grid-cols-2 gap-2">
-        <div className="rounded-xl bg-yes-bg p-4 text-center">
-          <div className="text-xs font-medium text-yes-text mb-1">Yes</div>
-          <div className="text-2xl font-bold text-yes-text">{yesPercent}%</div>
+      {isCategorical ? (
+        <>
+          {/* Outcome selector tabs */}
+          <div className="flex flex-wrap gap-1.5">
+            {market.outcomes!.map((outcome, idx) => (
+              <button
+                key={outcome.ticker}
+                onClick={() => setSelectedOutcomeIdx(idx)}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+                  idx === selectedOutcomeIdx
+                    ? "bg-foreground text-background"
+                    : "bg-secondary text-muted-foreground hover:bg-muted hover:text-foreground"
+                )}
+              >
+                {outcome.color && (
+                  <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: outcome.color }} />
+                )}
+                {outcome.label}
+                <span className="opacity-70">{Math.round(outcome.yesPrice * 100)}%</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Selected outcome Yes/No */}
+          <div className="grid grid-cols-2 gap-2">
+            <div className="rounded-xl bg-yes-bg p-4 text-center">
+              <div className="text-xs font-medium text-yes-text mb-1">Yes</div>
+              <div className="text-2xl font-bold text-yes-text">{yesPercent}%</div>
+            </div>
+            <div className="rounded-xl bg-no-bg p-4 text-center">
+              <div className="text-xs font-medium text-no-text mb-1">No</div>
+              <div className="text-2xl font-bold text-no-text">{noPercent > 0 ? `${noPercent}%` : "—"}</div>
+            </div>
+          </div>
+
+          {/* All outcomes summary */}
+          <div className={cn("rounded-xl border border-border bg-card p-3", market.outcomes!.length > 10 && "max-h-48 overflow-y-auto")}>
+            <h3 className="text-xs font-medium text-muted-foreground mb-2">All Outcomes</h3>
+            <div className="space-y-1.5">
+              {market.outcomes!.map((o, idx) => (
+                <button
+                  key={o.ticker}
+                  onClick={() => setSelectedOutcomeIdx(idx)}
+                  className={cn(
+                    "flex items-center gap-2 w-full rounded-lg px-2 py-1.5 text-xs transition-colors",
+                    idx === selectedOutcomeIdx ? "bg-muted" : "hover:bg-secondary"
+                  )}
+                >
+                  <span className="inline-block h-2 w-2 rounded-full flex-shrink-0" style={{ backgroundColor: o.color || "#6b7280" }} />
+                  <span className="text-foreground flex-1 text-left truncate">{o.label}</span>
+                  <span className="font-medium text-foreground">{Math.round(o.yesPrice * 100)}%</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className="grid grid-cols-2 gap-2">
+          <div className="rounded-xl bg-yes-bg p-4 text-center">
+            <div className="text-xs font-medium text-yes-text mb-1">Yes</div>
+            <div className="text-2xl font-bold text-yes-text">{yesPercent}%</div>
+          </div>
+          <div className="rounded-xl bg-no-bg p-4 text-center">
+            <div className="text-xs font-medium text-no-text mb-1">No</div>
+            <div className="text-2xl font-bold text-no-text">{noPercent}%</div>
+          </div>
         </div>
-        <div className="rounded-xl bg-no-bg p-4 text-center">
-          <div className="text-xs font-medium text-no-text mb-1">No</div>
-          <div className="text-2xl font-bold text-no-text">{noPercent}%</div>
-        </div>
-      </div>
+      )}
 
       {/* Price chart */}
       <div className="rounded-xl border border-border bg-card p-4">
-        <h3 className="text-xs font-medium text-muted-foreground mb-3">Price History (30d)</h3>
-        <PriceChart history={market.history} />
+        <h3 className="text-xs font-medium text-muted-foreground mb-3">
+          {isCategorical ? "Outcome Prices (30d)" : "Price History (30d)"}
+        </h3>
+        <PriceChart history={market.history} contractHistories={market.contractHistories} />
       </div>
 
       {/* Stats */}
