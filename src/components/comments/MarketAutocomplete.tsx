@@ -39,6 +39,16 @@ const CATEGORY_ICONS: Record<string, string> = {
   other: "📊",
 };
 
+// Debounce the search query so we don't hit the API on every keystroke
+function useDebouncedValue(value: string, delay: number) {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+  return debounced;
+}
+
 export function MarketAutocomplete({
   query,
   position,
@@ -47,23 +57,27 @@ export function MarketAutocomplete({
 }: MarketAutocompleteProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const debouncedQuery = useDebouncedValue(query, 300);
 
   const { data: markets, isLoading } = useQuery({
-    queryKey: ["market-search", query],
+    queryKey: ["market-search", debouncedQuery],
     queryFn: async () => {
-      const res = await fetch(`/api/markets?search=${encodeURIComponent(query)}&limit=8`);
+      const res = await fetch(
+        `/api/markets?search=${encodeURIComponent(debouncedQuery)}`
+      );
       const json: ApiResponse<Market[]> = await res.json();
-      return json.data ?? [];
+      return (json.data ?? []).slice(0, 8);
     },
-    enabled: query.length >= 1,
-    staleTime: 30000,
+    enabled: debouncedQuery.length >= 2,
+    staleTime: 60000,
+    gcTime: 5 * 60 * 1000,
   });
 
   const results = markets ?? [];
 
   useEffect(() => {
     setSelectedIndex(0);
-  }, [query]);
+  }, [debouncedQuery]);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -94,6 +108,9 @@ export function MarketAutocomplete({
     return () => document.removeEventListener("mousedown", handleClick);
   }, [onClose]);
 
+  // Show "keep typing" hint if query is too short for search
+  const tooShort = debouncedQuery.length < 2 && query.length >= 1;
+
   return (
     <div
       ref={ref}
@@ -103,13 +120,17 @@ export function MarketAutocomplete({
       <div className="px-3 py-2 text-xs text-muted-foreground border-b border-border">
         Tag a market
       </div>
-      {isLoading ? (
+      {tooShort ? (
+        <div className="px-3 py-4 text-center text-xs text-muted-foreground">
+          Type at least 2 characters to search...
+        </div>
+      ) : isLoading ? (
         <div className="px-3 py-4 text-center text-xs text-muted-foreground">
           Searching markets...
         </div>
       ) : results.length === 0 ? (
         <div className="px-3 py-4 text-center text-xs text-muted-foreground">
-          No markets found for &ldquo;{query}&rdquo;
+          No markets found for &ldquo;{debouncedQuery}&rdquo;
         </div>
       ) : (
         <div className="max-h-64 overflow-y-auto py-1">

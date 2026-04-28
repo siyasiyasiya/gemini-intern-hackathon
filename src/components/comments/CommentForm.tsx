@@ -53,11 +53,12 @@ export function CommentForm({
   } | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  // Track where the $ trigger started so we can remove it on select
+  const triggerStartRef = useRef<number | null>(null);
 
   const handleContentChange = useCallback((value: string) => {
     setContent(value);
 
-    // Check for $ trigger
     const textarea = textareaRef.current;
     if (!textarea) return;
 
@@ -68,6 +69,7 @@ export function CommentForm({
     const lastDollar = textBeforeCursor.lastIndexOf("$");
     if (lastDollar === -1) {
       setAutocomplete(null);
+      triggerStartRef.current = null;
       return;
     }
 
@@ -75,6 +77,7 @@ export function CommentForm({
     const charBefore = lastDollar > 0 ? textBeforeCursor[lastDollar - 1] : " ";
     if (charBefore !== " " && charBefore !== "\n" && lastDollar !== 0) {
       setAutocomplete(null);
+      triggerStartRef.current = null;
       return;
     }
 
@@ -83,36 +86,33 @@ export function CommentForm({
     // Close if there's a space after query started (user moved on)
     if (query.includes(" ") || query.includes("\n")) {
       setAutocomplete(null);
+      triggerStartRef.current = null;
       return;
     }
 
     if (query.length >= 1) {
-      // Position dropdown below the textarea
+      triggerStartRef.current = lastDollar;
       const rect = textarea.getBoundingClientRect();
       const containerRect = containerRef.current?.getBoundingClientRect();
       const top = rect.bottom - (containerRect?.top ?? 0) + 4;
-      const left = 0;
-      setAutocomplete({ query, position: { top, left } });
+      setAutocomplete({ query, position: { top, left: 0 } });
     } else {
       setAutocomplete(null);
+      triggerStartRef.current = null;
     }
   }, []);
 
   const handleSelectMarket = useCallback(
     (market: Market) => {
-      // Remove the $query from content and add the market token
       const textarea = textareaRef.current;
       if (!textarea) return;
 
+      // Remove the "$query" text from content
       const cursorPos = textarea.selectionStart;
-      const textBeforeCursor = content.slice(0, cursorPos);
-      const lastDollar = textBeforeCursor.lastIndexOf("$");
-      const textAfter = content.slice(cursorPos);
-
-      const newContent =
-        content.slice(0, lastDollar) +
-        `{{market:${market.ticker}}} ` +
-        textAfter;
+      const dollarPos = triggerStartRef.current ?? content.lastIndexOf("$");
+      const before = content.slice(0, dollarPos);
+      const after = content.slice(cursorPos);
+      const newContent = before + after;
 
       setContent(newContent);
 
@@ -122,12 +122,12 @@ export function CommentForm({
       }
 
       setAutocomplete(null);
+      triggerStartRef.current = null;
 
-      // Refocus textarea
+      // Refocus textarea at the position where $query was
       setTimeout(() => {
         textarea.focus();
-        const newCursorPos = lastDollar + `{{market:${market.ticker}}} `.length;
-        textarea.setSelectionRange(newCursorPos, newCursorPos);
+        textarea.setSelectionRange(dollarPos, dollarPos);
       }, 0);
     },
     [content, taggedMarkets]
@@ -135,18 +135,26 @@ export function CommentForm({
 
   const removeTaggedMarket = (ticker: string) => {
     setTaggedMarkets((prev) => prev.filter((m) => m.ticker !== ticker));
-    // Remove the token from content
-    setContent((prev) => prev.replace(`{{market:${ticker}}}`, "").replace(/  +/g, " ").trim());
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!content.trim() || isSubmitting) return;
+    const trimmed = content.trim();
+    if (!trimmed || isSubmitting) return;
 
     setIsSubmitting(true);
     try {
+      // Build the final content with market tokens appended
+      let finalContent = trimmed;
+      if (taggedMarkets.length > 0) {
+        const tokens = taggedMarkets
+          .map((m) => `{{market:${m.ticker}}}`)
+          .join(" ");
+        finalContent = `${trimmed}\n${tokens}`;
+      }
+
       await onSubmit({
-        content: content.trim(),
+        content: finalContent,
         marketTicker,
         parentId,
         positionDirection: showPosition ? direction : undefined,
