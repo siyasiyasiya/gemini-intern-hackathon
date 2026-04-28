@@ -103,7 +103,11 @@ export default function ConstellationDetailPage() {
 
         {/* Center: comments / discussion */}
         <main className="flex-1 overflow-y-auto p-4">
-          <CommentThread constellationSlug={slug} marketTicker={selectedMarket ?? undefined} />
+          <CommentThread
+            constellationSlug={slug}
+            marketTicker={selectedMarket ?? undefined}
+            onSelectMarket={(ticker) => setSelectedMarket(ticker)}
+          />
         </main>
 
         {/* Right sidebar: about, rules, stats, leaderboard, members */}

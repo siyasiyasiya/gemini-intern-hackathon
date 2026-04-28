@@ -1,24 +1,74 @@
 "use client";
 
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { timeAgo } from "@/lib/utils";
+import { MarketPill } from "./MarketPill";
 import type { CommentResponse } from "@/types/api";
 
 interface CommentProps {
   comment: CommentResponse;
   onReply?: (commentId: string) => void;
+  onSelectMarket?: (ticker: string) => void;
   isNested?: boolean;
 }
 
-export function Comment({ comment, onReply, isNested = false }: CommentProps) {
+const MARKET_TOKEN_REGEX = /\{\{market:([^}]+)\}\}/g;
+
+function renderContentWithPills(
+  content: string,
+  onSelectMarket?: (ticker: string) => void
+): React.ReactNode[] {
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  const regex = new RegExp(MARKET_TOKEN_REGEX.source, "g");
+  while ((match = regex.exec(content)) !== null) {
+    // Text before the token
+    if (match.index > lastIndex) {
+      parts.push(content.slice(lastIndex, match.index));
+    }
+    const ticker = match[1];
+    parts.push(
+      <MarketPill
+        key={`${ticker}-${match.index}`}
+        ticker={ticker}
+        onClick={onSelectMarket}
+      />
+    );
+    lastIndex = match.index + match[0].length;
+  }
+
+  // Remaining text
+  if (lastIndex < content.length) {
+    parts.push(content.slice(lastIndex));
+  }
+
+  return parts;
+}
+
+export function Comment({
+  comment,
+  onReply,
+  onSelectMarket,
+  isNested = false,
+}: CommentProps) {
   const initials = (comment.user.displayName || comment.user.username)
     .slice(0, 2)
     .toUpperCase();
 
+  const hasTaggedMarkets =
+    comment.taggedMarkets && comment.taggedMarkets.length > 0;
+
   return (
     <div className={cn("group", isNested && "ml-8 border-l-2 border-border pl-4")}>
-      <div className="rounded-lg bg-secondary p-4">
+      <div
+        className={cn(
+          "rounded-lg bg-secondary p-4",
+          hasTaggedMarkets && "border-l-2 border-accent"
+        )}
+      >
         <div className="flex items-start gap-3">
           {comment.user.avatarUrl ? (
             <img
@@ -43,6 +93,12 @@ export function Comment({ comment, onReply, isNested = false }: CommentProps) {
               <span className="text-xs text-muted-foreground">
                 {timeAgo(new Date(comment.createdAt))}
               </span>
+              {hasTaggedMarkets && (
+                <span className="flex items-center gap-0.5 text-xs text-muted-foreground">
+                  <BarChart3 className="h-3 w-3" />
+                  {comment.taggedMarkets!.length}
+                </span>
+              )}
             </div>
 
             {comment.positionDirection && comment.positionAmount != null && (
@@ -59,7 +115,9 @@ export function Comment({ comment, onReply, isNested = false }: CommentProps) {
               </span>
             )}
 
-            <p className="mt-1.5 text-sm text-foreground-secondary">{comment.content}</p>
+            <div className="mt-1.5 text-sm text-foreground-secondary leading-relaxed">
+              {renderContentWithPills(comment.content, onSelectMarket)}
+            </div>
 
             {onReply && !isNested && (
               <button
@@ -77,7 +135,12 @@ export function Comment({ comment, onReply, isNested = false }: CommentProps) {
       {comment.replies && comment.replies.length > 0 && (
         <div className="mt-2 space-y-2">
           {comment.replies.map((reply) => (
-            <Comment key={reply.id} comment={reply} isNested />
+            <Comment
+              key={reply.id}
+              comment={reply}
+              onSelectMarket={onSelectMarket}
+              isNested
+            />
           ))}
         </div>
       )}
