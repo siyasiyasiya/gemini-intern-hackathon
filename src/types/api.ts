@@ -46,6 +46,7 @@ export interface CommentResponse {
   content: string;
   positionDirection: "yes" | "no" | null;
   positionAmount: number | null;
+  taggedMarkets: string[] | null;
   createdAt: string;
   user: UserResponse;
   replies?: CommentResponse[];

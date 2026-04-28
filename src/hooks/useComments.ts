@@ -5,10 +5,12 @@ import type { ApiResponse, CommentResponse } from "@/types/api";
 
 async function fetchComments(
   constellationSlug: string,
-  marketTicker?: string
+  marketTicker?: string,
+  taggedMarket?: string
 ): Promise<CommentResponse[]> {
   const params = new URLSearchParams();
   if (marketTicker) params.set("marketTicker", marketTicker);
+  if (taggedMarket) params.set("taggedMarket", taggedMarket);
 
   const res = await fetch(
     `/api/constellations/${constellationSlug}/comments?${params.toString()}`
@@ -18,15 +20,23 @@ async function fetchComments(
   return json.data || [];
 }
 
-export function useComments(constellationSlug: string, marketTicker?: string) {
+export function useComments(
+  constellationSlug: string,
+  marketTicker?: string,
+  taggedMarket?: string
+) {
   return useQuery({
-    queryKey: ["comments", constellationSlug, marketTicker],
-    queryFn: () => fetchComments(constellationSlug, marketTicker),
+    queryKey: ["comments", constellationSlug, marketTicker, taggedMarket],
+    queryFn: () => fetchComments(constellationSlug, marketTicker, taggedMarket),
     enabled: !!constellationSlug,
   });
 }
 
-export function useCreateComment(constellationSlug: string, marketTicker?: string) {
+export function useCreateComment(
+  constellationSlug: string,
+  marketTicker?: string,
+  taggedMarket?: string
+) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -36,6 +46,7 @@ export function useCreateComment(constellationSlug: string, marketTicker?: strin
       parentId?: string;
       positionDirection?: "yes" | "no";
       positionAmount?: number;
+      taggedMarkets?: string[];
     }) => {
       const res = await fetch(`/api/constellations/${constellationSlug}/comments`, {
         method: "POST",
@@ -48,8 +59,14 @@ export function useCreateComment(constellationSlug: string, marketTicker?: strin
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["comments", constellationSlug, marketTicker],
+        queryKey: ["comments", constellationSlug, marketTicker, taggedMarket],
       });
+      // Also invalidate unfiltered view
+      if (taggedMarket) {
+        queryClient.invalidateQueries({
+          queryKey: ["comments", constellationSlug, marketTicker, undefined],
+        });
+      }
     },
   });
 }

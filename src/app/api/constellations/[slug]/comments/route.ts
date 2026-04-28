@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { constellations, comments, users } from "@/lib/db/schema";
-import { eq, and, isNull, desc } from "drizzle-orm";
+import { eq, and, isNull, desc, sql } from "drizzle-orm";
 import type { ApiResponse, CommentResponse } from "@/types/api";
 
 export async function GET(
@@ -26,10 +26,16 @@ export async function GET(
     }
 
     const constellationId = constellation.id;
+    const taggedMarket = searchParams.get("taggedMarket");
+
     const conditions = [eq(comments.constellationId, constellationId)];
 
     if (marketTicker) {
       conditions.push(eq(comments.marketTicker, marketTicker));
+    }
+
+    if (taggedMarket) {
+      conditions.push(sql`${taggedMarket} = ANY(${comments.taggedMarkets})`);
     }
 
     if (parentId) {
@@ -38,45 +44,58 @@ export async function GET(
       conditions.push(isNull(comments.parentId));
     }
 
+    const commentSelect = {
+      id: comments.id,
+      constellationId: comments.constellationId,
+      userId: comments.userId,
+      marketTicker: comments.marketTicker,
+      parentId: comments.parentId,
+      content: comments.content,
+      positionDirection: comments.positionDirection,
+      positionAmount: comments.positionAmount,
+      taggedMarkets: comments.taggedMarkets,
+      createdAt: comments.createdAt,
+      userName: users.username,
+      userDisplayName: users.displayName,
+      userAvatarUrl: users.avatarUrl,
+    };
+
     const rows = await db
-      .select({
-        id: comments.id,
-        constellationId: comments.constellationId,
-        userId: comments.userId,
-        marketTicker: comments.marketTicker,
-        parentId: comments.parentId,
-        content: comments.content,
-        positionDirection: comments.positionDirection,
-        positionAmount: comments.positionAmount,
-        createdAt: comments.createdAt,
-        userName: users.username,
-        userDisplayName: users.displayName,
-        userAvatarUrl: users.avatarUrl,
-      })
+      .select(commentSelect)
       .from(comments)
       .innerJoin(users, eq(comments.userId, users.id))
       .where(and(...conditions))
       .orderBy(desc(comments.createdAt));
+
+    function toCommentResponse(r: typeof rows[number]): CommentResponse {
+      return {
+        id: r.id,
+        constellationId: r.constellationId,
+        userId: r.userId,
+        marketTicker: r.marketTicker,
+        parentId: r.parentId,
+        content: r.content,
+        positionDirection: r.positionDirection,
+        positionAmount: r.positionAmount,
+        taggedMarkets: r.taggedMarkets,
+        createdAt: r.createdAt.toISOString(),
+        user: {
+          id: r.userId,
+          username: r.userName,
+          displayName: r.userDisplayName,
+          avatarUrl: r.userAvatarUrl,
+          bio: null,
+          createdAt: "",
+        },
+      };
+    }
 
     const commentsWithReplies: CommentResponse[] = await Promise.all(
       rows.map(async (row) => {
         const replies = parentId
           ? []
           : await db
-              .select({
-                id: comments.id,
-                constellationId: comments.constellationId,
-                userId: comments.userId,
-                marketTicker: comments.marketTicker,
-                parentId: comments.parentId,
-                content: comments.content,
-                positionDirection: comments.positionDirection,
-                positionAmount: comments.positionAmount,
-                createdAt: comments.createdAt,
-                userName: users.username,
-                userDisplayName: users.displayName,
-                userAvatarUrl: users.avatarUrl,
-              })
+              .select(commentSelect)
               .from(comments)
               .innerJoin(users, eq(comments.userId, users.id))
               .where(eq(comments.parentId, row.id))
@@ -84,42 +103,8 @@ export async function GET(
               .limit(3);
 
         return {
-          id: row.id,
-          constellationId: row.constellationId,
-          userId: row.userId,
-          marketTicker: row.marketTicker,
-          parentId: row.parentId,
-          content: row.content,
-          positionDirection: row.positionDirection,
-          positionAmount: row.positionAmount,
-          createdAt: row.createdAt.toISOString(),
-          user: {
-            id: row.userId,
-            username: row.userName,
-            displayName: row.userDisplayName,
-            avatarUrl: row.userAvatarUrl,
-            bio: null,
-            createdAt: "",
-          },
-          replies: replies.map((r) => ({
-            id: r.id,
-            constellationId: r.constellationId,
-            userId: r.userId,
-            marketTicker: r.marketTicker,
-            parentId: r.parentId,
-            content: r.content,
-            positionDirection: r.positionDirection,
-            positionAmount: r.positionAmount,
-            createdAt: r.createdAt.toISOString(),
-            user: {
-              id: r.userId,
-              username: r.userName,
-              displayName: r.userDisplayName,
-              avatarUrl: r.userAvatarUrl,
-              bio: null,
-              createdAt: "",
-            },
-          })),
+          ...toCommentResponse(row),
+          replies: replies.map(toCommentResponse),
         };
       })
     );
@@ -161,7 +146,7 @@ export async function POST(
     }
 
     const body = await request.json();
-    const { content, marketTicker, parentId, positionDirection, positionAmount } = body;
+    const { content, marketTicker, parentId, positionDirection, positionAmount, taggedMarkets } = body;
 
     if (!content || typeof content !== "string" || content.trim().length === 0) {
       return NextResponse.json<ApiResponse<null>>(
@@ -169,6 +154,10 @@ export async function POST(
         { status: 400 }
       );
     }
+
+    const taggedMarketsArr = Array.isArray(taggedMarkets) && taggedMarkets.length > 0
+      ? taggedMarkets.filter((t: unknown) => typeof t === "string")
+      : null;
 
     const [newComment] = await db
       .insert(comments)
@@ -180,6 +169,7 @@ export async function POST(
         parentId: parentId || null,
         positionDirection: positionDirection || null,
         positionAmount: positionAmount != null ? Number(positionAmount) : null,
+        taggedMarkets: taggedMarketsArr,
       })
       .returning();
 
@@ -198,6 +188,7 @@ export async function POST(
       content: newComment.content,
       positionDirection: newComment.positionDirection,
       positionAmount: newComment.positionAmount,
+      taggedMarkets: newComment.taggedMarkets,
       createdAt: newComment.createdAt.toISOString(),
       user: {
         id: user.id,

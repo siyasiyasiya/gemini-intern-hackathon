@@ -108,6 +108,7 @@ export const comments = pgTable("comments", {
   content: text("content").notNull(),
   positionDirection: tradeDirectionEnum("position_direction"),
   positionAmount: real("position_amount"),
+  taggedMarkets: text("tagged_markets").array(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
