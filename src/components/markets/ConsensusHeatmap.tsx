@@ -19,7 +19,7 @@ function DivergenceLabel({ divergence }: { divergence: number }) {
   if (abs >= 0.15) {
     return (
       <span
-        className="inline-flex items-center gap-1 rounded-full bg-red-500/15 px-2 py-0.5 text-[10px] font-semibold text-red-400 cursor-help"
+        className="inline-flex items-center gap-1 rounded-full bg-red-500/15 px-2 py-0.5 text-[10px] font-semibold text-red-400 cursor-default"
         title={`Community consensus is ${pct} points ${divergence < 0 ? "below" : "above"} the market price — a contrarian signal`}
       >
         CONTRARIAN {sign}{pct}%
@@ -29,7 +29,7 @@ function DivergenceLabel({ divergence }: { divergence: number }) {
   if (abs >= 0.05) {
     return (
       <span
-        className="inline-flex items-center gap-1 rounded-full bg-yellow-500/15 px-2 py-0.5 text-[10px] font-semibold text-yellow-400 cursor-help"
+        className="inline-flex items-center gap-1 rounded-full bg-yellow-500/15 px-2 py-0.5 text-[10px] font-semibold text-yellow-400 cursor-default"
         title={`Community consensus is ${pct} points ${divergence < 0 ? "below" : "above"} the market price`}
       >
         LEANING {sign}{pct}%
@@ -38,7 +38,7 @@ function DivergenceLabel({ divergence }: { divergence: number }) {
   }
   return (
     <span
-      className="inline-flex items-center gap-1 rounded-full bg-green-500/15 px-2 py-0.5 text-[10px] font-semibold text-green-400 cursor-help"
+      className="inline-flex items-center gap-1 rounded-full bg-green-500/15 px-2 py-0.5 text-[10px] font-semibold text-green-400 cursor-default"
       title="Community consensus is within 5 points of the market price"
     >
       ALIGNED
@@ -117,7 +117,7 @@ function CategoricalConsensus({
       <div className="flex items-center gap-1.5">
         <Users className="h-3.5 w-3.5 text-muted-foreground" />
         <h3
-          className="text-xs font-medium text-muted-foreground cursor-help"
+          className="text-xs font-medium text-muted-foreground cursor-default"
           title="Community positions vs market prices. Based on positions shared in comments by constellation members."
         >
           Community Consensus
@@ -177,13 +177,13 @@ function CategoricalConsensus({
 
       <div className="flex items-center justify-between">
         <span
-          className="cursor-help"
+          className="cursor-default"
           title={`Biggest gap: ${biggestDivergenceLabel} (community vs market)`}
         >
           <DivergenceLabel divergence={biggestDivergence} />
         </span>
         <span
-          className="text-[10px] text-muted-foreground cursor-help"
+          className="text-[10px] text-muted-foreground cursor-default"
           title="Distinct members of this constellation who shared a position on this market in comments"
         >
           {data.totalPositions} position{data.totalPositions !== 1 ? "s" : ""} shared
@@ -215,7 +215,7 @@ function BinaryConsensus({
       <div className="flex items-center gap-1.5">
         <Users className="h-3.5 w-3.5 text-muted-foreground" />
         <h3
-          className="text-xs font-medium text-muted-foreground cursor-help"
+          className="text-xs font-medium text-muted-foreground cursor-default"
           title="Weighted by position size (volume), not headcount. Only includes current constellation members."
         >
           Community Consensus (by volume)
@@ -253,7 +253,7 @@ function BinaryConsensus({
       <div className="flex items-center justify-between">
         <DivergenceLabel divergence={divergence} />
         <span
-          className="text-[10px] text-muted-foreground cursor-help"
+          className="text-[10px] text-muted-foreground cursor-default"
           title="Distinct members of this constellation who hold at least one position on this market"
         >
           {data.totalPositions} member{data.totalPositions !== 1 ? "s" : ""} positioned
