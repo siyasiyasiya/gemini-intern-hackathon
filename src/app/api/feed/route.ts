@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { constellations, constellationMembers, comments, users } from "@/lib/db/schema";
+import { constellations, constellationMembers, comments, commentLikes, users } from "@/lib/db/schema";
 import { eq, and, isNull, desc, lt, sql, inArray } from "drizzle-orm";
 import type { ApiResponse, FeedItemResponse } from "@/types/api";
 
@@ -47,14 +47,27 @@ export async function GET(request: NextRequest) {
       SELECT count(*)::int FROM comments r WHERE r.parent_id = ${comments.id}
     )`.as("reply_count");
 
+    // Like count subquery
+    const likeCountSql = sql<number>`(
+      SELECT count(*)::int FROM comment_likes cl WHERE cl.comment_id = ${comments.id}
+    )`.as("like_count");
+
+    // Whether the current user liked this comment
+    const likedByMeSql = sql<boolean>`EXISTS(
+      SELECT 1 FROM comment_likes cl
+      WHERE cl.comment_id = ${comments.id} AND cl.user_id = ${session.user.id}
+    )`.as("liked_by_me");
+
     // Determine ordering
     let orderBy;
     if (sort === "trending") {
-      // Trending: most replies in last 24h
+      // Trending: likes + replies combined, weighted towards recency
       const trendingScore = sql<number>`(
-        SELECT count(*)::int FROM comments r
-        WHERE r.parent_id = ${comments.id}
-        AND r.created_at > now() - interval '24 hours'
+        (SELECT count(*)::int FROM comment_likes cl
+         WHERE cl.comment_id = ${comments.id})
+        +
+        (SELECT count(*)::int FROM comments r
+         WHERE r.parent_id = ${comments.id})
       )`;
       orderBy = [desc(trendingScore), desc(comments.createdAt)];
     } else {
@@ -81,6 +94,8 @@ export async function GET(request: NextRequest) {
         constellationSlug: constellations.slug,
         constellationTopic: constellations.topic,
         replyCount: replyCountSql,
+        likeCount: likeCountSql,
+        likedByMe: likedByMeSql,
       })
       .from(comments)
       .innerJoin(users, eq(comments.userId, users.id))
@@ -105,8 +120,8 @@ export async function GET(request: NextRequest) {
       positionDirection: r.positionDirection,
       positionAmount: r.positionAmount,
       taggedMarkets: r.taggedMarkets,
-      likeCount: 0,
-      likedByMe: false,
+      likeCount: r.likeCount ?? 0,
+      likedByMe: r.likedByMe ?? false,
       createdAt: r.createdAt.toISOString(),
       user: {
         id: r.userId,
