@@ -22,6 +22,7 @@ import type {
   ApiResponse,
   UserResponse,
   UserStatsResponse,
+  TradeDetail,
 } from "@/types/api";
 
 const topicColors: Record<string, string> = {
@@ -85,8 +86,8 @@ export function ProfileContent({ username }: ProfileContentProps) {
     winRate: 0,
     constellationsJoined: 0,
     commentsPosted: 0,
-    bestTrade: 0,
-    worstTrade: 0,
+    bestTrade: null,
+    worstTrade: null,
   };
 
   if (userLoading) {
@@ -246,30 +247,28 @@ export function ProfileContent({ username }: ProfileContentProps) {
       )}
 
       {/* Trade Performance */}
-      {(displayStats.bestTrade !== 0 || displayStats.worstTrade !== 0) && (
+      {(displayStats.bestTrade || displayStats.worstTrade) && (
         <div className="rounded-lg border border-border bg-card p-6">
           <h2 className="mb-4 text-sm font-medium text-foreground">
             Trade Performance
           </h2>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex items-center gap-2">
-              <ArrowUpRight className="h-4 w-4 text-yes-text" />
-              <div>
-                <p className="text-xs text-muted-foreground">Best Trade</p>
-                <p className="text-sm font-medium text-yes-text">
-                  +{formatCurrency(displayStats.bestTrade)}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <ArrowDownRight className="h-4 w-4 text-no-text" />
-              <div>
-                <p className="text-xs text-muted-foreground">Worst Trade</p>
-                <p className="text-sm font-medium text-no-text">
-                  {formatCurrency(displayStats.worstTrade)}
-                </p>
-              </div>
-            </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {displayStats.bestTrade && (
+              <TradeCard
+                label="Best Trade"
+                trade={displayStats.bestTrade}
+                colorClass="text-yes-text"
+                icon={<ArrowUpRight className="h-4 w-4 text-yes-text" />}
+              />
+            )}
+            {displayStats.worstTrade && (
+              <TradeCard
+                label="Worst Trade"
+                trade={displayStats.worstTrade}
+                colorClass="text-no-text"
+                icon={<ArrowDownRight className="h-4 w-4 text-no-text" />}
+              />
+            )}
           </div>
         </div>
       )}
@@ -302,6 +301,71 @@ function StatCard({
       <div className="flex items-center gap-1.5 text-muted-foreground">{icon}</div>
       <p className="mt-2 text-lg font-semibold text-foreground">{value}</p>
       <p className="text-xs text-muted-foreground">{label}</p>
+    </div>
+  );
+}
+
+function formatTicker(ticker: string): string {
+  return ticker
+    .replace(/_/g, " ")
+    .replace(/([a-z])([A-Z])/g, "$1 $2");
+}
+
+function TradeCard({
+  label,
+  trade,
+  colorClass,
+  icon,
+}: {
+  label: string;
+  trade: TradeDetail;
+  colorClass: string;
+  icon: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-lg border border-border bg-secondary p-4">
+      <div className="flex items-center gap-2 mb-2">
+        {icon}
+        <span className="text-xs font-medium text-muted-foreground">{label}</span>
+        {trade.resolved && (
+          <span
+            className={cn(
+              "ml-auto rounded-full px-2 py-0.5 text-[10px] font-medium",
+              trade.resolved === "won"
+                ? "bg-yes-bg text-yes-text"
+                : "bg-no-bg text-no-text"
+            )}
+          >
+            {trade.resolved === "won" ? "Won" : "Lost"}
+          </span>
+        )}
+      </div>
+      <p className={cn("text-lg font-semibold", colorClass)}>
+        {trade.pnl >= 0 ? "+" : ""}
+        {formatCurrency(trade.pnl)}
+      </p>
+      <p className="mt-1 text-sm text-foreground truncate" title={trade.market}>
+        {formatTicker(trade.market)}
+      </p>
+      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+        {trade.direction && (
+          <span>
+            Side:{" "}
+            <span className={trade.direction === "yes" ? "text-yes-text" : "text-no-text"}>
+              {trade.direction.toUpperCase()}
+            </span>
+          </span>
+        )}
+        {trade.amount != null && (
+          <span>Qty: {trade.amount}</span>
+        )}
+        {trade.price != null && (
+          <span>Price: {formatCurrency(trade.price)}</span>
+        )}
+        {trade.date && (
+          <span>{timeAgo(new Date(trade.date))}</span>
+        )}
+      </div>
     </div>
   );
 }

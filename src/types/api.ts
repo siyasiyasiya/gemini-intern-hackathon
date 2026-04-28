@@ -82,14 +82,24 @@ export interface LeaderboardEntryResponse {
   winRate: number;
 }
 
+export interface TradeDetail {
+  pnl: number;
+  market: string;
+  direction: "yes" | "no" | null;
+  amount: number | null;
+  price: number | null;
+  date: string | null;
+  resolved: "won" | "lost" | null;
+}
+
 export interface UserStatsResponse {
   totalTrades: number;
   totalPnl: number;
   winRate: number;
   constellationsJoined: number;
   commentsPosted: number;
-  bestTrade: number;
-  worstTrade: number;
+  bestTrade: TradeDetail | null;
+  worstTrade: TradeDetail | null;
   geminiConnected?: boolean;
   /** "gemini" = live API data, "local" = seeded/simulated trades, "none" = no trade data */
   dataSource?: "gemini" | "local" | "none";
