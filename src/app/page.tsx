@@ -179,19 +179,22 @@ export default function Home() {
         </div>
       )}
 
-      {/* Section 4: How It Works */}
-      <RevealSection className="bg-secondary mt-16">
-        <div className="mx-auto max-w-6xl px-4 lg:px-6 py-16">
-          <HowItWorks />
-        </div>
-      </RevealSection>
+      {/* Section 4 & 5: How It Works + Value Props (logged-out only) */}
+      {!session && (
+        <>
+          <RevealSection className="bg-secondary mt-16">
+            <div className="mx-auto max-w-6xl px-4 lg:px-6 py-16">
+              <HowItWorks />
+            </div>
+          </RevealSection>
 
-      {/* Section 5: Value Props */}
-      <div className="mx-auto max-w-6xl px-4 lg:px-6 py-16">
-        <RevealSection>
-          <ValueProps />
-        </RevealSection>
-      </div>
+          <div className="mx-auto max-w-6xl px-4 lg:px-6 py-16">
+            <RevealSection>
+              <ValueProps />
+            </RevealSection>
+          </div>
+        </>
+      )}
 
       {/* Section 6: Top Traders */}
       {topTraders.length > 0 && (
