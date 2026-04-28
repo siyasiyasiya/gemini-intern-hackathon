@@ -38,9 +38,13 @@ export async function GET(request: NextRequest) {
       inArray(comments.constellationId, joinedIds),
     ];
 
-    if (cursor) {
+    // For latest mode, use cursor-based pagination on createdAt
+    // For trending mode, use offset-based pagination (cursor = offset number)
+    if (sort === "latest" && cursor) {
       conditions.push(lt(comments.createdAt, new Date(cursor)));
     }
+
+    const offset = sort === "trending" && cursor ? parseInt(cursor, 10) : 0;
 
     // Reply count subquery
     const replyCountSql = sql<number>`(
@@ -61,7 +65,6 @@ export async function GET(request: NextRequest) {
     // Determine ordering
     let orderBy;
     if (sort === "trending") {
-      // Trending: likes + replies combined, weighted towards recency
       const trendingScore = sql<number>`(
         (SELECT count(*)::int FROM comment_likes cl
          WHERE cl.comment_id = ${comments.id})
@@ -74,8 +77,8 @@ export async function GET(request: NextRequest) {
       orderBy = [desc(comments.createdAt)];
     }
 
-    // Fetch limit + 1 to determine if there's a next page
-    const rows = await db
+    // Build query
+    let query = db
       .select({
         id: comments.id,
         constellationId: comments.constellationId,
@@ -102,13 +105,26 @@ export async function GET(request: NextRequest) {
       .innerJoin(constellations, eq(comments.constellationId, constellations.id))
       .where(and(...conditions))
       .orderBy(...orderBy)
-      .limit(limit + 1);
+      .limit(limit + 1)
+      .$dynamic();
+
+    if (sort === "trending" && offset > 0) {
+      query = query.offset(offset);
+    }
+
+    const rows = await query;
 
     const hasMore = rows.length > limit;
     const pageRows = hasMore ? rows.slice(0, limit) : rows;
-    const nextCursor = hasMore
-      ? pageRows[pageRows.length - 1].createdAt.toISOString()
-      : null;
+
+    let nextCursor: string | null = null;
+    if (hasMore) {
+      if (sort === "trending") {
+        nextCursor = String(offset + limit);
+      } else {
+        nextCursor = pageRows[pageRows.length - 1].createdAt.toISOString();
+      }
+    }
 
     const data: FeedItemResponse[] = pageRows.map((r) => ({
       id: r.id,

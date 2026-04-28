@@ -535,6 +535,7 @@ async function seed() {
   // ── 6. Insert comments (with replies) ────────────────────────────────
   console.log("Inserting comments...");
   let totalComments = 0;
+  const rootCommentIds: string[] = [];
 
   for (let ci = 0; ci < insertedConstellations.length; ci++) {
     const commentDefs = getComments(ci);
@@ -567,6 +568,7 @@ async function seed() {
           createdAt: daysAgo(cDef.daysAgo),
         })
         .returning();
+      rootCommentIds.push(parent.id);
       totalComments++;
 
       if (cDef.replies) {
@@ -584,6 +586,28 @@ async function seed() {
     }
   }
   console.log(`  Inserted ${totalComments} comments.\n`);
+
+  // ── 6b. Insert comment likes (varying amounts for trending) ─────────
+  console.log("Inserting comment likes...");
+  const likeValues: { commentId: string; userId: string; createdAt: Date }[] = [];
+
+  for (const commentId of rootCommentIds) {
+    // Give each comment a random number of likes (0-6) from random users
+    const numLikes = Math.floor(Math.random() * 7);
+    const likers = [...insertedUsers].sort(() => Math.random() - 0.5).slice(0, numLikes);
+    for (const liker of likers) {
+      likeValues.push({
+        commentId,
+        userId: liker.id,
+        createdAt: daysAgo(Math.floor(Math.random() * 7)),
+      });
+    }
+  }
+
+  if (likeValues.length > 0) {
+    await db.insert(schema.commentLikes).values(likeValues);
+  }
+  console.log(`  Inserted ${likeValues.length} comment likes.\n`);
 
   // ── 7. Insert user trades ─────────────────────────────────────────────
   console.log("Inserting user trades...");
