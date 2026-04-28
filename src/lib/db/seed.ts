@@ -308,15 +308,17 @@ function getComments(ci: number): CommentDef[] {
     case 1: // Sports Edge — tickers: [NBAF-2526CHAMP, NBAF-2526CONF-WEST]
       return [
         {
-          userIndex: 2, content: "NBA playoff model update: Celtics have a 72% chance of repeating. Going YES on {{market:T0}}.", positionDirection: "yes", positionAmount: 0.72, taggedMarkets: [0], daysAgo: 7,
+          userIndex: 2, content: "NBA playoff model update: Celtics have a 72% chance of repeating. Going YES on {{market:T0}}.", positionDirection: "yes", positionAmount: 0.72, positionContractLabel: "Boston", taggedMarkets: [0], daysAgo: 7,
           replies: [
             { userIndex: 5, content: "What about injury adjustments? Tatum's been dealing with that knee.", daysAgo: 6 },
             { userIndex: 0, content: "Your model has been fire this season. Tailing on {{market:T0}}.", daysAgo: 6 },
           ],
         },
-        { userIndex: 6, content: "{{market:T1}} is wide open this year. Thunder, Nuggets, Wolves all have a shot.", taggedMarkets: [1], daysAgo: 4 },
-        { userIndex: 7, content: "The Western Conference is stacked. I think {{market:T1}} has the most value right now.", taggedMarkets: [1], daysAgo: 2 },
-        { userIndex: 0, content: "Line movement on the Lakers series looks sharp. Pros are on the under.", positionDirection: "no", positionAmount: 0.25, taggedMarkets: [0], daysAgo: 1 },
+        { userIndex: 6, content: "Thunder are my dark horse pick for {{market:T0}}. SGA is playing at an MVP level.", positionDirection: "yes", positionAmount: 0.55, positionContractLabel: "Oklahoma City", taggedMarkets: [0], daysAgo: 5 },
+        { userIndex: 7, content: "{{market:T1}} is wide open this year. Thunder have the best odds in the West.", positionDirection: "yes", positionAmount: 0.40, positionContractLabel: "Oklahoma City", taggedMarkets: [1], daysAgo: 4 },
+        { userIndex: 5, content: "Nuggets depth is underrated. Jokic in the playoffs is a different animal.", positionDirection: "yes", positionAmount: 0.35, positionContractLabel: "Denver", taggedMarkets: [1], daysAgo: 3 },
+        { userIndex: 0, content: "Cleveland is the sleeper. Mitchell + Mobley finally clicking.", positionDirection: "yes", positionAmount: 0.30, positionContractLabel: "Cleveland", taggedMarkets: [0], daysAgo: 2 },
+        { userIndex: 3, content: "Lakers playoff experience matters. LeBron in elimination games is still elite.", positionDirection: "yes", positionAmount: 0.20, positionContractLabel: "LA Lakers", taggedMarkets: [0], daysAgo: 1 },
       ];
     case 2: // Policy & Markets — tickers: [CABINET-26, CTRLUSHOU, GDP2026, CPI260512]
       return [
@@ -382,25 +384,31 @@ function getComments(ci: number): CommentDef[] {
           ],
         },
         { userIndex: 8, content: "What's everyone's prediction for the weirdest market that resolves YES this year? I'm watching {{market:T2}}.", taggedMarkets: [2], daysAgo: 7 },
+        { userIndex: 7, content: "Cirie is the GOAT Survivor player. Putting my money where my mouth is on {{market:T2}}.", positionDirection: "yes", positionAmount: 0.35, positionContractLabel: "Cirie Fields", taggedMarkets: [2], daysAgo: 6 },
         { userIndex: 10, content: "How do resolution disputes work? Had a market that seemed wrong.", daysAgo: 5,
           replies: [
             { userIndex: 6, content: "Each platform has its own resolution process. Gemini uses predetermined oracle sources.", daysAgo: 4 },
           ],
         },
         { userIndex: 0, content: "Just hit my best month ever. +$2k across all positions. Feeling good.", daysAgo: 2 },
-        { userIndex: 2, content: "Anyone watching {{market:T1}}? The playoff race is heating up.", taggedMarkets: [1], daysAgo: 1 },
+        { userIndex: 2, content: "OKC is my championship pick. Going big on {{market:T1}}.", positionDirection: "yes", positionAmount: 0.65, positionContractLabel: "Oklahoma City", taggedMarkets: [1], daysAgo: 1 },
         { userIndex: 9, content: "Hot take: most prediction market traders would be better off dollar-cost-averaging into index funds.", daysAgo: 0 },
       ];
     case 6: // Awards Season — tickers: [SURV50, EUROWIN26]
       return [
         {
-          userIndex: 8, content: "{{market:T0}} is heating up. The merge tribe has a clear numbers advantage but alliances are shifting.", positionDirection: "yes", positionAmount: 0.30, taggedMarkets: [0], daysAgo: 14,
+          userIndex: 8, content: "{{market:T0}} is heating up. Aubry's edit is screaming winner.", positionDirection: "yes", positionAmount: 0.30, positionContractLabel: "Aubry Bracco", taggedMarkets: [0], daysAgo: 14,
           replies: [
             { userIndex: 0, content: "The edit is pointing to a different winner though. Classic misdirect on {{market:T0}}.", daysAgo: 13 },
             { userIndex: 5, content: "Edgic analysis is the best predictor historically. Wait for the merge episode.", daysAgo: 12 },
           ],
         },
-        { userIndex: 0, content: "{{market:T1}} is wide open. No clear front-runner yet from the semi-final results.", positionDirection: "yes", positionAmount: 0.25, taggedMarkets: [1], daysAgo: 5 },
+        { userIndex: 5, content: "Cirie has the social game to win it all. She was robbed in Micronesia.", positionDirection: "yes", positionAmount: 0.45, positionContractLabel: "Cirie Fields", taggedMarkets: [0], daysAgo: 10 },
+        { userIndex: 0, content: "Christian is the dark horse. He's got the edit + challenge ability.", positionDirection: "yes", positionAmount: 0.25, positionContractLabel: "Christian Hubicki", taggedMarkets: [0], daysAgo: 7 },
+        { userIndex: 3, content: "Coach winning would be the most chaotic timeline. Small bet for fun.", positionDirection: "yes", positionAmount: 0.10, positionContractLabel: "Benjamin \"Coach\" Wade", taggedMarkets: [0], daysAgo: 6 },
+        { userIndex: 0, content: "Finland is my Eurovision pick. Huge streaming numbers and the juries love them.", positionDirection: "yes", positionAmount: 0.40, positionContractLabel: "Finland", taggedMarkets: [1], daysAgo: 5 },
+        { userIndex: 8, content: "France always gets the sympathy vote. Going YES.", positionDirection: "yes", positionAmount: 0.25, positionContractLabel: "France", taggedMarkets: [1], daysAgo: 3 },
+        { userIndex: 6, content: "Greece has the catchiest song this year. Dark horse for Eurovision.", positionDirection: "yes", positionAmount: 0.15, positionContractLabel: "Greece", taggedMarkets: [1], daysAgo: 2 },
       ];
     case 7: // Climate Bets — tickers: [NASAMOON, GDP2026]
       return [
