@@ -15,6 +15,7 @@ import {
   Settings,
 } from "lucide-react";
 import { cn, formatCurrency, formatPercentage, timeAgo } from "@/lib/utils";
+import { AstronautAvatar } from "@/components/ui/AstronautAvatar";
 import { PositionsCard } from "@/components/profile/PositionsCard";
 import { OrderHistoryCard } from "@/components/profile/OrderHistoryCard";
 import { ActivityFeed } from "@/components/profile/ActivityFeed";
@@ -132,9 +133,7 @@ export function ProfileContent({ username }: ProfileContentProps) {
               className="h-16 w-16 rounded-full"
             />
           ) : (
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted text-lg font-semibold text-muted-foreground">
-              {initials}
-            </div>
+            <AstronautAvatar seed={user.username} size={64} className="rounded-full" />
           )}
 
           <div className="min-w-0 flex-1">

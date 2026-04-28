@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Settings, CheckCircle2, XCircle, Loader2, User, Camera } from "lucide-react";
+import { AstronautAvatar } from "@/components/ui/AstronautAvatar";
 import type { ApiResponse, UserResponse } from "@/types/api";
 
 export function SettingsContent() {
@@ -198,9 +199,7 @@ export function SettingsContent() {
                       className="h-16 w-16 rounded-full object-cover"
                     />
                   ) : (
-                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted text-lg font-semibold text-muted-foreground">
-                      {(displayName || username || "?").slice(0, 2).toUpperCase()}
-                    </div>
+                    <AstronautAvatar seed={username || "?"} size={64} className="rounded-full" />
                   )}
                   <button
                     type="button"

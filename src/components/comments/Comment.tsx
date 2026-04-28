@@ -6,6 +6,7 @@ import { MessageSquare, Heart, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { timeAgo } from "@/lib/utils";
 import { MarketPill } from "./MarketPill";
+import { AstronautAvatar } from "@/components/ui/AstronautAvatar";
 import type { CommentResponse } from "@/types/api";
 
 interface CommentProps {
@@ -99,22 +100,17 @@ export function Comment({
       )}
     >
       <div className="flex items-start gap-3">
-        {comment.user.avatarUrl ? (
-          <Link href={`/profile/${comment.user.username}`}>
+        <Link href={`/profile/${comment.user.username}`}>
+          {comment.user.avatarUrl ? (
             <img
               src={comment.user.avatarUrl}
               alt={comment.user.username}
               className="h-8 w-8 rounded-full"
             />
-          </Link>
-        ) : (
-          <Link
-            href={`/profile/${comment.user.username}`}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground"
-          >
-            {initials}
-          </Link>
-        )}
+          ) : (
+            <AstronautAvatar seed={comment.user.username} size={32} className="rounded-full" />
+          )}
+        </Link>
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">

@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Shield, Crown, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AstronautAvatar } from "@/components/ui/AstronautAvatar";
 
 interface Member {
   id: string;
@@ -48,9 +49,11 @@ export function MemberList({ constellationSlug }: { constellationSlug: string })
               key={member.id}
               className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 hover:bg-secondary/50 transition-colors"
             >
-              <div className="h-7 w-7 rounded-full bg-secondary flex items-center justify-center text-xs font-medium shrink-0">
-                {(member.displayName || member.username).charAt(0).toUpperCase()}
-              </div>
+              {member.avatarUrl ? (
+                <img src={member.avatarUrl} alt={member.username} className="h-7 w-7 rounded-full shrink-0" />
+              ) : (
+                <AstronautAvatar seed={member.username} size={28} className="shrink-0 rounded-full" />
+              )}
               <span className="text-sm truncate flex-1">
                 {member.displayName || member.username}
               </span>

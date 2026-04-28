@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { LogOut, User, Menu, X, Settings } from "lucide-react";
+import { LogOut, Menu, X, Settings } from "lucide-react";
 import { useState } from "react";
+import { AstronautAvatar } from "@/components/ui/AstronautAvatar";
 import { cn } from "@/lib/utils";
 
 export function Navbar() {
@@ -69,9 +70,7 @@ export function Navbar() {
                 href={`/profile/${session.user.username}`}
                 className="flex items-center gap-2 rounded-full px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
               >
-                <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center">
-                  <User className="h-3.5 w-3.5 text-foreground" />
-                </div>
+                <AstronautAvatar seed={session.user.username || session.user.name || ""} size={24} className="rounded-full" />
                 {session.user.name}
               </Link>
               <Link

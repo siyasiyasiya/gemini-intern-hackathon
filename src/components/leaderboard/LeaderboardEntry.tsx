@@ -2,6 +2,7 @@
 
 import { Trophy } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
+import { AstronautAvatar } from "@/components/ui/AstronautAvatar";
 import type { LeaderboardEntryResponse } from "@/types/api";
 import Link from "next/link";
 
@@ -44,9 +45,7 @@ export function LeaderboardEntry({ entry }: LeaderboardEntryProps) {
           className="h-8 w-8 shrink-0 rounded-full"
         />
       ) : (
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
-          {initials}
-        </div>
+        <AstronautAvatar seed={entry.username} size={32} className="shrink-0 rounded-full" />
       )}
 
       {/* Name + stats */}
