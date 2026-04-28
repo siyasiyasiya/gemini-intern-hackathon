@@ -1,6 +1,7 @@
 "use client";
 
-import { MessageSquare, BarChart3 } from "lucide-react";
+import { useState } from "react";
+import { MessageSquare, Heart, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { timeAgo } from "@/lib/utils";
 import { MarketPill } from "./MarketPill";
@@ -25,7 +26,6 @@ function renderContentWithPills(
 
   const regex = new RegExp(MARKET_TOKEN_REGEX.source, "g");
   while ((match = regex.exec(content)) !== null) {
-    // Text before the token
     if (match.index > lastIndex) {
       parts.push(content.slice(lastIndex, match.index));
     }
@@ -40,7 +40,6 @@ function renderContentWithPills(
     lastIndex = match.index + match[0].length;
   }
 
-  // Remaining text
   if (lastIndex < content.length) {
     parts.push(content.slice(lastIndex));
   }
@@ -54,12 +53,40 @@ export function Comment({
   onSelectMarket,
   isNested = false,
 }: CommentProps) {
+  const [likeCount, setLikeCount] = useState(comment.likeCount);
+  const [liked, setLiked] = useState(comment.likedByMe);
+  const [liking, setLiking] = useState(false);
+
   const initials = (comment.user.displayName || comment.user.username)
     .slice(0, 2)
     .toUpperCase();
 
   const hasTaggedMarkets =
     comment.taggedMarkets && comment.taggedMarkets.length > 0;
+
+  async function toggleLike() {
+    if (liking) return;
+    setLiking(true);
+
+    // Optimistic update
+    setLiked(!liked);
+    setLikeCount((c) => (liked ? c - 1 : c + 1));
+
+    try {
+      const res = await fetch(`/api/comments/${comment.id}/like`, { method: "POST" });
+      const json = await res.json();
+      if (json.data) {
+        setLiked(json.data.liked);
+        setLikeCount(json.data.likeCount);
+      }
+    } catch {
+      // Revert on error
+      setLiked(liked);
+      setLikeCount(comment.likeCount);
+    } finally {
+      setLiking(false);
+    }
+  }
 
   return (
     <div className={cn("group", isNested && "ml-8 border-l-2 border-border pl-4")}>
@@ -119,15 +146,30 @@ export function Comment({
               {renderContentWithPills(comment.content, onSelectMarket)}
             </div>
 
-            {onReply && !isNested && (
+            <div className="mt-2 flex items-center gap-4">
               <button
-                onClick={() => onReply(comment.id)}
-                className="mt-2 flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                onClick={toggleLike}
+                className={cn(
+                  "flex items-center gap-1 text-xs transition-colors",
+                  liked
+                    ? "text-red-500"
+                    : "text-muted-foreground hover:text-red-500"
+                )}
               >
-                <MessageSquare className="h-3.5 w-3.5" />
-                Reply
+                <Heart className={cn("h-3.5 w-3.5", liked && "fill-current")} />
+                {likeCount > 0 && <span>{likeCount}</span>}
               </button>
-            )}
+
+              {onReply && !isNested && (
+                <button
+                  onClick={() => onReply(comment.id)}
+                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <MessageSquare className="h-3.5 w-3.5" />
+                  Reply
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
