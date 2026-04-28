@@ -285,6 +285,7 @@ async function seed() {
     DROP TABLE IF EXISTS notifications CASCADE;
     DROP TABLE IF EXISTS leaderboard_entries CASCADE;
     DROP TABLE IF EXISTS user_trades CASCADE;
+    DROP TABLE IF EXISTS comment_likes CASCADE;
     DROP TABLE IF EXISTS watchlist_items CASCADE;
     DROP TABLE IF EXISTS comments CASCADE;
     DROP TABLE IF EXISTS tracked_markets CASCADE;
@@ -373,6 +374,13 @@ async function seed() {
       "tagged_markets" text[],
       "created_at" timestamp with time zone DEFAULT now() NOT NULL,
       "updated_at" timestamp with time zone DEFAULT now() NOT NULL
+    );
+
+    CREATE TABLE "comment_likes" (
+      "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+      "comment_id" uuid NOT NULL REFERENCES "comments"("id") ON DELETE CASCADE,
+      "user_id" uuid NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+      "created_at" timestamp with time zone DEFAULT now() NOT NULL
     );
 
     CREATE TABLE "watchlist_items" (
