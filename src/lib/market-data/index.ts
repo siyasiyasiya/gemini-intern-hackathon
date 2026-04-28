@@ -142,13 +142,15 @@ export async function getMarketsByCategory(category: MarketCategory): Promise<Ma
   return getMarkets({ category });
 }
 
-export async function getMarketsByTickers(tickers: string[]): Promise<Market[]> {
+export async function getMarketsByTickers(tickers: string[], activeOnly = true): Promise<Market[]> {
   if (tickers.length === 0) return [];
   const results = await Promise.all(
     tickers.map(async (ticker) => {
       try {
         const event = await fetchGeminiEvent(ticker);
-        return event ? geminiEventToMarket(event) : null;
+        if (!event) return null;
+        if (activeOnly && event.status !== "active") return null;
+        return geminiEventToMarket(event);
       } catch {
         return null;
       }
