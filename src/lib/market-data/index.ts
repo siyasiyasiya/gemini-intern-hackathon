@@ -68,6 +68,13 @@ export async function getMarkets(filters?: MarketFilters & { categories?: Market
 
   let markets = response.data.map(geminiEventToMarket);
 
+  // Client-side category filtering (Gemini API can return non-matching results)
+  if (filters?.categories && filters.categories.length > 0) {
+    markets = markets.filter((m) => filters.categories!.includes(m.category));
+  } else if (filters?.category) {
+    markets = markets.filter((m) => m.category === filters.category);
+  }
+
   // Client-side filtering for statuses Gemini doesn't directly map
   if (filters?.status && filters.status !== "active") {
     markets = markets.filter((m) => m.status === filters.status);
