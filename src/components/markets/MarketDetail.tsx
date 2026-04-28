@@ -94,27 +94,50 @@ export function MarketDetail({ ticker, constellationSlug, onBack, onSelectRelate
 
       {isCategorical ? (
         <>
-          {/* Outcome selector tabs */}
-          <div className="flex flex-wrap gap-1.5">
-            {market.outcomes!.map((outcome, idx) => (
-              <button
-                key={outcome.ticker}
-                onClick={() => setSelectedOutcomeIdx(idx)}
-                className={cn(
-                  "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
-                  idx === selectedOutcomeIdx
-                    ? "bg-foreground text-background"
-                    : "bg-secondary text-muted-foreground hover:bg-muted hover:text-foreground"
-                )}
-              >
-                {outcome.color && (
-                  <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: outcome.color }} />
-                )}
-                {outcome.label}
-                <span className="opacity-70">{Math.round(outcome.yesPrice * 100)}%</span>
-              </button>
-            ))}
-          </div>
+          {market.outcomes!.length <= 5 ? (
+            /* Outcome selector pills — compact for small sets */
+            <div className="flex flex-wrap gap-1.5">
+              {market.outcomes!.map((outcome, idx) => (
+                <button
+                  key={outcome.ticker}
+                  onClick={() => setSelectedOutcomeIdx(idx)}
+                  className={cn(
+                    "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+                    idx === selectedOutcomeIdx
+                      ? "bg-foreground text-background"
+                      : "bg-secondary text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}
+                >
+                  {outcome.color && (
+                    <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: outcome.color }} />
+                  )}
+                  {outcome.label}
+                  <span className="opacity-70">{Math.round(outcome.yesPrice * 100)}%</span>
+                </button>
+              ))}
+            </div>
+          ) : (
+            /* Scrollable outcome list — for large sets */
+            <div className="rounded-xl border border-border bg-card p-3 max-h-48 overflow-y-auto">
+              <h3 className="text-xs font-medium text-muted-foreground mb-2">All Outcomes</h3>
+              <div className="space-y-1.5">
+                {market.outcomes!.map((o, idx) => (
+                  <button
+                    key={o.ticker}
+                    onClick={() => setSelectedOutcomeIdx(idx)}
+                    className={cn(
+                      "flex items-center gap-2 w-full rounded-lg px-2 py-1.5 text-xs transition-colors",
+                      idx === selectedOutcomeIdx ? "bg-muted" : "hover:bg-secondary"
+                    )}
+                  >
+                    <span className="inline-block h-2 w-2 rounded-full flex-shrink-0" style={{ backgroundColor: o.color || "#6b7280" }} />
+                    <span className="text-foreground flex-1 text-left truncate">{o.label}</span>
+                    <span className="font-medium text-foreground">{Math.round(o.yesPrice * 100)}%</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Selected outcome Yes/No */}
           <div className="grid grid-cols-2 gap-2">
@@ -125,27 +148,6 @@ export function MarketDetail({ ticker, constellationSlug, onBack, onSelectRelate
             <div className="rounded-xl bg-no-bg p-4 text-center">
               <div className="text-xs font-medium text-no-text mb-1">No</div>
               <div className="text-2xl font-bold text-no-text">{noPercent > 0 ? `${noPercent}%` : "—"}</div>
-            </div>
-          </div>
-
-          {/* All outcomes summary */}
-          <div className={cn("rounded-xl border border-border bg-card p-3", market.outcomes!.length > 10 && "max-h-48 overflow-y-auto")}>
-            <h3 className="text-xs font-medium text-muted-foreground mb-2">All Outcomes</h3>
-            <div className="space-y-1.5">
-              {market.outcomes!.map((o, idx) => (
-                <button
-                  key={o.ticker}
-                  onClick={() => setSelectedOutcomeIdx(idx)}
-                  className={cn(
-                    "flex items-center gap-2 w-full rounded-lg px-2 py-1.5 text-xs transition-colors",
-                    idx === selectedOutcomeIdx ? "bg-muted" : "hover:bg-secondary"
-                  )}
-                >
-                  <span className="inline-block h-2 w-2 rounded-full flex-shrink-0" style={{ backgroundColor: o.color || "#6b7280" }} />
-                  <span className="text-foreground flex-1 text-left truncate">{o.label}</span>
-                  <span className="font-medium text-foreground">{Math.round(o.yesPrice * 100)}%</span>
-                </button>
-              ))}
             </div>
           </div>
         </>

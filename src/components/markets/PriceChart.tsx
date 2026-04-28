@@ -193,18 +193,12 @@ export function PriceChart({ history, contractHistories }: PriceChartProps) {
 
       {isMulti && multiData && (
         <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 px-1">
-          {multiData.map((d) => {
-            const lastPrice = d.history[d.history.length - 1]?.yesPrice;
-            return (
-              <div key={d.instrumentSymbol} className="flex items-center gap-1.5 text-xs">
-                <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: d.color }} />
-                <span className="text-muted-foreground">{d.contractLabel}</span>
-                {lastPrice != null && (
-                  <span className="font-medium text-foreground">{Math.round(lastPrice * 100)}%</span>
-                )}
-              </div>
-            );
-          })}
+          {multiData.map((d) => (
+            <div key={d.instrumentSymbol} className="flex items-center gap-1.5 text-xs">
+              <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: d.color }} />
+              <span className="text-muted-foreground">{d.contractLabel}</span>
+            </div>
+          ))}
         </div>
       )}
     </div>
