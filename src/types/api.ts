@@ -103,6 +103,15 @@ export interface TrackedMarketResponse {
   pinnedBy: string;
 }
 
+export interface ConsensusData {
+  consensusPercent: number; // 0-1, portion of money on YES
+  totalPositions: number;
+  yesAmount: number;
+  noAmount: number;
+  yesCount: number;
+  noCount: number;
+}
+
 export interface ConstellationStatsResponse {
   collectiveAccuracy: number;
   totalVolume: number;
