@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { useMarketDetail } from "@/hooks/useMarketDetail";
 import { PriceChart } from "./PriceChart";
+import { AutopsyTimeline } from "./AutopsyTimeline";
 import { cn, formatCompactNumber } from "@/lib/utils";
-import { TrendingUp, TrendingDown, Clock, BarChart3, ExternalLink, ArrowLeft } from "lucide-react";
+import { TrendingUp, TrendingDown, Clock, BarChart3, ExternalLink, ArrowLeft, Activity } from "lucide-react";
 import { ConsensusHeatmap } from "./ConsensusHeatmap";
 
 function timeLeft(dateStr: string): string {
@@ -26,6 +27,7 @@ interface MarketDetailProps {
 export function MarketDetail({ ticker, constellationSlug, onBack, onSelectRelated }: MarketDetailProps) {
   const { data: market, isLoading, error } = useMarketDetail(ticker);
   const [selectedOutcomeIdx, setSelectedOutcomeIdx] = useState(0);
+  const [showAutopsy, setShowAutopsy] = useState(false);
 
   if (isLoading) {
     return (
@@ -142,12 +144,32 @@ export function MarketDetail({ ticker, constellationSlug, onBack, onSelectRelate
         </div>
       )}
 
-      {/* Price chart */}
+      {/* Price chart / Autopsy toggle */}
       <div className="rounded-xl border border-border bg-card p-4">
-        <h3 className="text-xs font-medium text-muted-foreground mb-3">
-          {isCategorical ? "Outcome Prices" : "Price History"}
-        </h3>
-        <PriceChart history={market.history} contractHistories={market.contractHistories} />
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-xs font-medium text-muted-foreground">
+            {showAutopsy ? "Market Autopsy" : isCategorical ? "Outcome Prices" : "Price History"}
+          </h3>
+          {!isCategorical && (
+            <button
+              onClick={() => setShowAutopsy(!showAutopsy)}
+              className={cn(
+                "flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-medium transition-colors",
+                showAutopsy
+                  ? "bg-accent/10 text-accent"
+                  : "bg-secondary text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Activity className="h-3 w-3" />
+              {showAutopsy ? "Simple" : "Autopsy"}
+            </button>
+          )}
+        </div>
+        {showAutopsy && !isCategorical ? (
+          <AutopsyTimeline ticker={ticker} />
+        ) : (
+          <PriceChart history={market.history} contractHistories={market.contractHistories} />
+        )}
       </div>
 
       {/* Stats */}
