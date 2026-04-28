@@ -47,6 +47,7 @@ function DivergenceLabel({ divergence }: { divergence: number }) {
 }
 
 const MAX_VISIBLE_OUTCOMES = 5;
+const MIN_POSITIONS = 3;
 
 function CategoricalConsensus({
   constellationSlug,
@@ -66,7 +67,7 @@ function CategoricalConsensus({
       <div className="rounded-xl border border-border bg-card p-4 space-y-3">
         <div className="flex items-center gap-1.5">
           <Users className="h-3.5 w-3.5 text-muted-foreground" />
-          <h3 className="text-xs font-medium text-muted-foreground">Community Positions</h3>
+          <h3 className="text-xs font-medium text-muted-foreground">Community Consensus</h3>
         </div>
         <p className="text-[10px] text-muted-foreground">
           No positions shared yet. Share your position in a comment to contribute.
@@ -75,15 +76,41 @@ function CategoricalConsensus({
     );
   }
 
-  // Build display rows: top 5 + "N others" if needed
+  // Low-N gate: don't show percentages with < 3 positions
+  if (data.totalPositions < MIN_POSITIONS) {
+    return (
+      <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+        <div className="flex items-center gap-1.5">
+          <Users className="h-3.5 w-3.5 text-muted-foreground" />
+          <h3 className="text-xs font-medium text-muted-foreground">Community Consensus</h3>
+        </div>
+        <p className="text-[10px] text-muted-foreground">
+          {data.totalPositions} of {MIN_POSITIONS} positions needed. Share yours to unlock community consensus.
+        </p>
+      </div>
+    );
+  }
+
+  // Map outcome labels to market prices and colors
+  const marketPriceMap = new Map(outcomes.map((o) => [o.label, o.yesPrice]));
+  const colorMap = new Map(outcomes.map((o) => [o.label, o.color || "#6b7280"]));
+
+  // Build rows with community vs market comparison
   const visible = data.outcomes.slice(0, MAX_VISIBLE_OUTCOMES);
   const rest = data.outcomes.slice(MAX_VISIBLE_OUTCOMES);
-  const restAmount = rest.reduce((sum, o) => sum + o.amount, 0);
   const restPercent = rest.reduce((sum, o) => sum + o.percent, 0);
-  const maxPercent = visible.length > 0 ? visible[0].percent : 1;
 
-  // Map outcome labels to their chart colors
-  const colorMap = new Map(outcomes.map((o) => [o.label, o.color || "#6b7280"]));
+  // Find the outcome with the biggest divergence for the summary label
+  let biggestDivergence = 0;
+  let biggestDivergenceLabel = "";
+  for (const o of data.outcomes) {
+    const marketPrice = marketPriceMap.get(o.label) ?? 0;
+    const div = o.percent - marketPrice;
+    if (Math.abs(div) > Math.abs(biggestDivergence)) {
+      biggestDivergence = div;
+      biggestDivergenceLabel = o.label;
+    }
+  }
 
   return (
     <div className="rounded-xl border border-border bg-card p-4 space-y-3">
@@ -91,59 +118,77 @@ function CategoricalConsensus({
         <Users className="h-3.5 w-3.5 text-muted-foreground" />
         <h3
           className="text-xs font-medium text-muted-foreground cursor-help"
-          title="Based on positions shared in comments by constellation members. Weighted by position size."
+          title="Community positions vs market prices. Based on positions shared in comments by constellation members."
         >
-          Community Positions
+          Community Consensus
         </h3>
       </div>
 
-      <div className="space-y-2">
-        {visible.map((o) => (
-          <div key={o.label} className="space-y-1">
-            <div className="flex items-center justify-between text-[10px]">
-              <span className="flex items-center gap-1.5 text-muted-foreground">
-                <span
-                  className="inline-block h-2 w-2 rounded-full"
-                  style={{ backgroundColor: colorMap.get(o.label) || "#6b7280" }}
-                />
-                {o.label}
-              </span>
-              <span className="font-medium text-foreground">{Math.round(o.percent * 100)}%</span>
+      <div className="space-y-3">
+        {visible.map((o) => {
+          const marketPrice = marketPriceMap.get(o.label) ?? 0;
+          const communityPct = Math.round(o.percent * 100);
+          const marketPct = Math.round(marketPrice * 100);
+          const color = colorMap.get(o.label) || "#6b7280";
+
+          return (
+            <div key={o.label} className="space-y-1">
+              <div className="flex items-center justify-between text-[10px]">
+                <span className="flex items-center gap-1.5 text-muted-foreground">
+                  <span
+                    className="inline-block h-2 w-2 rounded-full"
+                    style={{ backgroundColor: color }}
+                  />
+                  {o.label}
+                </span>
+              </div>
+              {/* Community bar */}
+              <div className="flex items-center gap-2">
+                <span className="text-[9px] text-muted-foreground w-14 text-right">Community</span>
+                <div className="h-1.5 flex-1 rounded-full bg-muted overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all"
+                    style={{ width: `${communityPct}%`, backgroundColor: color }}
+                  />
+                </div>
+                <span className="text-[10px] font-medium text-foreground w-8 text-right">{communityPct}%</span>
+              </div>
+              {/* Market bar */}
+              <div className="flex items-center gap-2">
+                <span className="text-[9px] text-muted-foreground w-14 text-right">Market</span>
+                <div className="h-1.5 flex-1 rounded-full bg-muted overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-primary/40 transition-all"
+                    style={{ width: `${marketPct}%` }}
+                  />
+                </div>
+                <span className="text-[10px] font-medium text-muted-foreground w-8 text-right">{marketPct}¢</span>
+              </div>
             </div>
-            <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-              <div
-                className="h-full rounded-full transition-all"
-                style={{
-                  width: `${(o.percent / maxPercent) * 100}%`,
-                  backgroundColor: colorMap.get(o.label) || "#6b7280",
-                }}
-              />
-            </div>
-          </div>
-        ))}
+          );
+        })}
 
         {rest.length > 0 && (
-          <div className="space-y-1">
-            <div className="flex items-center justify-between text-[10px]">
-              <span className="text-muted-foreground">{rest.length} others</span>
-              <span className="font-medium text-foreground">{Math.round(restPercent * 100)}%</span>
-            </div>
-            <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-              <div
-                className="h-full rounded-full bg-muted-foreground/40 transition-all"
-                style={{ width: `${(restPercent / maxPercent) * 100}%` }}
-              />
-            </div>
+          <div className="text-[10px] text-muted-foreground">
+            +{rest.length} others ({Math.round(restPercent * 100)}% of community positions)
           </div>
         )}
       </div>
 
-      <span
-        className="text-[10px] text-muted-foreground cursor-help block"
-        title="Distinct members of this constellation who shared a position on this market in comments"
-      >
-        {data.totalPositions} position{data.totalPositions !== 1 ? "s" : ""} shared
-      </span>
+      <div className="flex items-center justify-between">
+        <span
+          className="cursor-help"
+          title={`Biggest gap: ${biggestDivergenceLabel} (community vs market)`}
+        >
+          <DivergenceLabel divergence={biggestDivergence} />
+        </span>
+        <span
+          className="text-[10px] text-muted-foreground cursor-help"
+          title="Distinct members of this constellation who shared a position on this market in comments"
+        >
+          {data.totalPositions} position{data.totalPositions !== 1 ? "s" : ""} shared
+        </span>
+      </div>
     </div>
   );
 }
