@@ -96,7 +96,7 @@ export default function ConstellationDetailPage() {
                 onSelectRelated={(ticker) => setSelectedMarket(ticker)}
               />
             ) : (
-              <MarketFeed onSelectMarket={(ticker) => setSelectedMarket(ticker)} />
+              <MarketFeed onSelectMarket={(ticker) => setSelectedMarket(ticker)} constellationSlug={slug} />
             )}
           </div>
         </aside>

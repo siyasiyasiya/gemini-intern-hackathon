@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
         userAvatarUrl: users.avatarUrl,
         constellationName: constellations.name,
         constellationSlug: constellations.slug,
-        constellationTopic: constellations.topic,
+        constellationCategories: constellations.categories,
         replyCount: replyCountSql,
         likeCount: likeCountSql,
         likedByMe: likedByMeSql,
@@ -153,7 +153,7 @@ export async function GET(request: NextRequest) {
         id: r.constellationId,
         name: r.constellationName,
         slug: r.constellationSlug,
-        topic: r.constellationTopic,
+        topic: (r.constellationCategories as string[])?.[0] ?? "other",
       },
       replyCount: r.replyCount ?? 0,
     }));

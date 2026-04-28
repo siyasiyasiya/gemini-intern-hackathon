@@ -47,10 +47,15 @@ function sortMarkets(markets: Market[], sort: MarketSortOption): Market[] {
   }
 }
 
-export async function getMarkets(filters?: MarketFilters): Promise<Market[]> {
-  const geminiCategory = filters?.category
-    ? CATEGORY_TO_GEMINI[filters.category]
-    : undefined;
+export async function getMarkets(filters?: MarketFilters & { categories?: MarketCategory[] }): Promise<Market[]> {
+  let geminiCategory: string | string[] | undefined;
+  if (filters?.categories && filters.categories.length > 0) {
+    geminiCategory = filters.categories
+      .map((c) => CATEGORY_TO_GEMINI[c])
+      .filter(Boolean) as string[];
+  } else if (filters?.category) {
+    geminiCategory = CATEGORY_TO_GEMINI[filters.category];
+  }
 
   const geminiStatus = filters?.status === "active" ? "active" : undefined;
 
@@ -87,6 +92,21 @@ export async function getMarketByTicker(ticker: string): Promise<MarketDetail | 
 
 export async function getMarketsByCategory(category: MarketCategory): Promise<Market[]> {
   return getMarkets({ category });
+}
+
+export async function getMarketsByTickers(tickers: string[]): Promise<Market[]> {
+  if (tickers.length === 0) return [];
+  const results = await Promise.all(
+    tickers.map(async (ticker) => {
+      try {
+        const event = await fetchGeminiEvent(ticker);
+        return event ? geminiEventToMarket(event) : null;
+      } catch {
+        return null;
+      }
+    })
+  );
+  return results.filter((m): m is Market => m !== null);
 }
 
 export async function searchMarkets(query: string): Promise<Market[]> {

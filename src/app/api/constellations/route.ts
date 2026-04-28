@@ -8,14 +8,14 @@ import { generateInviteCode, generateSlug } from "@/lib/utils";
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const topic = searchParams.get("topic");
+    const category = searchParams.get("category");
     const search = searchParams.get("search");
     const page = parseInt(searchParams.get("page") || "1");
     const pageSize = 12;
 
     const conditions = [eq(constellations.isPublic, true)];
-    if (topic && topic !== "all") {
-      conditions.push(eq(constellations.topic, topic as any));
+    if (category && category !== "all") {
+      conditions.push(sql`${constellations.categories} && ARRAY[${category}]`);
     }
     if (search) {
       conditions.push(ilike(constellations.name, `%${search}%`));
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { name, description, topic, isPublic, about, rules, bannerUrl } = body;
+    const { name, description, categories, isPublic, about, rules, bannerUrl } = body;
 
     if (!name || name.trim().length === 0) {
       return NextResponse.json({ error: "Constellation name is required" }, { status: 400 });
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
         about: about?.trim() || null,
         rules: rules?.trim() || null,
         bannerUrl: bannerUrl?.trim() || null,
-        topic: topic || "other",
+        categories: Array.isArray(categories) ? categories : [],
         isPublic: isPublic ?? true,
         inviteCode: generateInviteCode(),
         creatorId: session.user.id,

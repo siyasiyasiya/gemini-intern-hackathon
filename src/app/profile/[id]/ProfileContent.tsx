@@ -63,7 +63,7 @@ export function ProfileContent({ username }: ProfileContentProps) {
       const res = await fetch(`/api/users/${username}/constellations`);
       const json = await res.json();
       if (json.error) throw new Error(json.error);
-      return json.data as { id: string; name: string; slug: string; topic: string }[];
+      return json.data as { id: string; name: string; slug: string; categories: string[] }[];
     },
     enabled: !!user,
   });
@@ -178,7 +178,7 @@ export function ProfileContent({ username }: ProfileContentProps) {
                     href={`/constellations/${c.slug}`}
                     className={cn(
                       "rounded-full px-2.5 py-0.5 text-xs font-medium transition-opacity hover:opacity-80",
-                      topicColors[c.topic] || topicColors.other
+                      topicColors[c.categories?.[0]] || topicColors.other
                     )}
                   >
                     {c.name}

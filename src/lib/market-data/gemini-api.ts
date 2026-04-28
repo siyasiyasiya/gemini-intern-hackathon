@@ -144,14 +144,19 @@ export function geminiEventToMarketDetail(
 }
 
 export async function fetchGeminiEvents(params?: {
-  category?: string;
+  category?: string | string[];
   search?: string;
   status?: string;
   limit?: number;
   offset?: number;
 }): Promise<GeminiEventsResponse> {
   const url = new URL(`${BASE_URL}/events`);
-  if (params?.category) url.searchParams.append("category[]", params.category);
+  if (params?.category) {
+    const cats = Array.isArray(params.category) ? params.category : [params.category];
+    for (const cat of cats) {
+      url.searchParams.append("category[]", cat);
+    }
+  }
   if (params?.search) url.searchParams.append("search", params.search);
   if (params?.status) url.searchParams.append("status[]", params.status);
   url.searchParams.set("limit", String(params?.limit ?? 50));

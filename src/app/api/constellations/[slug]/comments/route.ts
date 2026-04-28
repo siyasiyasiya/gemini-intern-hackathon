@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { constellations, comments, users, commentLikes } from "@/lib/db/schema";
+import { constellations, comments, users, commentLikes, trackedMarkets } from "@/lib/db/schema";
 import { eq, and, isNull, desc, sql } from "drizzle-orm";
 import type { ApiResponse, CommentResponse } from "@/types/api";
 
@@ -224,6 +224,22 @@ export async function POST(
         taggedMarkets: taggedMarketsArr,
       })
       .returning();
+
+    // Upsert tagged tickers into tracked_markets (auto-grow watchlist)
+    if (taggedMarketsArr && taggedMarketsArr.length > 0) {
+      await Promise.all(
+        taggedMarketsArr.map((ticker: string) =>
+          db
+            .insert(trackedMarkets)
+            .values({
+              constellationId: constellation.id,
+              marketTicker: ticker,
+              pinnedBy: session.user.id,
+            })
+            .onConflictDoNothing({ target: [trackedMarkets.constellationId, trackedMarkets.marketTicker] })
+        )
+      );
+    }
 
     const [user] = await db
       .select()

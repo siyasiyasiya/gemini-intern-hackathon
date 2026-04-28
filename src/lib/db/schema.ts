@@ -7,8 +7,9 @@ import {
   integer,
   real,
   pgEnum,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 
 // Enums
 export const constellationTopicEnum = pgEnum("constellation_topic", [
@@ -57,7 +58,7 @@ export const constellations = pgTable("constellations", {
   about: text("about"),
   rules: text("rules"),
   bannerUrl: text("banner_url"),
-  topic: constellationTopicEnum("topic").notNull().default("other"),
+  categories: text("categories").array().notNull().default(sql`ARRAY[]::text[]`),
   isPublic: boolean("is_public").notNull().default(true),
   inviteCode: text("invite_code").unique(),
   creatorId: uuid("creator_id")
@@ -92,7 +93,9 @@ export const trackedMarkets = pgTable("tracked_markets", {
   pinnedBy: uuid("pinned_by")
     .notNull()
     .references(() => users.id),
-});
+}, (table) => [
+  uniqueIndex("tracked_markets_constellation_ticker_idx").on(table.constellationId, table.marketTicker),
+]);
 
 // Comments
 export const comments = pgTable("comments", {

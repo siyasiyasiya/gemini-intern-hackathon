@@ -5,7 +5,7 @@ import { Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ConstellationResponse } from "@/types/api";
 
-const topicColors: Record<string, string> = {
+const categoryColors: Record<string, string> = {
   politics: "bg-blue-500/20 text-blue-400",
   crypto: "bg-orange-500/20 text-orange-400",
   sports: "bg-green-500/20 text-green-400",
@@ -13,6 +13,11 @@ const topicColors: Record<string, string> = {
   science: "bg-cyan-500/20 text-cyan-400",
   economics: "bg-yellow-500/20 text-yellow-400",
   technology: "bg-purple-500/20 text-purple-400",
+  commodities: "bg-amber-500/20 text-amber-400",
+  business: "bg-slate-500/20 text-slate-400",
+  weather: "bg-sky-500/20 text-sky-400",
+  media: "bg-rose-500/20 text-rose-400",
+  culture: "bg-violet-500/20 text-violet-400",
   other: "bg-muted text-muted-foreground",
 };
 
@@ -30,14 +35,25 @@ export function ConstellationCard({ constellation }: { constellation: Constellat
             <h3 className="font-semibold text-card-foreground truncate group-hover:text-primary transition-colors">
               {constellation.name}
             </h3>
-            <span
-              className={cn(
-                "shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium capitalize",
-                topicColors[constellation.topic] || topicColors.other
+            <div className="flex flex-wrap gap-1 shrink-0">
+              {constellation.categories && constellation.categories.length > 0 ? (
+                constellation.categories.slice(0, 3).map((cat: string) => (
+                  <span
+                    key={cat}
+                    className={cn(
+                      "rounded-full px-2 py-0.5 text-xs font-medium capitalize",
+                      categoryColors[cat] || categoryColors.other
+                    )}
+                  >
+                    {cat}
+                  </span>
+                ))
+              ) : (
+                <span className={cn("rounded-full px-2 py-0.5 text-xs font-medium", categoryColors.other)}>
+                  General
+                </span>
               )}
-            >
-              {constellation.topic}
-            </span>
+            </div>
           </div>
           {constellation.description && (
             <p className="text-sm text-muted-foreground line-clamp-2 mb-4">

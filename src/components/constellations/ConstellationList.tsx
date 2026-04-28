@@ -7,7 +7,7 @@ import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ConstellationResponse } from "@/types/api";
 
-const topics = [
+const CATEGORIES = [
   "all",
   "politics",
   "crypto",
@@ -16,24 +16,28 @@ const topics = [
   "science",
   "economics",
   "technology",
-  "other",
+  "commodities",
+  "business",
+  "weather",
+  "media",
+  "culture",
 ] as const;
 
-async function fetchConstellations(topic: string, search: string, page: number) {
+async function fetchConstellations(category: string, search: string, page: number) {
   const params = new URLSearchParams({ page: String(page) });
-  if (topic !== "all") params.set("topic", topic);
+  if (category !== "all") params.set("category", category);
   if (search) params.set("search", search);
   const res = await fetch(`/api/constellations?${params}`);
   return res.json();
 }
 
 export function ConstellationList({ search = "" }: { search?: string }) {
-  const [topic, setTopic] = useState("all");
+  const [category, setCategory] = useState("all");
   const [page, setPage] = useState(1);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["constellations", topic, search, page],
-    queryFn: () => fetchConstellations(topic, search, page),
+    queryKey: ["constellations", category, search, page],
+    queryFn: () => fetchConstellations(category, search, page),
   });
 
   const constellations: ConstellationResponse[] = data?.data || [];
@@ -43,18 +47,18 @@ export function ConstellationList({ search = "" }: { search?: string }) {
   return (
     <div>
       <div className="flex gap-2 overflow-x-auto pb-3 mb-6 scrollbar-hide">
-        {topics.map((t) => (
+        {CATEGORIES.map((c) => (
           <button
-            key={t}
-            onClick={() => { setTopic(t); setPage(1); }}
+            key={c}
+            onClick={() => { setCategory(c); setPage(1); }}
             className={cn(
               "shrink-0 rounded-full px-4 py-1.5 text-sm font-medium capitalize transition-colors",
-              topic === t
+              category === c
                 ? "bg-primary text-primary-foreground"
                 : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
             )}
           >
-            {t}
+            {c}
           </button>
         ))}
       </div>

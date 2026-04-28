@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Loader2, Upload, X } from "lucide-react";
 import { cn, generateSlug } from "@/lib/utils";
 
-const topics = [
+const CATEGORIES = [
   "politics",
   "crypto",
   "sports",
@@ -13,7 +13,11 @@ const topics = [
   "science",
   "economics",
   "technology",
-  "other",
+  "commodities",
+  "business",
+  "weather",
+  "media",
+  "culture",
 ] as const;
 
 export function CreateConstellationForm() {
@@ -26,7 +30,7 @@ export function CreateConstellationForm() {
   const [rules, setRules] = useState("");
   const [bannerUrl, setBannerUrl] = useState("");
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
-  const [topic, setTopic] = useState<string>("other");
+  const [categories, setCategories] = useState<string[]>([]);
   const [isPublic, setIsPublic] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -73,7 +77,7 @@ export function CreateConstellationForm() {
       const res = await fetch("/api/constellations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, slug, description, topic, isPublic, about, rules, bannerUrl: bannerUrl || undefined }),
+        body: JSON.stringify({ name, slug, description, categories, isPublic, about, rules, bannerUrl: bannerUrl || undefined }),
       });
       const json = await res.json();
 
@@ -202,23 +206,33 @@ export function CreateConstellationForm() {
         />
       </div>
 
-      {/* Topic + Visibility side by side */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        <div>
-          <label className="block text-sm font-medium mb-2">Topic</label>
-          <select
-            value={topic}
-            onChange={(e) => setTopic(e.target.value)}
-            className="w-full rounded-lg border border-border bg-secondary px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-          >
-            {topics.map((t) => (
-              <option key={t} value={t} className="capitalize">
-                {t.charAt(0).toUpperCase() + t.slice(1)}
-              </option>
-            ))}
-          </select>
+      {/* Categories */}
+      <div>
+        <label className="block text-sm font-medium mb-2">Categories</label>
+        <p className="text-xs text-muted-foreground mb-2">
+          Select categories to auto-populate matching markets. Leave empty for a general constellation.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {CATEGORIES.map((cat) => (
+            <button
+              key={cat}
+              type="button"
+              onClick={() => setCategories((prev) => prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat])}
+              className={cn(
+                "rounded-full px-3 py-1.5 text-sm font-medium capitalize transition-colors",
+                categories.includes(cat)
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+              )}
+            >
+              {cat}
+            </button>
+          ))}
         </div>
+      </div>
 
+      {/* Visibility */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <div>
           <label className="block text-sm font-medium mb-2">Visibility</label>
           <button

@@ -25,7 +25,7 @@ export async function GET(
         id: constellations.id,
         name: constellations.name,
         slug: constellations.slug,
-        topic: constellations.topic,
+        categories: constellations.categories,
       })
       .from(constellationMembers)
       .innerJoin(

@@ -19,7 +19,7 @@ export interface ConstellationResponse {
   about: string | null;
   rules: string | null;
   bannerUrl: string | null;
-  topic: string;
+  categories: string[];
   isPublic: boolean;
   inviteCode: string | null;
   creatorId: string;

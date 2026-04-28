@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useMarkets } from "@/hooks/useMarkets";
+import { useConstellationMarkets } from "@/hooks/useConstellationMarkets";
 import { MarketCard } from "./MarketCard";
 import { MarketFilters } from "./MarketFilters";
 import type { MarketCategory, MarketSortOption } from "@/types/market";
@@ -29,29 +30,50 @@ function MarketCardSkeleton() {
 
 interface MarketFeedProps {
   onSelectMarket?: (ticker: string) => void;
+  constellationSlug?: string;
 }
 
-export function MarketFeed({ onSelectMarket }: MarketFeedProps) {
+export function MarketFeed({ onSelectMarket, constellationSlug }: MarketFeedProps) {
   const [category, setCategory] = useState<MarketCategory | undefined>();
   const [sort, setSort] = useState<MarketSortOption>("trending");
   const [search, setSearch] = useState("");
 
-  const { data: markets, isLoading, error } = useMarkets({
-    category,
-    sort,
-    search: search || undefined,
-  });
+  const globalQuery = useMarkets(
+    constellationSlug ? undefined : { category, sort, search: search || undefined }
+  );
+  const constellationQuery = useConstellationMarkets(
+    constellationSlug || "",
+    constellationSlug ? { sort, search: search || undefined } : undefined
+  );
+
+  const activeQuery = constellationSlug ? constellationQuery : globalQuery;
+  const markets = constellationSlug
+    ? (constellationQuery.data?.data || [])
+    : (globalQuery.data || []);
+  const isLoading = activeQuery.isLoading;
+  const error = activeQuery.error;
 
   return (
     <div className="space-y-4">
-      <MarketFilters
-        category={category}
-        sort={sort}
-        search={search}
-        onCategoryChange={setCategory}
-        onSortChange={setSort}
-        onSearchChange={setSearch}
-      />
+      {constellationSlug ? (
+        <MarketFilters
+          sort={sort}
+          search={search}
+          onCategoryChange={() => {}}
+          onSortChange={setSort}
+          onSearchChange={setSearch}
+          hideCategories
+        />
+      ) : (
+        <MarketFilters
+          category={category}
+          sort={sort}
+          search={search}
+          onCategoryChange={setCategory}
+          onSortChange={setSort}
+          onSearchChange={setSearch}
+        />
+      )}
 
       {error && (
         <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
@@ -67,7 +89,7 @@ export function MarketFeed({ onSelectMarket }: MarketFeedProps) {
         </div>
       )}
 
-      {markets && markets.length === 0 && (
+      {markets && markets.length === 0 && !isLoading && (
         <div className="py-12 text-center text-muted-foreground text-sm">
           No markets found.
         </div>

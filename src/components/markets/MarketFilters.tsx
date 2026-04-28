@@ -34,6 +34,7 @@ interface MarketFiltersProps {
   onCategoryChange: (category: MarketCategory | undefined) => void;
   onSortChange: (sort: MarketSortOption) => void;
   onSearchChange: (search: string) => void;
+  hideCategories?: boolean;
 }
 
 export function MarketFilters({
@@ -43,6 +44,7 @@ export function MarketFilters({
   onCategoryChange,
   onSortChange,
   onSearchChange,
+  hideCategories = false,
 }: MarketFiltersProps) {
   return (
     <div className="space-y-3">
@@ -60,26 +62,28 @@ export function MarketFilters({
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
         {/* Category pills — scrollable row */}
-        <div className="relative min-w-0 flex-1">
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
-            {CATEGORIES.map((cat) => (
-              <button
-                key={cat.value}
-                onClick={() =>
-                  onCategoryChange(cat.value === "all" ? undefined : cat.value)
-                }
-                className={cn(
-                  "whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium transition-colors flex-shrink-0",
-                  (cat.value === "all" && !category) || cat.value === category
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {cat.label}
-              </button>
-            ))}
+        {!hideCategories && (
+          <div className="relative min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
+              {CATEGORIES.map((cat) => (
+                <button
+                  key={cat.value}
+                  onClick={() =>
+                    onCategoryChange(cat.value === "all" ? undefined : cat.value)
+                  }
+                  className={cn(
+                    "whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium transition-colors flex-shrink-0",
+                    (cat.value === "all" && !category) || cat.value === category
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-secondary text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Sort dropdown */}
         <select
