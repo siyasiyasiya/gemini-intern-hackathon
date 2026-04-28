@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Settings, CheckCircle2, XCircle, Loader2, User } from "lucide-react";
+import { Settings, CheckCircle2, XCircle, Loader2, User, Camera } from "lucide-react";
 import type { ApiResponse, UserResponse } from "@/types/api";
 
 export function SettingsContent() {
@@ -86,6 +86,33 @@ export function SettingsContent() {
     }
   }, [profile]);
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  async function handleAvatarUpload(file: File) {
+    setUploading(true);
+    setUploadError(null);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/upload/avatar", {
+        method: "POST",
+        body: formData,
+      });
+      const json = await res.json();
+      if (json.error) {
+        setUploadError(json.error);
+        return;
+      }
+      setAvatarUrl(json.data.url);
+    } catch {
+      setUploadError("Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  }
+
   const profileMutation = useMutation({
     mutationFn: async () => {
       const res = await fetch(`/api/users/${username}`, {
@@ -159,16 +186,57 @@ export function SettingsContent() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
-                Avatar URL
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Profile Picture
               </label>
-              <input
-                type="url"
-                value={avatarUrl}
-                onChange={(e) => setAvatarUrl(e.target.value)}
-                placeholder="https://example.com/avatar.png"
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-              />
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  {avatarUrl ? (
+                    <img
+                      src={avatarUrl}
+                      alt="Avatar preview"
+                      className="h-16 w-16 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted text-lg font-semibold text-muted-foreground">
+                      {(displayName || username || "?").slice(0, 2).toUpperCase()}
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50"
+                  >
+                    {uploading ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Camera className="h-3.5 w-3.5" />
+                    )}
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleAvatarUpload(file);
+                      e.target.value = "";
+                    }}
+                  />
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  <p>Click the camera icon to upload.</p>
+                  <p>JPEG, PNG, WebP, or GIF. Max 2MB.</p>
+                </div>
+              </div>
+              {uploadError && (
+                <p className="mt-1.5 flex items-center gap-1.5 text-xs text-destructive">
+                  <XCircle className="h-3.5 w-3.5" />
+                  {uploadError}
+                </p>
+              )}
             </div>
 
             {profileMutation.isError && (
