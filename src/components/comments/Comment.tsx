@@ -159,7 +159,7 @@ export function Comment({
             >
               {comment.positionContractLabel && `${comment.positionContractLabel} · `}
               {comment.positionDirection === "yes" ? "YES" : "NO"}{" "}
-              ${Math.round(comment.positionAmount)}
+              @ ${Math.round(comment.positionAmount * 100)}¢
             </span>
           )}
 

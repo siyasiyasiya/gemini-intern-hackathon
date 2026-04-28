@@ -289,16 +289,16 @@ function getComments(ci: number): CommentDef[] {
     case 0: // Crypto Alpha — tickers: [CRYPTOSTRUCT26, RECESSION26, GDP2026, CPI260512]
       return [
         {
-          userIndex: 1, content: "{{market:T0}} is the sleeper market of the year. If crypto gets proper market structure legislation, everything re-rates.", positionDirection: "yes", positionAmount: 500, taggedMarkets: [0], daysAgo: 5,
+          userIndex: 1, content: "{{market:T0}} is the sleeper market of the year. If crypto gets proper market structure legislation, everything re-rates.", positionDirection: "yes", positionAmount: 0.35, taggedMarkets: [0], daysAgo: 5,
           replies: [
             { userIndex: 0, content: "Agreed. The bipartisan support is real this time. Going heavy YES on {{market:T0}}.", daysAgo: 5 },
             { userIndex: 3, content: "Counterpoint: midterm politics could stall it. Don't underestimate legislative gridlock.", daysAgo: 4 },
             { userIndex: 7, content: "What's your stop loss on this?", daysAgo: 4 },
           ],
         },
-        { userIndex: 0, content: "DeFi TVL just crossed $200B again. {{market:T1}} is not pricing this in — if there's no recession, crypto runs.", positionDirection: "no", positionAmount: 200, taggedMarkets: [1], daysAgo: 3 },
+        { userIndex: 0, content: "DeFi TVL just crossed $200B again. {{market:T1}} is not pricing this in — if there's no recession, crypto runs.", positionDirection: "no", positionAmount: 0.30, taggedMarkets: [1], daysAgo: 3 },
         { userIndex: 3, content: "Fed minutes coming out tomorrow. Expect volatility on {{market:T2}} and {{market:T3}}.", taggedMarkets: [2, 3], daysAgo: 2 },
-        { userIndex: 4, content: "On-chain data shows whales accumulating aggressively. {{market:T1}} going NO feels like free money if the economy holds.", positionDirection: "no", positionAmount: 300, taggedMarkets: [1], daysAgo: 1,
+        { userIndex: 4, content: "On-chain data shows whales accumulating aggressively. {{market:T1}} going NO feels like free money if the economy holds.", positionDirection: "no", positionAmount: 0.45, taggedMarkets: [1], daysAgo: 1,
           replies: [
             { userIndex: 1, content: "Mixed signals though — {{market:T3}} could come in hot and change the narrative fast.", daysAgo: 1 },
           ],
@@ -308,7 +308,7 @@ function getComments(ci: number): CommentDef[] {
     case 1: // Sports Edge — tickers: [NBAF-2526CHAMP, NBAF-2526CONF-WEST]
       return [
         {
-          userIndex: 2, content: "NBA playoff model update: Celtics have a 72% chance of repeating. Going YES on {{market:T0}}.", positionDirection: "yes", positionAmount: 150, taggedMarkets: [0], daysAgo: 7,
+          userIndex: 2, content: "NBA playoff model update: Celtics have a 72% chance of repeating. Going YES on {{market:T0}}.", positionDirection: "yes", positionAmount: 0.72, taggedMarkets: [0], daysAgo: 7,
           replies: [
             { userIndex: 5, content: "What about injury adjustments? Tatum's been dealing with that knee.", daysAgo: 6 },
             { userIndex: 0, content: "Your model has been fire this season. Tailing on {{market:T0}}.", daysAgo: 6 },
@@ -316,19 +316,19 @@ function getComments(ci: number): CommentDef[] {
         },
         { userIndex: 6, content: "{{market:T1}} is wide open this year. Thunder, Nuggets, Wolves all have a shot.", taggedMarkets: [1], daysAgo: 4 },
         { userIndex: 7, content: "The Western Conference is stacked. I think {{market:T1}} has the most value right now.", taggedMarkets: [1], daysAgo: 2 },
-        { userIndex: 0, content: "Line movement on the Lakers series looks sharp. Pros are on the under.", positionDirection: "no", positionAmount: 100, taggedMarkets: [0], daysAgo: 1 },
+        { userIndex: 0, content: "Line movement on the Lakers series looks sharp. Pros are on the under.", positionDirection: "no", positionAmount: 0.25, taggedMarkets: [0], daysAgo: 1 },
       ];
     case 2: // Policy & Markets — tickers: [CABINET-26, CTRLUSHOU, GDP2026, CPI260512]
       return [
         {
-          userIndex: 5, content: "{{market:T1}} is mispriced. New polling aggregate has it at 52-48 but market says 60-40.", positionDirection: "no", positionAmount: 400, taggedMarkets: [1], daysAgo: 8,
+          userIndex: 5, content: "{{market:T1}} is mispriced. New polling aggregate has it at 52-48 but market says 60-40.", positionDirection: "no", positionAmount: 0.40, taggedMarkets: [1], daysAgo: 8,
           replies: [
             { userIndex: 3, content: "Polls this far out are basically noise. I'd wait until after the debates.", daysAgo: 7 },
             { userIndex: 4, content: "The prediction market is usually more accurate than polls by this point in the cycle.", daysAgo: 7 },
           ],
         },
-        { userIndex: 0, content: "More {{market:T0}} drama incoming. This cabinet is historically unstable.", positionDirection: "yes", positionAmount: 250, taggedMarkets: [0], daysAgo: 4 },
-        { userIndex: 3, content: "CPI report lands Thursday. Consensus is 3.1%. I think {{market:T3}} comes in hot.", positionDirection: "yes", positionAmount: 200, taggedMarkets: [3], daysAgo: 2,
+        { userIndex: 0, content: "More {{market:T0}} drama incoming. This cabinet is historically unstable.", positionDirection: "yes", positionAmount: 0.55, taggedMarkets: [0], daysAgo: 4 },
+        { userIndex: 3, content: "CPI report lands Thursday. Consensus is 3.1%. I think {{market:T3}} comes in hot.", positionDirection: "yes", positionAmount: 0.30, taggedMarkets: [3], daysAgo: 2,
           replies: [
             { userIndex: 8, content: "Shelter inflation is sticky. I agree with the over bet on {{market:T3}}.", daysAgo: 1 },
           ],
@@ -338,20 +338,20 @@ function getComments(ci: number): CommentDef[] {
     case 3: // AI & Future Tech — tickers: [BESTAI26, GEMINI35, NASAMOON, GDP2026, SURV50, EUROWIN26]
       return [
         {
-          userIndex: 4, content: "GPT-5 rumored for Q3. If it passes the bar exam with 95%+, {{market:T0}} will move fast.", positionDirection: "yes", positionAmount: 300, positionContractLabel: "ChatGPT", taggedMarkets: [0], daysAgo: 10,
+          userIndex: 4, content: "GPT-5 rumored for Q3. If it passes the bar exam with 95%+, {{market:T0}} will move fast.", positionDirection: "yes", positionAmount: 0.45, positionContractLabel: "ChatGPT", taggedMarkets: [0], daysAgo: 10,
           replies: [
             { userIndex: 1, content: "Benchmark performance ≠ AGI. But {{market:T0}} doesn't care about that distinction.", daysAgo: 9 },
             { userIndex: 9, content: "More interested in the reasoning capabilities. Benchmarks are increasingly gamed.", daysAgo: 8 },
             { userIndex: 0, content: "Bought YES on {{market:T0}} at $0.35. Feels like free money.", daysAgo: 8 },
           ],
         },
-        { userIndex: 1, content: "Claude's reasoning evals are unmatched. Going heavy on Claude for {{market:T0}}.", positionDirection: "yes", positionAmount: 500, positionContractLabel: "Claude", taggedMarkets: [0], daysAgo: 8 },
-        { userIndex: 0, content: "Gemini 2.5 just dropped. Multimodal is where the real competition is. YES on Gemini for {{market:T0}}.", positionDirection: "yes", positionAmount: 200, positionContractLabel: "Gemini", taggedMarkets: [0], daysAgo: 6 },
-        { userIndex: 9, content: "Don't sleep on Claude — Anthropic's scaling is aggressive. Adding more.", positionDirection: "yes", positionAmount: 350, positionContractLabel: "Claude", taggedMarkets: [0], daysAgo: 5 },
+        { userIndex: 1, content: "Claude's reasoning evals are unmatched. Going heavy on Claude for {{market:T0}}.", positionDirection: "yes", positionAmount: 0.35, positionContractLabel: "Claude", taggedMarkets: [0], daysAgo: 8 },
+        { userIndex: 0, content: "Gemini 2.5 just dropped. Multimodal is where the real competition is. YES on Gemini for {{market:T0}}.", positionDirection: "yes", positionAmount: 0.30, positionContractLabel: "Gemini", taggedMarkets: [0], daysAgo: 6 },
+        { userIndex: 9, content: "Don't sleep on Claude — Anthropic's scaling is aggressive. Adding more.", positionDirection: "yes", positionAmount: 0.62, positionContractLabel: "Claude", taggedMarkets: [0], daysAgo: 5 },
         { userIndex: 8, content: "{{market:T1}} is the race to watch right now. Google is under pressure to ship.", taggedMarkets: [1], daysAgo: 5 },
-        { userIndex: 3, content: "Grok is a dark horse. xAI has the compute. Small position.", positionDirection: "yes", positionAmount: 75, positionContractLabel: "Grok", taggedMarkets: [0], daysAgo: 4 },
-        { userIndex: 5, content: "ChatGPT still has the distribution advantage. Enterprise adoption is massive.", positionDirection: "yes", positionAmount: 250, positionContractLabel: "ChatGPT", taggedMarkets: [0], daysAgo: 3 },
-        { userIndex: 3, content: "{{market:T2}} is a long shot but the Artemis program is back on track. Going small YES.", positionDirection: "yes", positionAmount: 50, taggedMarkets: [2], daysAgo: 3 },
+        { userIndex: 3, content: "Grok is a dark horse. xAI has the compute. Small position.", positionDirection: "yes", positionAmount: 0.10, positionContractLabel: "Grok", taggedMarkets: [0], daysAgo: 4 },
+        { userIndex: 5, content: "ChatGPT still has the distribution advantage. Enterprise adoption is massive.", positionDirection: "yes", positionAmount: 0.55, positionContractLabel: "ChatGPT", taggedMarkets: [0], daysAgo: 3 },
+        { userIndex: 3, content: "{{market:T2}} is a long shot but the Artemis program is back on track. Going small YES.", positionDirection: "yes", positionAmount: 0.15, taggedMarkets: [2], daysAgo: 3 },
         { userIndex: 0, content: "Interesting cross-category play: {{market:T4}} and {{market:T5}} are both entertainment markets you can pair for diversification.", taggedMarkets: [4, 5], daysAgo: 1 },
         { userIndex: 10, content: "What resources do you all use to track AI benchmarks?", daysAgo: 0,
           replies: [
@@ -362,7 +362,7 @@ function getComments(ci: number): CommentDef[] {
     case 4: // Whale Watchers (PRIVATE) — tickers: [CRYPTOSTRUCT26, RECESSION26, GDP2026, CPI260512, CABINET-26, CTRLUSHOU]
       return [
         {
-          userIndex: 0, content: "Position update: 60% allocated to {{market:T0}} YES, 30% {{market:T4}} NO, 10% cash. Total bankroll $12k.", positionDirection: "yes", positionAmount: 7200, taggedMarkets: [0, 4], daysAgo: 6,
+          userIndex: 0, content: "Position update: 60% allocated to {{market:T0}} YES, 30% {{market:T4}} NO, 10% cash. Total bankroll $12k.", positionDirection: "yes", positionAmount: 0.60, taggedMarkets: [0, 4], daysAgo: 6,
           replies: [
             { userIndex: 1, content: "Heavy into crypto legislation. I'm more balanced — 40/40/20. {{market:T5}} has been paying lately.", daysAgo: 5 },
             { userIndex: 3, content: "I'm sitting on mostly cash. Waiting for the {{market:T3}} print to deploy.", daysAgo: 5 },
@@ -394,18 +394,18 @@ function getComments(ci: number): CommentDef[] {
     case 6: // Awards Season — tickers: [SURV50, EUROWIN26]
       return [
         {
-          userIndex: 8, content: "{{market:T0}} is heating up. The merge tribe has a clear numbers advantage but alliances are shifting.", positionDirection: "yes", positionAmount: 200, taggedMarkets: [0], daysAgo: 14,
+          userIndex: 8, content: "{{market:T0}} is heating up. The merge tribe has a clear numbers advantage but alliances are shifting.", positionDirection: "yes", positionAmount: 0.30, taggedMarkets: [0], daysAgo: 14,
           replies: [
             { userIndex: 0, content: "The edit is pointing to a different winner though. Classic misdirect on {{market:T0}}.", daysAgo: 13 },
             { userIndex: 5, content: "Edgic analysis is the best predictor historically. Wait for the merge episode.", daysAgo: 12 },
           ],
         },
-        { userIndex: 0, content: "{{market:T1}} is wide open. No clear front-runner yet from the semi-final results.", positionDirection: "yes", positionAmount: 100, taggedMarkets: [1], daysAgo: 5 },
+        { userIndex: 0, content: "{{market:T1}} is wide open. No clear front-runner yet from the semi-final results.", positionDirection: "yes", positionAmount: 0.25, taggedMarkets: [1], daysAgo: 5 },
       ];
     case 7: // Climate Bets — tickers: [NASAMOON, GDP2026]
       return [
         {
-          userIndex: 9, content: "{{market:T0}} is the most exciting science market on the platform. Artemis III timeline keeps slipping though.", positionDirection: "yes", positionAmount: 500, taggedMarkets: [0], daysAgo: 20,
+          userIndex: 9, content: "{{market:T0}} is the most exciting science market on the platform. Artemis III timeline keeps slipping though.", positionDirection: "yes", positionAmount: 0.35, taggedMarkets: [0], daysAgo: 20,
           replies: [
             { userIndex: 4, content: "What's your confidence on {{market:T0}}? The SpaceX Starship timeline is the real bottleneck.", daysAgo: 18 },
           ],
@@ -422,7 +422,7 @@ function getComments(ci: number): CommentDef[] {
           ],
         },
         { userIndex: 4, content: "{{market:T0}} is getting spicy. Two more resignations rumored this week.", taggedMarkets: [0], daysAgo: 1 },
-        { userIndex: 0, content: "Arbitrage opportunity between Polymarket and Gemini on {{market:T1}}. Going YES.", positionDirection: "yes", positionAmount: 350, taggedMarkets: [1], daysAgo: 0 },
+        { userIndex: 0, content: "Arbitrage opportunity between Polymarket and Gemini on {{market:T1}}. Going YES.", positionDirection: "yes", positionAmount: 0.62, taggedMarkets: [1], daysAgo: 0 },
       ];
     case 9: // Fresh Start (EMPTY — no comments)
       return [];
