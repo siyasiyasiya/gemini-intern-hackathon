@@ -2,8 +2,10 @@ import type { Market, MarketDetail, MarketFilters, MarketSortOption, MarketCateg
 import {
   fetchGeminiEvents,
   fetchGeminiEvent,
+  fetchContractCandles,
   geminiEventToMarket,
   geminiEventToMarketDetail,
+  getFeaturedContract,
 } from "./gemini-api";
 
 // Map our lowercase categories to Gemini's mixed-case values for the API query
@@ -87,13 +89,17 @@ export async function getMarketByTicker(ticker: string): Promise<MarketDetail | 
   const event = await fetchGeminiEvent(ticker);
   if (!event) return null;
 
-  // Fetch related events in the same category
-  const related = await fetchGeminiEvents({
-    category: event.category,
-    limit: 4,
-  });
+  const featuredContract = getFeaturedContract(event.contracts);
 
-  return geminiEventToMarketDetail(event, related.data);
+  // Fetch related events + price history candles in parallel
+  const [related, history] = await Promise.all([
+    fetchGeminiEvents({ category: event.category, limit: 4 }),
+    featuredContract?.instrumentSymbol
+      ? fetchContractCandles(featuredContract.instrumentSymbol, "1day")
+      : Promise.resolve([]),
+  ]);
+
+  return geminiEventToMarketDetail(event, related.data, history);
 }
 
 export async function getMarketsByCategory(category: MarketCategory): Promise<Market[]> {

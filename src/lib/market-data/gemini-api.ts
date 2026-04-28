@@ -5,6 +5,7 @@ import type {
   MarketDetail,
   MarketCategory,
   GeminiContract,
+  PricePoint,
 } from "@/types/market";
 
 const BASE_URL = "https://api.gemini.com/v1/prediction-markets";
@@ -69,7 +70,7 @@ function extractDescription(desc: unknown): string {
   return "";
 }
 
-function getFeaturedContract(contracts: GeminiContract[]): GeminiContract | undefined {
+export function getFeaturedContract(contracts: GeminiContract[]): GeminiContract | undefined {
   // For binary: usually 1 contract. For categorical: pick the one closest to 50/50 with valid prices.
   const withPrices = contracts.filter(
     (c) => c.prices?.buy?.yes || c.prices?.lastTradePrice
@@ -128,19 +129,47 @@ export function geminiEventToMarket(event: GeminiEvent): Market {
 
 export function geminiEventToMarketDetail(
   event: GeminiEvent,
-  relatedEvents: GeminiEvent[]
+  relatedEvents: GeminiEvent[],
+  history: PricePoint[] = []
 ): MarketDetail {
   const base = geminiEventToMarket(event);
   return {
     ...base,
     resolutionSource: event.source || "Gemini",
-    history: [], // Gemini public API doesn't expose price history
+    history,
     relatedTickers: relatedEvents
       .filter((e) => e.ticker !== event.ticker)
       .slice(0, 3)
       .map((e) => e.ticker),
     contracts: event.contracts,
   };
+}
+
+// Gemini v2 candles: [timestamp, open, high, low, close, volume]
+type GeminiCandle = [number, number, number, number, number, number];
+
+export async function fetchContractCandles(
+  instrumentSymbol: string,
+  timeframe: "1m" | "5m" | "15m" | "30m" | "1hr" | "6hr" | "1day" = "1day"
+): Promise<PricePoint[]> {
+  const res = await fetch(
+    `https://api.gemini.com/v2/candles/${encodeURIComponent(instrumentSymbol)}/${timeframe}`,
+    { next: { revalidate: 300 } }
+  );
+  if (!res.ok) return [];
+
+  const candles: GeminiCandle[] = await res.json();
+  if (!Array.isArray(candles)) return [];
+
+  // Candles come newest-first; reverse for chronological order
+  return candles
+    .slice()
+    .reverse()
+    .map(([timestamp, , , , close, volume]) => ({
+      timestamp: new Date(timestamp).toISOString(),
+      yesPrice: close,
+      volume,
+    }));
 }
 
 export async function fetchGeminiEvents(params?: {
