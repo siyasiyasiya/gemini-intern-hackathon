@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { constellations, constellationMembers, userTrades } from "@/lib/db/schema";
 import { eq, sql } from "drizzle-orm";
+import { checkConstellationAccess } from "@/lib/db/check-membership";
 import type { ApiResponse, ConstellationStatsResponse } from "@/types/api";
 
 export async function GET(
@@ -11,14 +13,15 @@ export async function GET(
   const { slug } = await params;
 
   try {
-    const [constellation] = await db
-      .select({ id: constellations.id })
-      .from(constellations)
-      .where(eq(constellations.slug, slug))
-      .limit(1);
+    const session = await auth();
+    const { constellation, forbidden } = await checkConstellationAccess(slug, session?.user?.id);
 
     if (!constellation) {
       return NextResponse.json<ApiResponse<null>>({ error: "Constellation not found" }, { status: 404 });
+    }
+
+    if (forbidden) {
+      return NextResponse.json<ApiResponse<null>>({ error: "This constellation is private" }, { status: 403 });
     }
 
     const [tradeStats] = await db

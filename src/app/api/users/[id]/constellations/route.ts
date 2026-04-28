@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { constellationMembers, constellations } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { resolveUser } from "@/lib/db/resolve-user";
 import type { ApiResponse } from "@/types/api";
 
@@ -12,6 +13,7 @@ export async function GET(
   const { id } = await params;
 
   try {
+    const session = await auth();
     const user = await resolveUser(id);
     if (!user) {
       return NextResponse.json<ApiResponse<null>>(
@@ -19,6 +21,8 @@ export async function GET(
         { status: 404 }
       );
     }
+
+    const isOwnProfile = session?.user?.id === user.id;
 
     const rows = await db
       .select({
@@ -32,7 +36,14 @@ export async function GET(
         constellations,
         eq(constellationMembers.constellationId, constellations.id)
       )
-      .where(eq(constellationMembers.userId, user.id));
+      .where(
+        isOwnProfile
+          ? eq(constellationMembers.userId, user.id)
+          : and(
+              eq(constellationMembers.userId, user.id),
+              eq(constellations.isPublic, true)
+            )
+      );
 
     return NextResponse.json({ data: rows });
   } catch {

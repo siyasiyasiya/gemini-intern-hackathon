@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { constellations, constellationMembers, trackedMarkets } from "@/lib/db/schema";
 import { auth } from "@/lib/auth";
 import { eq, and, desc } from "drizzle-orm";
+import { checkConstellationAccess } from "@/lib/db/check-membership";
 import type { ApiResponse, TrackedMarketResponse } from "@/types/api";
 
 async function getConstellationBySlug(slug: string) {
@@ -21,9 +22,13 @@ export async function GET(
   const { slug } = await params;
 
   try {
-    const constellation = await getConstellationBySlug(slug);
+    const session = await auth();
+    const { constellation, forbidden } = await checkConstellationAccess(slug, session?.user?.id);
     if (!constellation) {
       return NextResponse.json<ApiResponse<null>>({ error: "Constellation not found" }, { status: 404 });
+    }
+    if (forbidden) {
+      return NextResponse.json<ApiResponse<null>>({ error: "This constellation is private" }, { status: 403 });
     }
 
     const markets = await db

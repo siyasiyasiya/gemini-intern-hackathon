@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { constellations, comments, users, commentLikes, trackedMarkets } from "@/lib/db/schema";
+import { constellations, constellationMembers, comments, users, commentLikes, trackedMarkets } from "@/lib/db/schema";
 import { eq, and, isNull, desc, sql } from "drizzle-orm";
+import { checkConstellationAccess } from "@/lib/db/check-membership";
 import type { ApiResponse, CommentResponse } from "@/types/api";
 
 const commentSelect = {
@@ -102,14 +103,14 @@ export async function GET(
   const currentUserId = session?.user?.id;
 
   try {
-    const [constellation] = await db
-      .select({ id: constellations.id })
-      .from(constellations)
-      .where(eq(constellations.slug, slug))
-      .limit(1);
+    const { constellation, forbidden } = await checkConstellationAccess(slug, currentUserId);
 
     if (!constellation) {
       return NextResponse.json<ApiResponse<null>>({ error: "Constellation not found" }, { status: 404 });
+    }
+
+    if (forbidden) {
+      return NextResponse.json<ApiResponse<null>>({ error: "This constellation is private" }, { status: 403 });
     }
 
     const conditions = [eq(comments.constellationId, constellation.id)];
@@ -187,14 +188,14 @@ export async function POST(
   const { slug } = await params;
 
   try {
-    const [constellation] = await db
-      .select({ id: constellations.id })
-      .from(constellations)
-      .where(eq(constellations.slug, slug))
-      .limit(1);
+    const { constellation, isMember } = await checkConstellationAccess(slug, session.user.id);
 
     if (!constellation) {
       return NextResponse.json<ApiResponse<null>>({ error: "Constellation not found" }, { status: 404 });
+    }
+
+    if (!isMember) {
+      return NextResponse.json<ApiResponse<null>>({ error: "Must be a member to comment" }, { status: 403 });
     }
 
     const body = await request.json();

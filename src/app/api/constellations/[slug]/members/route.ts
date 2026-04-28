@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { constellations, constellationMembers, users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { checkConstellationAccess } from "@/lib/db/check-membership";
 
 export async function GET(
   req: NextRequest,
@@ -9,14 +11,15 @@ export async function GET(
 ) {
   try {
     const { slug } = await params;
-    const [constellation] = await db
-      .select({ id: constellations.id })
-      .from(constellations)
-      .where(eq(constellations.slug, slug))
-      .limit(1);
+    const session = await auth();
+    const { constellation, forbidden } = await checkConstellationAccess(slug, session?.user?.id);
 
     if (!constellation) {
       return NextResponse.json({ error: "Constellation not found" }, { status: 404 });
+    }
+
+    if (forbidden) {
+      return NextResponse.json({ error: "This constellation is private" }, { status: 403 });
     }
 
     const members = await db

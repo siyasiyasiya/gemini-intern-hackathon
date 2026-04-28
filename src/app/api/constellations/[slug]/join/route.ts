@@ -25,6 +25,13 @@ export async function POST(
       return NextResponse.json({ error: "Constellation not found" }, { status: 404 });
     }
 
+    if (!constellation.isPublic) {
+      return NextResponse.json(
+        { error: "This constellation is private. Use an invite link to join." },
+        { status: 403 }
+      );
+    }
+
     const [existing] = await db
       .select()
       .from(constellationMembers)
