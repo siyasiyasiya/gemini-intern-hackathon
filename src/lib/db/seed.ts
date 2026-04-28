@@ -335,7 +335,7 @@ async function seed() {
       "about" text,
       "rules" text,
       "banner_url" text,
-      "topic" "constellation_topic" DEFAULT 'other' NOT NULL,
+      "categories" text[] DEFAULT ARRAY[]::text[] NOT NULL,
       "is_public" boolean DEFAULT true NOT NULL,
       "invite_code" text,
       "creator_id" uuid NOT NULL REFERENCES "users"("id"),
@@ -359,7 +359,8 @@ async function seed() {
       "constellation_id" uuid NOT NULL REFERENCES "constellations"("id") ON DELETE CASCADE,
       "market_ticker" text NOT NULL,
       "pinned_at" timestamp with time zone DEFAULT now() NOT NULL,
-      "pinned_by" uuid NOT NULL REFERENCES "users"("id")
+      "pinned_by" uuid NOT NULL REFERENCES "users"("id"),
+      CONSTRAINT "tracked_markets_constellation_ticker" UNIQUE("constellation_id", "market_ticker")
     );
 
     CREATE TABLE "comments" (
@@ -457,7 +458,7 @@ async function seed() {
         description: c.description,
         about: c.about,
         rules: c.rules,
-        topic: c.topic,
+        categories: [c.topic],
         isPublic: true,
         creatorId: insertedUsers[membershipMap[i].find((m) => m.role === "owner")!.userIndex].id,
         memberCount: membershipMap[i].length,
@@ -489,8 +490,12 @@ async function seed() {
   await db.insert(schema.constellationMembers).values(memberValues);
   console.log(`  Inserted ${memberValues.length} memberships.\n`);
 
-  // ── 5. Fetch & insert tracked markets ─────────────────────────────────
-  console.log("Fetching Gemini prediction market tickers...");
+  // ── 5. Tracked markets (watchlist) ─────────────────────────────────
+  // Watchlist is now populated only via $mention in comments — no seeding.
+  console.log("Skipping tracked markets (watchlist grows via $mention).\n");
+
+  // Fetch tickers for use in comment seeding
+  console.log("Fetching Gemini prediction market tickers for comment content...");
   let tickersByTopic = await fetchGeminiTickers();
   if (!tickersByTopic) {
     console.log("  Gemini API unavailable, using fallback tickers.");
@@ -499,38 +504,11 @@ async function seed() {
     console.log("  Got tickers from Gemini API.");
   }
 
-  const trackedMarketValues: {
-    constellationId: string;
-    marketTicker: string;
-    pinnedBy: string;
-  }[] = [];
-
-  for (let ci = 0; ci < insertedConstellations.length; ci++) {
+  const tickersByConstellation: string[][] = insertedConstellations.map((_, ci) => {
     const topic = constellationData[ci].topic;
-    const tickers = tickersByTopic[topic] || fallbackTickers[topic];
-    const ownerId = insertedUsers[membershipMap[ci].find((m) => m.role === "owner")!.userIndex].id;
-
-    for (const ticker of tickers.slice(0, 3)) {
-      trackedMarketValues.push({
-        constellationId: insertedConstellations[ci].id,
-        marketTicker: ticker,
-        pinnedBy: ownerId,
-      });
-    }
-  }
-
-  const insertedTrackedMarkets = await db
-    .insert(schema.trackedMarkets)
-    .values(trackedMarketValues)
-    .returning();
-  console.log(`  Inserted ${insertedTrackedMarkets.length} tracked markets.\n`);
-
-  // Build a lookup: constellationIndex -> list of tickers
-  const tickersByConstellation: string[][] = insertedConstellations.map((c) =>
-    insertedTrackedMarkets
-      .filter((tm) => tm.constellationId === c.id)
-      .map((tm) => tm.marketTicker)
-  );
+    const tickers = tickersByTopic![topic] || fallbackTickers[topic];
+    return tickers?.slice(0, 3) || [];
+  });
 
   // ── 6. Insert comments (with replies) ────────────────────────────────
   console.log("Inserting comments...");
