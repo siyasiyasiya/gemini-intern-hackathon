@@ -335,12 +335,6 @@ function WelcomeHero({
           href="/constellations"
           className="rounded-full border border-border bg-secondary px-5 py-2.5 text-sm font-medium text-secondary-foreground hover:bg-muted transition-colors"
         >
-          Your Constellations
-        </Link>
-        <Link
-          href="/constellations"
-          className="rounded-full border border-border bg-secondary px-5 py-2.5 text-sm font-medium text-secondary-foreground hover:bg-muted transition-colors"
-        >
           Explore Markets
         </Link>
         <Link
@@ -354,9 +348,16 @@ function WelcomeHero({
 
       {userConstellations.length > 0 && (
         <div>
-          <h2 className="text-sm font-medium text-muted-foreground mb-3 uppercase tracking-wider">
-            Your Constellations
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold">Your Constellations</h2>
+            <Link
+              href="/constellations"
+              className="flex items-center gap-1 text-sm text-accent hover:text-accent/80 transition-colors"
+            >
+              View all
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {userConstellations.slice(0, 6).map((c) => (
               <ConstellationCard key={c.id} constellation={c} />
