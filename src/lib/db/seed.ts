@@ -190,13 +190,14 @@ function getComments(constellationIndex: number): {
   marketTicker?: boolean; // true = attach the first tracked market ticker
   positionDirection?: "yes" | "no";
   positionAmount?: number;
+  taggedMarketIndices?: number[]; // indices into constellation's tracked markets array
   daysAgo: number;
   replies?: { content: string; userIndex: number; daysAgo: number }[];
 }[] {
   const commentSets = [
     // Crypto Alpha
     [
-      { content: "BTC breaking above 100k resistance. The prediction market is pricing in 68% chance of hitting 120k by end of June. Seems about right given the ETF inflows.", userIndex: 0, marketTicker: true, positionDirection: "yes" as const, positionAmount: 250, daysAgo: 6,
+      { content: "BTC breaking above 100k resistance. The prediction market {{market:TICKER_0}} is pricing in 68% chance of hitting 120k by end of June. Seems about right given the ETF inflows.", userIndex: 0, marketTicker: true, positionDirection: "yes" as const, positionAmount: 250, taggedMarketIndices: [0], daysAgo: 6,
         replies: [
           { content: "ETF inflows have slowed this week though. I'd put it closer to 55%.", userIndex: 3, daysAgo: 5 },
           { content: "On-chain data still bullish. Whale accumulation hasn't stopped.", userIndex: 7, daysAgo: 5 },
@@ -205,7 +206,7 @@ function getComments(constellationIndex: number): {
         replies: [
           { content: "Bought YES at 0.42. The Pectra upgrade narrative is building.", userIndex: 4, daysAgo: 3 },
         ] },
-      { content: "Solana prediction markets are getting interesting. The ecosystem growth is real but markets seem to be overpricing the short-term.", userIndex: 4, marketTicker: true, positionDirection: "no" as const, positionAmount: 100, daysAgo: 2 },
+      { content: "Solana prediction markets are getting interesting. {{market:TICKER_2}} — the ecosystem growth is real but markets seem to be overpricing the short-term.", userIndex: 4, marketTicker: true, positionDirection: "no" as const, positionAmount: 100, taggedMarketIndices: [2], daysAgo: 2 },
       { content: "Just published my weekly crypto markets recap in my profile. TL;DR: cautiously bullish on BTC, neutral on alts.", userIndex: 1, daysAgo: 1 },
       { content: "Position update: Added to my BTC YES position. Cost basis at 0.65.", userIndex: 0, positionDirection: "yes" as const, positionAmount: 150, daysAgo: 0 },
     ],
@@ -237,7 +238,7 @@ function getComments(constellationIndex: number): {
     ],
     // Tech Futures
     [
-      { content: "The AGI timeline market is fascinating. We went from 15% to 35% chance of AGI before 2030 in just 6 months.", userIndex: 5, marketTicker: true, daysAgo: 6,
+      { content: "The AGI timeline market {{market:TICKER_0}} is fascinating. We went from 15% to 35% chance of AGI before 2030 in just 6 months.", userIndex: 5, marketTicker: true, taggedMarketIndices: [0], daysAgo: 6,
         replies: [
           { content: "Depends entirely on your definition. By some definitions we're already there.", userIndex: 0, daysAgo: 5 },
           { content: "The market is pricing in the hype cycle too much. I'm selling YES here.", userIndex: 4, daysAgo: 5 },
@@ -252,7 +253,7 @@ function getComments(constellationIndex: number): {
     ],
     // Macro Moves
     [
-      { content: "Fed funds futures are pricing in 2 cuts by year-end but prediction markets only show 45% for even one cut in June. Interesting divergence.", userIndex: 1, marketTicker: true, daysAgo: 7,
+      { content: "Fed funds futures are pricing in 2 cuts by year-end but {{market:TICKER_0}} only shows 45% for even one cut in June. Interesting divergence.", userIndex: 1, marketTicker: true, taggedMarketIndices: [0], daysAgo: 7,
         replies: [
           { content: "The June cut probability seems too low. Inflation data has been trending down.", userIndex: 4, daysAgo: 6 },
           { content: "But labor market is still hot. I think the Fed stays put longer than markets expect.", userIndex: 0, daysAgo: 6 },
@@ -369,6 +370,7 @@ async function seed() {
       "content" text NOT NULL,
       "position_direction" "trade_direction",
       "position_amount" real,
+      "tagged_markets" text[],
       "created_at" timestamp with time zone DEFAULT now() NOT NULL,
       "updated_at" timestamp with time zone DEFAULT now() NOT NULL
     );
@@ -531,15 +533,29 @@ async function seed() {
     const constellationTickers = tickersByConstellation[ci];
 
     for (const cDef of commentDefs) {
+      // Resolve TICKER_N placeholders in content
+      let resolvedContent = cDef.content;
+      const taggedMarkets: string[] = [];
+      if (cDef.taggedMarketIndices) {
+        for (const idx of cDef.taggedMarketIndices) {
+          const ticker = constellationTickers[idx] || constellationTickers[0];
+          if (ticker) {
+            resolvedContent = resolvedContent.replace(`TICKER_${idx}`, ticker);
+            taggedMarkets.push(ticker);
+          }
+        }
+      }
+
       const [parent] = await db
         .insert(schema.comments)
         .values({
           constellationId: insertedConstellations[ci].id,
           userId: insertedUsers[cDef.userIndex].id,
-          content: cDef.content,
+          content: resolvedContent,
           marketTicker: cDef.marketTicker ? constellationTickers[0] : null,
           positionDirection: cDef.positionDirection || null,
           positionAmount: cDef.positionAmount || null,
+          taggedMarkets: taggedMarkets.length > 0 ? taggedMarkets : null,
           createdAt: daysAgo(cDef.daysAgo),
         })
         .returning();
