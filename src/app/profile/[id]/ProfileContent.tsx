@@ -17,11 +17,23 @@ import {
 import { cn, formatCurrency, formatPercentage, timeAgo } from "@/lib/utils";
 import { PositionsCard } from "@/components/profile/PositionsCard";
 import { OrderHistoryCard } from "@/components/profile/OrderHistoryCard";
+import { ActivityFeed } from "@/components/profile/ActivityFeed";
 import type {
   ApiResponse,
   UserResponse,
   UserStatsResponse,
 } from "@/types/api";
+
+const topicColors: Record<string, string> = {
+  politics: "bg-blue-500/20 text-blue-400",
+  crypto: "bg-orange-500/20 text-orange-400",
+  sports: "bg-green-500/20 text-green-400",
+  entertainment: "bg-pink-500/20 text-pink-400",
+  science: "bg-cyan-500/20 text-cyan-400",
+  economics: "bg-yellow-500/20 text-yellow-400",
+  technology: "bg-purple-500/20 text-purple-400",
+  other: "bg-muted text-muted-foreground",
+};
 
 interface ProfileContentProps {
   username: string;
@@ -44,6 +56,17 @@ export function ProfileContent({ username }: ProfileContentProps) {
   });
 
   const isOwnProfile = session?.user?.id === user?.id;
+
+  const { data: memberConstellations } = useQuery({
+    queryKey: ["userConstellations", username],
+    queryFn: async () => {
+      const res = await fetch(`/api/users/${username}/constellations`);
+      const json = await res.json();
+      if (json.error) throw new Error(json.error);
+      return json.data as { id: string; name: string; slug: string; topic: string }[];
+    },
+    enabled: !!user,
+  });
 
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ["userStats", username],
@@ -147,6 +170,22 @@ export function ProfileContent({ username }: ProfileContentProps) {
                 Connect Gemini to show real stats
               </Link>
             )}
+            {memberConstellations && memberConstellations.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {memberConstellations.map((c) => (
+                  <Link
+                    key={c.id}
+                    href={`/constellations/${c.slug}`}
+                    className={cn(
+                      "rounded-full px-2.5 py-0.5 text-xs font-medium transition-opacity hover:opacity-80",
+                      topicColors[c.topic] || topicColors.other
+                    )}
+                  >
+                    {c.name}
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -235,15 +274,8 @@ export function ProfileContent({ username }: ProfileContentProps) {
         </div>
       )}
 
-      {/* Activity */}
-      <div className="rounded-lg border border-border bg-card p-6">
-        <h2 className="mb-2 text-sm font-medium text-foreground">Activity</h2>
-        <p className="text-sm text-muted-foreground">
-          Member of {displayStats.constellationsJoined} communit{displayStats.constellationsJoined !== 1 ? "ies" : "y"}{" "}
-          &middot; {displayStats.commentsPosted} comment
-          {displayStats.commentsPosted !== 1 && "s"} posted
-        </p>
-      </div>
+      {/* Activity Feed */}
+      <ActivityFeed username={username} />
 
       {/* Gemini Positions & Order History (own profile only) */}
       {isOwnProfile && stats?.geminiConnected && user && (

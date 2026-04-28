@@ -47,6 +47,8 @@ export interface CommentResponse {
   positionDirection: "yes" | "no" | null;
   positionAmount: number | null;
   taggedMarkets: string[] | null;
+  likeCount: number;
+  likedByMe: boolean;
   createdAt: string;
   user: UserResponse;
   replies?: CommentResponse[];
@@ -60,6 +62,13 @@ export interface FeedItemResponse extends CommentResponse {
     topic: string;
   };
   replyCount: number;
+}
+
+export interface ActivityItemResponse extends FeedItemResponse {
+  parentComment?: {
+    username: string;
+    content: string;
+  };
 }
 
 export interface LeaderboardEntryResponse {
