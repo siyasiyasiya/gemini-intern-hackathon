@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { userTrades, constellationMembers, comments } from "@/lib/db/schema";
-import { eq, sql, desc, asc } from "drizzle-orm";
+import { eq, and, isNotNull, sql, desc, asc } from "drizzle-orm";
 import { getUserGeminiCredentials, fetchPositions, fetchSettledPositions, fetchOrderHistory } from "@/lib/market-data/gemini-authenticated";
 import { resolveUser } from "@/lib/db/resolve-user";
 import type { ApiResponse, UserStatsResponse, TradeDetail } from "@/types/api";
@@ -133,7 +133,12 @@ export async function GET(
       totalPnl = tradeStats?.totalPnl || 0;
       winRate = totalTrades > 0 ? (tradeStats.wins || 0) / totalTrades : 0;
 
-      // Fetch best trade row
+      const resolvedCondition = and(
+        eq(userTrades.userId, id),
+        isNotNull(userTrades.pnl)
+      );
+
+      // Fetch best trade row (highest PnL among resolved trades)
       const [bestRow] = await db
         .select({
           pnl: userTrades.pnl,
@@ -144,11 +149,11 @@ export async function GET(
           createdAt: userTrades.createdAt,
         })
         .from(userTrades)
-        .where(eq(userTrades.userId, id))
+        .where(resolvedCondition)
         .orderBy(desc(userTrades.pnl))
         .limit(1);
 
-      // Fetch worst trade row
+      // Fetch worst trade row (lowest PnL among resolved trades)
       const [worstRow] = await db
         .select({
           pnl: userTrades.pnl,
@@ -159,7 +164,7 @@ export async function GET(
           createdAt: userTrades.createdAt,
         })
         .from(userTrades)
-        .where(eq(userTrades.userId, id))
+        .where(resolvedCondition)
         .orderBy(asc(userTrades.pnl))
         .limit(1);
 
