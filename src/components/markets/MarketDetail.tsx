@@ -4,6 +4,7 @@ import { useMarketDetail } from "@/hooks/useMarketDetail";
 import { PriceChart } from "./PriceChart";
 import { cn, formatCompactNumber } from "@/lib/utils";
 import { TrendingUp, TrendingDown, Clock, BarChart3, ExternalLink, ArrowLeft } from "lucide-react";
+import { ConsensusHeatmap } from "./ConsensusHeatmap";
 
 function timeLeft(dateStr: string): string {
   const diff = new Date(dateStr).getTime() - Date.now();
@@ -16,11 +17,12 @@ function timeLeft(dateStr: string): string {
 
 interface MarketDetailProps {
   ticker: string;
+  constellationSlug?: string;
   onBack?: () => void;
   onSelectRelated?: (ticker: string) => void;
 }
 
-export function MarketDetail({ ticker, onBack, onSelectRelated }: MarketDetailProps) {
+export function MarketDetail({ ticker, constellationSlug, onBack, onSelectRelated }: MarketDetailProps) {
   const { data: market, isLoading, error } = useMarketDetail(ticker);
 
   if (isLoading) {
@@ -120,6 +122,15 @@ export function MarketDetail({ ticker, onBack, onSelectRelated }: MarketDetailPr
           <div className="text-xs font-medium">{timeLeft(market.resolutionDate)}</div>
         </div>
       </div>
+
+      {/* Community consensus */}
+      {constellationSlug && (
+        <ConsensusHeatmap
+          constellationSlug={constellationSlug}
+          ticker={ticker}
+          marketYesPrice={market.yesPrice}
+        />
+      )}
 
       {/* Resolution source */}
       <div className="rounded-xl bg-secondary p-3">
