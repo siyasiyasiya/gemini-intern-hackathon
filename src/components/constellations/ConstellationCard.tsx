@@ -30,7 +30,7 @@ export function ConstellationCard({ constellation, compact }: ConstellationCardP
   if (compact) {
     return (
       <Link href={`/constellations/${constellation.slug}`} className="h-full block">
-        <div className="group h-full flex flex-col rounded-xl border border-border bg-card p-4 transition-all hover:border-primary/50 hover:bg-card/80 hover:shadow-lg hover:shadow-primary/5">
+        <div className="group h-full min-h-[120px] flex flex-col rounded-xl border border-border bg-card p-4 transition-all hover:border-primary/50 hover:bg-card/80 hover:shadow-lg hover:shadow-primary/5">
           <div className="flex flex-wrap gap-1 mb-2">
             {constellation.categories && constellation.categories.length > 0 ? (
               constellation.categories.slice(0, 2).map((cat: string) => (
