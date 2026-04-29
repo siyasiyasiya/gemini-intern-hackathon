@@ -12,6 +12,15 @@ const CHART_W = 600;
 const CHART_H = 200;
 const PAD = { top: 10, right: 10, bottom: 20, left: 40 };
 
+function formatTimestamp(ts: string, spanMs: number): string {
+  const d = new Date(ts);
+  // If the data spans less than 2 days, show date + time
+  if (spanMs < 2 * 86400000) {
+    return d.toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+  }
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+}
+
 function buildPath(data: PricePoint[], w: number, h: number) {
   if (data.length === 0) return { path: "", points: [] as { x: number; y: number; data: PricePoint }[] };
   const pts = data.map((p, i) => ({
@@ -55,6 +64,15 @@ export function PriceChart({ history, contractHistories }: PriceChartProps) {
   const maxLen = isMulti
     ? Math.max(...(multiData?.map((d) => d.history.length) || [0]))
     : history.length;
+
+  const timeSpanMs = useMemo(() => {
+    const allPoints = isMulti
+      ? (contractHistories?.flatMap((ch) => ch.history) || [])
+      : history;
+    if (allPoints.length < 2) return 0;
+    const times = allPoints.map((p) => new Date(p.timestamp).getTime());
+    return Math.max(...times) - Math.min(...times);
+  }, [isMulti, contractHistories, history]);
 
   if (maxLen === 0) {
     return (
@@ -171,7 +189,7 @@ export function PriceChart({ history, contractHistories }: PriceChartProps) {
             </div>
           ))}
           <div className="text-muted-foreground mt-0.5">
-            {new Date(hoveredMulti[0].timestamp).toLocaleDateString()}
+            {formatTimestamp(hoveredMulti[0].timestamp, timeSpanMs)}
           </div>
         </div>
       )}
@@ -186,7 +204,7 @@ export function PriceChart({ history, contractHistories }: PriceChartProps) {
         >
           <div className="font-medium text-success">{Math.round(hoveredSingle.data.yesPrice * 100)}% YES</div>
           <div className="text-muted-foreground">
-            {new Date(hoveredSingle.data.timestamp).toLocaleDateString()}
+            {formatTimestamp(hoveredSingle.data.timestamp, timeSpanMs)}
           </div>
         </div>
       )}
