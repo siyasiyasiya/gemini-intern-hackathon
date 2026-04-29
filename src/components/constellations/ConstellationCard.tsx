@@ -63,14 +63,14 @@ export function ConstellationCard({ constellation, compact }: ConstellationCardP
   }
 
   return (
-    <Link href={`/constellations/${constellation.slug}`}>
-      <div className="group h-full rounded-xl border border-border bg-card overflow-hidden transition-all hover:border-primary/50 hover:bg-card/80 hover:shadow-lg hover:shadow-primary/5">
+    <Link href={`/constellations/${constellation.slug}`} className="h-full block">
+      <div className="group h-full flex flex-col rounded-xl border border-border bg-card overflow-hidden transition-all hover:border-primary/50 hover:bg-card/80 hover:shadow-lg hover:shadow-primary/5">
         {constellation.bannerUrl && (
           <div className="h-20 w-full overflow-hidden">
             <img src={constellation.bannerUrl} alt="" className="h-full w-full object-cover" />
           </div>
         )}
-        <div className="p-5">
+        <div className="p-5 flex flex-col flex-1">
           <div className="flex items-start justify-between gap-3 mb-3">
             <h3 className="font-semibold text-card-foreground line-clamp-2 group-hover:text-primary transition-colors">
               {constellation.name}
@@ -100,7 +100,7 @@ export function ConstellationCard({ constellation, compact }: ConstellationCardP
               {constellation.description}
             </p>
           )}
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <div className="mt-auto flex items-center gap-1.5 text-xs text-muted-foreground">
             <Users className="h-3.5 w-3.5" />
             <span>{constellation.memberCount} {constellation.memberCount === 1 ? "member" : "members"}</span>
           </div>
