@@ -32,7 +32,7 @@ export function ConstellationCard({ constellation }: { constellation: Constellat
         )}
         <div className="p-5">
           <div className="flex items-start justify-between gap-3 mb-3">
-            <h3 className="font-semibold text-card-foreground truncate group-hover:text-primary transition-colors">
+            <h3 className="font-semibold text-card-foreground line-clamp-2 group-hover:text-primary transition-colors">
               {constellation.name}
             </h3>
             <div className="flex flex-wrap gap-1 shrink-0">
