@@ -9,6 +9,8 @@ export async function GET(request: NextRequest) {
   const sort = searchParams.get("sort") as MarketSortOption | null;
   const search = searchParams.get("search");
   const status = searchParams.get("status") as MarketStatus | null;
+  const limitParam = searchParams.get("limit");
+  const limit = limitParam ? parseInt(limitParam, 10) : undefined;
 
   try {
     const markets = await getMarkets({
@@ -18,7 +20,8 @@ export async function GET(request: NextRequest) {
       status: status || undefined,
     });
 
-    return NextResponse.json({ data: markets });
+    const result = limit && limit > 0 ? markets.slice(0, limit) : markets;
+    return NextResponse.json({ data: result, total: markets.length });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Failed to fetch markets";
     return NextResponse.json({ error: message }, { status: 502 });

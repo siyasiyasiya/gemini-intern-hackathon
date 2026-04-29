@@ -58,6 +58,10 @@ function sortMarkets(markets: Market[], sort: MarketSortOption): Market[] {
   }
 }
 
+// In-memory cache for processed getMarkets results (avoids re-mapping 1000+ events every call)
+const marketsCache = new Map<string, { data: Market[]; expiry: number }>();
+const MARKETS_CACHE_TTL = 60_000; // 60s, matches Gemini fetch revalidate
+
 export async function getMarkets(filters?: MarketFilters & { categories?: MarketCategory[] }): Promise<Market[]> {
   let geminiCategory: string | string[] | undefined;
   if (filters?.categories && filters.categories.length > 0) {
@@ -70,26 +74,37 @@ export async function getMarkets(filters?: MarketFilters & { categories?: Market
 
   const geminiStatus = filters?.status ?? "active";
 
-  const response = await fetchGeminiEvents({
-    category: geminiCategory,
-    search: filters?.search,
-    status: geminiStatus,
-  });
+  // Cache key based on fetch params (before sort, since sort is cheap)
+  const cacheKey = JSON.stringify({ category: geminiCategory, search: filters?.search, status: geminiStatus });
+  let markets: Market[];
 
-  let markets = response.data.map(geminiEventToMarket);
+  const cached = marketsCache.get(cacheKey);
+  if (cached && cached.expiry > Date.now()) {
+    markets = cached.data;
+  } else {
+    const response = await fetchGeminiEvents({
+      category: geminiCategory,
+      search: filters?.search,
+      status: geminiStatus,
+    });
 
-  // Client-side category filtering (Gemini API can return non-matching results)
-  if (filters?.categories && filters.categories.length > 0) {
-    markets = markets.filter((m) => filters.categories!.includes(m.category));
-  } else if (filters?.category) {
-    markets = markets.filter((m) => m.category === filters.category);
-  }
+    markets = response.data.map(geminiEventToMarket);
 
-  // Client-side status filtering (Gemini API doesn't reliably filter by status)
-  if (geminiStatus === "active") {
-    markets = markets.filter((m) => m.status === "active");
-  } else if (geminiStatus) {
-    markets = markets.filter((m) => m.status === geminiStatus);
+    // Client-side category filtering (Gemini API can return non-matching results)
+    if (filters?.categories && filters.categories.length > 0) {
+      markets = markets.filter((m) => filters.categories!.includes(m.category));
+    } else if (filters?.category) {
+      markets = markets.filter((m) => m.category === filters.category);
+    }
+
+    // Client-side status filtering (Gemini API doesn't reliably filter by status)
+    if (geminiStatus === "active") {
+      markets = markets.filter((m) => m.status === "active");
+    } else if (geminiStatus) {
+      markets = markets.filter((m) => m.status === geminiStatus);
+    }
+
+    marketsCache.set(cacheKey, { data: markets, expiry: Date.now() + MARKETS_CACHE_TTL });
   }
 
   const sort = filters?.sort ?? "trending";

@@ -198,6 +198,11 @@ export async function fetchContractCandles(
     }));
 }
 
+// In-memory cache + request deduplication for Gemini events API
+const eventsCache = new Map<string, { data: GeminiEventsResponse; expiry: number }>();
+const inflight = new Map<string, Promise<GeminiEventsResponse>>();
+const EVENTS_CACHE_TTL = 60_000; // 60s
+
 export async function fetchGeminiEvents(params?: {
   category?: string | string[];
   search?: string;
@@ -217,22 +222,63 @@ export async function fetchGeminiEvents(params?: {
   url.searchParams.set("limit", String(params?.limit ?? 500));
   if (params?.offset) url.searchParams.set("offset", String(params.offset));
 
-  const res = await fetch(url.toString(), { next: { revalidate: 60 } });
-  if (!res.ok) {
-    throw new Error(`Gemini API error: ${res.status}`);
+  const cacheKey = url.toString();
+
+  // Return cached if fresh
+  const cached = eventsCache.get(cacheKey);
+  if (cached && cached.expiry > Date.now()) {
+    return cached.data;
   }
-  return res.json();
+
+  // Deduplicate concurrent requests to the same URL
+  const existing = inflight.get(cacheKey);
+  if (existing) return existing;
+
+  const promise = (async () => {
+    const res = await fetch(cacheKey, { next: { revalidate: 60 } });
+    if (!res.ok) {
+      throw new Error(`Gemini API error: ${res.status}`);
+    }
+    const data: GeminiEventsResponse = await res.json();
+    eventsCache.set(cacheKey, { data, expiry: Date.now() + EVENTS_CACHE_TTL });
+    return data;
+  })();
+
+  inflight.set(cacheKey, promise);
+  promise.finally(() => inflight.delete(cacheKey));
+
+  return promise;
 }
 
+const singleEventCache = new Map<string, { data: GeminiEvent | null; expiry: number }>();
+const singleEventInflight = new Map<string, Promise<GeminiEvent | null>>();
+
 export async function fetchGeminiEvent(eventTicker: string): Promise<GeminiEvent | null> {
-  const res = await fetch(`${BASE_URL}/events/${encodeURIComponent(eventTicker)}`, {
-    next: { revalidate: 60 },
-  });
-  if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`Gemini API error: ${res.status}`);
-  const data = await res.json();
-  // The single-event endpoint may return the event directly or wrapped in data
-  return data.data ?? data;
+  const cached = singleEventCache.get(eventTicker);
+  if (cached && cached.expiry > Date.now()) return cached.data;
+
+  const existing = singleEventInflight.get(eventTicker);
+  if (existing) return existing;
+
+  const promise = (async () => {
+    const res = await fetch(`${BASE_URL}/events/${encodeURIComponent(eventTicker)}`, {
+      next: { revalidate: 60 },
+    });
+    if (res.status === 404) {
+      singleEventCache.set(eventTicker, { data: null, expiry: Date.now() + EVENTS_CACHE_TTL });
+      return null;
+    }
+    if (!res.ok) throw new Error(`Gemini API error: ${res.status}`);
+    const data = await res.json();
+    const event: GeminiEvent = data.data ?? data;
+    singleEventCache.set(eventTicker, { data: event, expiry: Date.now() + EVENTS_CACHE_TTL });
+    return event;
+  })();
+
+  singleEventInflight.set(eventTicker, promise);
+  promise.finally(() => singleEventInflight.delete(eventTicker));
+
+  return promise;
 }
 
 export async function fetchGeminiCategories(): Promise<string[]> {

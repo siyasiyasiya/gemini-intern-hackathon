@@ -109,7 +109,7 @@ export default function Home() {
   const { data: marketsData } = useQuery({
     queryKey: ["landing-markets"],
     queryFn: async () => {
-      const res = await fetch("/api/markets?sort=trending");
+      const res = await fetch("/api/markets?sort=trending&limit=10");
       return res.json();
     },
   });
@@ -135,6 +135,10 @@ export default function Home() {
   const tickerMarkets = markets.slice(0, 10);
   const previewMarkets = markets.slice(0, 6);
   const stats = statsData?.data || { activeMarkets: 0, constellations: 0, traders: 0 };
+  // Derive activeMarkets from the markets response total (avoids Gemini call in /api/stats)
+  if (marketsData?.total) {
+    stats.activeMarkets = marketsData.total;
+  }
   const topTraders: LeaderboardEntryResponse[] = leaderboardData?.data || [];
 
   // Unique categories from constellations for filter pills
