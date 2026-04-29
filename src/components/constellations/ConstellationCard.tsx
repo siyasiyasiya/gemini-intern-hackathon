@@ -30,7 +30,7 @@ export function ConstellationCard({ constellation, compact }: ConstellationCardP
   if (compact) {
     return (
       <Link href={`/constellations/${constellation.slug}`}>
-        <div className="group h-full rounded-xl border border-border bg-card p-4 transition-all hover:border-primary/50 hover:bg-card/80 hover:shadow-lg hover:shadow-primary/5">
+        <div className="group h-full flex flex-col rounded-xl border border-border bg-card p-4 transition-all hover:border-primary/50 hover:bg-card/80 hover:shadow-lg hover:shadow-primary/5">
           <div className="flex flex-wrap gap-1 mb-2">
             {constellation.categories && constellation.categories.length > 0 ? (
               constellation.categories.slice(0, 2).map((cat: string) => (
@@ -53,7 +53,7 @@ export function ConstellationCard({ constellation, compact }: ConstellationCardP
           <h3 className="font-semibold text-sm text-card-foreground group-hover:text-primary transition-colors mb-2">
             {constellation.name}
           </h3>
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <div className="mt-auto flex items-center gap-1.5 text-xs text-muted-foreground">
             <Users className="h-3.5 w-3.5" />
             <span>{constellation.memberCount} {constellation.memberCount === 1 ? "member" : "members"}</span>
           </div>
