@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { MessageSquare, BarChart3 } from "lucide-react";
+import { MessageSquare, BarChart3, Reply } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Comment } from "@/components/comments/Comment";
 import type { FeedItemResponse } from "@/types/api";
@@ -50,6 +50,25 @@ export function FeedItem({ item }: FeedItemProps) {
           </Link>
         )}
       </div>
+
+      {/* Reply context (if this is a reply) */}
+      {item.parentComment && (
+        <div className="mx-4 mb-2 rounded-lg bg-muted/50 border border-border/50 px-3 py-2">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Reply className="h-3 w-3" />
+            <span>Replying to</span>
+            <Link
+              href={`/profile/${item.parentComment.username}`}
+              className="font-medium text-accent hover:underline"
+            >
+              @{item.parentComment.username}
+            </Link>
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground/80 line-clamp-2">
+            &ldquo;{item.parentComment.content}&rdquo;
+          </p>
+        </div>
+      )}
 
       {/* Comment content */}
       <div className="px-4 pb-2">

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { constellations, constellationMembers, comments, commentLikes, users } from "@/lib/db/schema";
-import { eq, and, isNull, desc, lt, sql, inArray } from "drizzle-orm";
+import { eq, and, desc, lt, sql, inArray } from "drizzle-orm";
 import type { ApiResponse, FeedItemResponse } from "@/types/api";
 
 export async function GET(request: NextRequest) {
@@ -20,23 +20,29 @@ export async function GET(request: NextRequest) {
   const sort = searchParams.get("sort") || "latest";
 
   try {
-    // Get constellation IDs the user has joined
-    const memberRows = await db
-      .select({ constellationId: constellationMembers.constellationId })
-      .from(constellationMembers)
-      .where(eq(constellationMembers.userId, session.user.id));
+    // Build conditions based on sort mode
+    const conditions = [];
 
-    const joinedIds = memberRows.map((r) => r.constellationId);
+    if (sort === "trending") {
+      // Trending: ALL public constellations (discovery)
+      conditions.push(eq(constellations.isPublic, true));
+    } else {
+      // Latest: only joined constellations
+      const memberRows = await db
+        .select({ constellationId: constellationMembers.constellationId })
+        .from(constellationMembers)
+        .where(eq(constellationMembers.userId, session.user.id));
 
-    if (joinedIds.length === 0) {
-      return NextResponse.json({ data: [], nextCursor: null });
+      const joinedIds = memberRows.map((r) => r.constellationId);
+
+      if (joinedIds.length === 0) {
+        return NextResponse.json({ data: [], nextCursor: null });
+      }
+
+      conditions.push(inArray(comments.constellationId, joinedIds));
     }
 
-    // Build conditions: root-level comments from joined constellations
-    const conditions = [
-      isNull(comments.parentId),
-      inArray(comments.constellationId, joinedIds),
-    ];
+    // No parentId filter — include both posts AND replies
 
     // For latest mode, use cursor-based pagination on createdAt
     // For trending mode, use offset-based pagination (cursor = offset number)
@@ -61,6 +67,17 @@ export async function GET(request: NextRequest) {
       SELECT 1 FROM comment_likes cl
       WHERE cl.comment_id = ${comments.id} AND cl.user_id = ${session.user.id}
     )`.as("liked_by_me");
+
+    // Parent comment context for replies
+    const parentContentSql = sql<string>`(
+      SELECT content FROM comments pc WHERE pc.id = ${comments.parentId}
+    )`.as("parent_content");
+
+    const parentUsernameSql = sql<string>`(
+      SELECT u.username FROM comments pc
+      JOIN users u ON u.id = pc.user_id
+      WHERE pc.id = ${comments.parentId}
+    )`.as("parent_username");
 
     // Determine ordering
     let orderBy;
@@ -101,6 +118,8 @@ export async function GET(request: NextRequest) {
         replyCount: replyCountSql,
         likeCount: likeCountSql,
         likedByMe: likedByMeSql,
+        parentContent: parentContentSql,
+        parentUsername: parentUsernameSql,
       })
       .from(comments)
       .innerJoin(users, eq(comments.userId, users.id))
@@ -156,6 +175,17 @@ export async function GET(request: NextRequest) {
         topic: (r.constellationCategories as string[])?.[0] ?? "other",
       },
       replyCount: r.replyCount ?? 0,
+      ...(r.parentId && r.parentContent
+        ? {
+            parentComment: {
+              username: r.parentUsername ?? "unknown",
+              content:
+                r.parentContent.length > 100
+                  ? r.parentContent.slice(0, 100) + "..."
+                  : r.parentContent,
+            },
+          }
+        : {}),
     }));
 
     return NextResponse.json({ data, nextCursor });

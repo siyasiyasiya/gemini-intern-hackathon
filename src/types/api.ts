@@ -64,14 +64,13 @@ export interface FeedItemResponse extends CommentResponse {
     topic: string;
   };
   replyCount: number;
-}
-
-export interface ActivityItemResponse extends FeedItemResponse {
   parentComment?: {
     username: string;
     content: string;
   };
 }
+
+export interface ActivityItemResponse extends FeedItemResponse {}
 
 export interface LeaderboardEntryResponse {
   rank: number;
