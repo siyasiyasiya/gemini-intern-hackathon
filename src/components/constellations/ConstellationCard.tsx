@@ -21,10 +21,50 @@ const categoryColors: Record<string, string> = {
   other: "bg-muted text-muted-foreground",
 };
 
-export function ConstellationCard({ constellation }: { constellation: ConstellationResponse }) {
+interface ConstellationCardProps {
+  constellation: ConstellationResponse;
+  compact?: boolean;
+}
+
+export function ConstellationCard({ constellation, compact }: ConstellationCardProps) {
+  if (compact) {
+    return (
+      <Link href={`/constellations/${constellation.slug}`}>
+        <div className="group h-full rounded-xl border border-border bg-card p-4 transition-all hover:border-primary/50 hover:bg-card/80 hover:shadow-lg hover:shadow-primary/5">
+          <div className="flex flex-wrap gap-1 mb-2">
+            {constellation.categories && constellation.categories.length > 0 ? (
+              constellation.categories.slice(0, 2).map((cat: string) => (
+                <span
+                  key={cat}
+                  className={cn(
+                    "rounded-full px-2 py-0.5 text-[10px] font-medium capitalize",
+                    categoryColors[cat] || categoryColors.other
+                  )}
+                >
+                  {cat}
+                </span>
+              ))
+            ) : (
+              <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-medium", categoryColors.other)}>
+                General
+              </span>
+            )}
+          </div>
+          <h3 className="font-semibold text-sm text-card-foreground group-hover:text-primary transition-colors mb-2">
+            {constellation.name}
+          </h3>
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Users className="h-3.5 w-3.5" />
+            <span>{constellation.memberCount} {constellation.memberCount === 1 ? "member" : "members"}</span>
+          </div>
+        </div>
+      </Link>
+    );
+  }
+
   return (
     <Link href={`/constellations/${constellation.slug}`}>
-      <div className="group rounded-xl border border-border bg-card overflow-hidden transition-all hover:border-primary/50 hover:bg-card/80 hover:shadow-lg hover:shadow-primary/5">
+      <div className="group h-full rounded-xl border border-border bg-card overflow-hidden transition-all hover:border-primary/50 hover:bg-card/80 hover:shadow-lg hover:shadow-primary/5">
         {constellation.bannerUrl && (
           <div className="h-20 w-full overflow-hidden">
             <img src={constellation.bannerUrl} alt="" className="h-full w-full object-cover" />

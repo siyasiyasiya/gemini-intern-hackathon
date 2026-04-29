@@ -364,7 +364,7 @@ function WelcomeHero({
           </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {userConstellations.slice(0, 6).map((c) => (
-              <ConstellationCard key={c.id} constellation={c} />
+              <ConstellationCard key={c.id} constellation={c} compact />
             ))}
           </div>
         </div>
