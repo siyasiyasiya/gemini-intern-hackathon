@@ -1,12 +1,17 @@
 # Predictions Communities (Gemini Constellation)
 
-A Next.js web app that adds a social layer to Gemini prediction markets. Users join “Constellations” (persistent community rooms), track live market data, and discuss trades in real time.
+**Predictions Communities** is a Next.js web app that turns Gemini prediction markets into community-driven spaces. Users join **Constellations** (persistent rooms), track live market data, and debate outcomes in real time—then measure performance on shared leaderboards.
+
+**Why it’s compelling:** prediction markets are information-dense but socially thin. This project layers identity, conversation, and friendly competition on top of market data so communities can build shared context around fast-moving events.
 
 ## Table of Contents
 - [Overview](#overview)
-- [Key Features](#key-features)
+- [Product Highlights](#product-highlights)
+- [User Journey](#user-journey)
 - [Tech Stack](#tech-stack)
 - [Architecture](#architecture)
+- [Realtime Layer](#realtime-layer)
+- [Data Model Snapshot](#data-model-snapshot)
 - [Project Structure](#project-structure)
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
@@ -15,19 +20,28 @@ A Next.js web app that adds a social layer to Gemini prediction markets. Users j
   - [Run Locally](#run-locally)
 - [Scripts](#scripts)
 - [Data & Integrations](#data--integrations)
+- [Security Notes](#security-notes)
 - [Contributing](#contributing)
 
 ## Overview
-Predictions Communities is a standalone web app that turns real Gemini prediction markets into community-driven spaces. Each Constellation is a persistent room centered around a market theme where users can track prices, share commentary, and compete on leaderboards.
+Predictions Communities is a standalone social layer for Gemini prediction markets. Each **Constellation** is a persistent room centered around a market theme, combining live pricing, threaded discussion, and performance tracking into a single experience.
 
-## Key Features
-- **Constellations (community rooms):** persistent rooms with shared market focus.
-- **Markets explorer:** browse Gemini markets and view detailed market pages.
-- **Real-time presence & comments:** Socket.io-powered presence counts and live comment updates.
-- **Leaderboards & profiles:** track performance and view user activity.
-- **Activity feed:** surface recent actions across communities.
-- **Gemini account linking:** connect API credentials to show real trading stats.
-- **Market “Autopsy” (optional):** Gemini AI-generated context for market inflection points.
+## Product Highlights
+- **Constellations as community hubs:** public or invite-only rooms with rules, topics, member counts, and pinned markets.
+- **Market intelligence at a glance:** browse Gemini markets, drill into market detail pages, and follow watchlisted tickers.
+- **Real-time discussion & presence:** Socket.io-powered presence counts and live comment updates.
+- **Opinionated commentary:** comments can include tagged markets and trade positions.
+- **Leaderboards & profiles:** view performance summaries, user activity, and rank progress.
+- **Activity feed:** surface recent community activity and trending commentary.
+- **Gemini account linking:** connect Gemini API credentials to show authenticated trading stats.
+- **Market Autopsy (optional):** AI-assisted inflection point summaries for major price moves.
+
+## User Journey
+1. **Discover** a market or topic and join a constellation.
+2. **Track** live price changes and related markets in the room’s watchlist.
+3. **Discuss** outcomes with structured comments, likes, and threaded replies.
+4. **Compete** on leaderboards based on trade history and performance.
+5. **Analyze** inflection points with the Market Autopsy timeline.
 
 ## Tech Stack
 - **Framework:** Next.js 16 (App Router) + TypeScript
@@ -38,11 +52,27 @@ Predictions Communities is a standalone web app that turns real Gemini predictio
 - **State:** TanStack Query + Zustand
 
 ## Architecture
-- **Next.js app** handles UI, server components, and API routes in `src/app`.
+- **Next.js app** provides UI, server components, and API routes in `src/app`.
 - **Socket server** runs as a separate process in `src/server` for presence and live updates.
 - **PostgreSQL** stores users, constellations, comments, trades, and leaderboard data.
-- **Gemini integrations** fetch market data and user trading stats.
-- **Optional Gemini AI** provides market “autopsy” summaries (requires API key).
+- **Gemini integrations** fetch public market data and authenticated user stats.
+- **Optional Gemini AI** powers Market Autopsy summaries (requires API key).
+
+## Realtime Layer
+Socket.io broadcasts keep rooms in sync:
+- **presence-update:** user join/leave events + online count per constellation.
+- **comment-added:** live comment fan-out to the room.
+- **market-price-update:** broadcast price and volume changes.
+
+## Data Model Snapshot
+Key tables (Drizzle/Postgres):
+- **users**: profiles, credentials, and Gemini connection state.
+- **constellations**: community rooms with categories, rules, and invite codes.
+- **constellation_members**: roles (owner/moderator/member) and membership records.
+- **tracked_markets**: room-level watchlist/pins.
+- **comments + comment_likes**: threaded discussion with reactions.
+- **watchlist_items**: per-user market follow list.
+- **user_trades + leaderboard_entries**: performance tracking and rankings.
 
 ## Project Structure
 ```
@@ -130,6 +160,10 @@ Open http://localhost:3000 to view the app.
 - **Gemini Markets:** Market browsing uses Gemini’s public prediction market APIs.
 - **User Trading Stats:** Users can connect Gemini API keys to display positions and order history.
 - **Market Autopsy:** Optional Gemini AI integration to summarize catalysts for market moves (requires `GEMINI_AI_API_KEY`).
+
+## Security Notes
+- Gemini API credentials are encrypted at rest using AES-256-GCM and the `AUTH_SECRET` key.
+- Use a strong, unique `AUTH_SECRET` for local and production environments.
 
 ## Contributing
 1. Create a feature branch.
